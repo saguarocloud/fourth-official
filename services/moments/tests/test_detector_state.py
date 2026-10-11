@@ -144,3 +144,8 @@ def test_a_collapse_after_half_time_is_found_on_continuous_match_time() -> None:
 
     assert (collapse.kind, collapse.clock.period) == ("pressing_collapse", 2)
     assert 52 <= collapse.clock.minute <= 56
+
+
+def test_a_flicker_of_pressing_from_nothing_is_not_a_surge() -> None:
+    # One press every other minute is below the floor of a press at all.
+    assert _shifts(_pressing(range(40), lambda minute: int(minute >= 25 and minute % 2 == 0))) == []
