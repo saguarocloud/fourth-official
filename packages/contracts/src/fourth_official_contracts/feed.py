@@ -11,8 +11,17 @@ from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
 from fourth_official_contracts.corrections import Correction
 from fourth_official_contracts.insights import Insight
+from fourth_official_contracts.localized import LocalizedInsight
 from fourth_official_contracts.moments import Moment
+from fourth_official_contracts.overlays import LowerThird, OverlaySpec
 from fourth_official_contracts.primitives import MatchClock, MatchId, Score, Seq, WireModel
+from fourth_official_contracts.tenants import (
+    NARRATIVE_KINDS,
+    TEMPLATE_FOR,
+    Approval,
+    ItemKind,
+    TenantId,
+)
 from fourth_official_contracts.verdicts import FindingCode, Verdict
 
 EntrySeq = Annotated[int, Field(ge=1, le=1_000_000)]
@@ -106,8 +115,84 @@ class CorrectionEntry(FeedEntryBase):
         return self
 
 
+class TenantItemEntry(FeedEntryBase):
+    """One item for one partner: its graphic, and for narrative items the words in its voice.
+
+    Feeds are filtered by partner at the API, so an entry carries exactly one partner's item."""
+
+    kind: Literal["tenant_item"]
+    tenant_id: TenantId
+    item_kind: ItemKind
+    # Whether the partner's policy has a named editor decide on this item before it airs.
+    approval_required: bool
+    # Pending and rejected items stay off air.
+    state: Literal["on_air", "pending_approval", "rejected"]
+    localized: LocalizedInsight | None
+    rendered: RenderedInsight | None
+    overlay: OverlaySpec
+    attempts: Annotated[tuple[AttemptRecord, ...], Field(max_length=MAX_ATTEMPTS, strict=False)]
+    approval: Approval | None
+
+    @model_validator(mode="after")
+    def _one_partner_and_consistent(self) -> "TenantItemEntry":
+        if self.overlay.tenant_id != self.tenant_id:
+            raise ValueError("the graphic belongs to another partner")
+        if self.overlay.content.template != TEMPLATE_FOR[self.item_kind]:
+            raise ValueError(f"{self.item_kind} items are shown as {TEMPLATE_FOR[self.item_kind]}")
+        if self.item_kind in NARRATIVE_KINDS:
+            self._check_narrative()
+        else:
+            self._check_data()
+        self._check_approval()
+        return self
+
+    def _check_narrative(self) -> None:
+        localized, rendered, content = self.localized, self.rendered, self.overlay.content
+        if localized is None or rendered is None or not self.attempts:
+            raise ValueError("a narrative item carries its words and how they were reached")
+        if localized.tenant_id != self.tenant_id or localized.match_id != self.match_id:
+            raise ValueError("the words belong to another partner or match")
+        if localized.item_id != self.overlay.item_id:
+            raise ValueError("the graphic shows another item")
+        if len(rendered.claims) != len(localized.claims):
+            raise ValueError("every claim is rendered, and only those")
+        if self.attempts[-1].outcome != "passed":
+            raise ValueError("the last attempt is the one that passed")
+        if not isinstance(content, LowerThird) or (content.headline, content.line) != (
+            rendered.headline,
+            rendered.claims[0],
+        ):
+            raise ValueError("the graphic shows exactly the words rendered for the item")
+        disclosure = self.overlay.disclosure
+        if disclosure is None or disclosure.reason == "data":
+            raise ValueError("words written by agents are always disclosed as such")
+
+    def _check_data(self) -> None:
+        if self.localized is not None or self.rendered is not None or self.attempts:
+            raise ValueError("a data item carries no words written by an agent")
+        disclosure = self.overlay.disclosure
+        if disclosure is not None and disclosure.reason != "data":
+            raise ValueError("a data item is not disclosed as written by agents")
+
+    def _check_approval(self) -> None:
+        decision = None if self.approval is None else self.approval.decision
+        if self.state == "pending_approval" and (not self.approval_required or decision):
+            raise ValueError("only an item awaiting a required decision is pending")
+        if self.state == "rejected" and decision != "rejected":
+            raise ValueError("a rejected item records the editor's rejection")
+        if self.state == "on_air" and (
+            decision == "rejected" or (self.approval_required and decision != "approved")
+        ):
+            raise ValueError("an item that needs approval airs only once approved")
+        disclosure = self.overlay.disclosure
+        reviewed = disclosure is not None and disclosure.reason == "ai_assisted_reviewed"
+        if reviewed and decision != "approved":
+            raise ValueError("a reviewed label needs the approval behind it")
+
+
 FeedEntry = Annotated[
-    ClockEntry | MomentEntry | InsightEntry | CorrectionEntry, Field(discriminator="kind")
+    ClockEntry | MomentEntry | InsightEntry | CorrectionEntry | TenantItemEntry,
+    Field(discriminator="kind"),
 ]
 FEED_ENTRY_ADAPTER: TypeAdapter[FeedEntry] = TypeAdapter(FeedEntry)
 

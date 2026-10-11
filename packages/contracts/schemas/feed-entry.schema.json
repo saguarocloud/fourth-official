@@ -74,6 +74,37 @@
       "title": "Amendment",
       "type": "object"
     },
+    "Approval": {
+      "additionalProperties": false,
+      "description": "A named editor's decision on an item before it goes on air.",
+      "properties": {
+        "decidedAt": {
+          "format": "date-time",
+          "title": "Decidedat",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "approved",
+            "rejected"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "editor": {
+          "pattern": "^[A-Z][A-Za-z.' -]{1,59}$",
+          "title": "Editor",
+          "type": "string"
+        }
+      },
+      "required": [
+        "editor",
+        "decidedAt",
+        "decision"
+      ],
+      "title": "Approval",
+      "type": "object"
+    },
     "AttemptRecord": {
       "additionalProperties": false,
       "description": "One try at explaining a moment: who drafted, and how it ended.",
@@ -301,6 +332,72 @@
         "inText"
       ],
       "title": "CorrectionEntry",
+      "type": "object"
+    },
+    "CorrectionStrap": {
+      "additionalProperties": false,
+      "properties": {
+        "template": {
+          "const": "correction_strap",
+          "title": "Template",
+          "type": "string"
+        },
+        "text": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template",
+        "text"
+      ],
+      "title": "CorrectionStrap",
+      "type": "object"
+    },
+    "Disclosure": {
+      "additionalProperties": false,
+      "description": "How AI involvement is shown on an item: the label (rendered by code, never by a model).",
+      "properties": {
+        "label": {
+          "anyOf": [
+            {
+              "maxLength": 60,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Label"
+        },
+        "mode": {
+          "enum": [
+            "label-all",
+            "label-unless-approved",
+            "eu-strict"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "ai_generated",
+            "ai_assisted_reviewed",
+            "data"
+          ],
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "mode",
+        "reason"
+      ],
+      "title": "Disclosure",
       "type": "object"
     },
     "EventAmended": {
@@ -624,6 +721,133 @@
       "title": "InsightEntry",
       "type": "object"
     },
+    "LocalizedInsight": {
+      "additionalProperties": false,
+      "properties": {
+        "asOfSeq": {
+          "maximum": 10000000,
+          "minimum": 1,
+          "title": "Asofseq",
+          "type": "integer"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Claims",
+          "type": "array"
+        },
+        "headline": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Headline",
+          "type": "string"
+        },
+        "insightId": {
+          "maxLength": 72,
+          "pattern": "^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$",
+          "title": "Insightid",
+          "type": "string"
+        },
+        "itemId": {
+          "maxLength": 128,
+          "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+          "title": "Itemid",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "en-GB",
+            "es-MX",
+            "de-DE"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "momentId": {
+          "maxLength": 64,
+          "pattern": "^mo-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}$",
+          "title": "Momentid",
+          "type": "string"
+        },
+        "policyVersion": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Policyversion",
+          "type": "integer"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "itemId",
+        "tenantId",
+        "locale",
+        "insightId",
+        "matchId",
+        "momentId",
+        "asOfSeq",
+        "version",
+        "headline",
+        "claims",
+        "provenance",
+        "policyVersion"
+      ],
+      "title": "LocalizedInsight",
+      "type": "object"
+    },
+    "LowerThird": {
+      "additionalProperties": false,
+      "properties": {
+        "headline": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Headline",
+          "type": "string"
+        },
+        "line": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Line",
+          "type": "string"
+        },
+        "template": {
+          "const": "lower_third",
+          "title": "Template",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template",
+        "headline",
+        "line"
+      ],
+      "title": "LowerThird",
+      "type": "object"
+    },
     "MatchClock": {
       "additionalProperties": false,
       "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
@@ -825,6 +1049,130 @@
       "title": "MomentEntry",
       "type": "object"
     },
+    "OverlaySpec": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "discriminator": {
+            "mapping": {
+              "correction_strap": "#/$defs/CorrectionStrap",
+              "lower_third": "#/$defs/LowerThird",
+              "score_bug": "#/$defs/ScoreBug",
+              "stat_card": "#/$defs/StatCard"
+            },
+            "propertyName": "template"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/LowerThird"
+            },
+            {
+              "$ref": "#/$defs/StatCard"
+            },
+            {
+              "$ref": "#/$defs/CorrectionStrap"
+            },
+            {
+              "$ref": "#/$defs/ScoreBug"
+            }
+          ],
+          "title": "Content"
+        },
+        "disclosure": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Disclosure"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inAt": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "itemId": {
+          "maxLength": 128,
+          "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+          "title": "Itemid",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "en-GB",
+            "es-MX",
+            "de-DE"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "outAt": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "priority": {
+          "maximum": 9,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "provenanceUrl": {
+          "anyOf": [
+            {
+              "maxLength": 300,
+              "pattern": "^https://[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?(/[A-Za-z0-9._~/?#=&%+-]*)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Provenanceurl"
+        },
+        "supersedes": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Supersedes"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "itemId",
+        "tenantId",
+        "locale",
+        "inAt",
+        "outAt",
+        "priority",
+        "content",
+        "disclosure",
+        "provenanceUrl",
+        "version",
+        "supersedes"
+      ],
+      "title": "OverlaySpec",
+      "type": "object"
+    },
     "Provenance": {
       "additionalProperties": false,
       "description": "Who produced the insight and how: recorded for every published item.",
@@ -912,6 +1260,214 @@
       "title": "Score",
       "type": "object"
     },
+    "ScoreBug": {
+      "additionalProperties": false,
+      "properties": {
+        "away": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Away",
+          "type": "string"
+        },
+        "clock": {
+          "maxLength": 8,
+          "minLength": 1,
+          "title": "Clock",
+          "type": "string"
+        },
+        "home": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Home",
+          "type": "string"
+        },
+        "score": {
+          "maxLength": 7,
+          "minLength": 1,
+          "title": "Score",
+          "type": "string"
+        },
+        "template": {
+          "const": "score_bug",
+          "title": "Template",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template",
+        "home",
+        "away",
+        "score",
+        "clock"
+      ],
+      "title": "ScoreBug",
+      "type": "object"
+    },
+    "StatCard": {
+      "additionalProperties": false,
+      "properties": {
+        "rows": {
+          "items": {
+            "$ref": "#/$defs/StatRow"
+          },
+          "maxItems": 3,
+          "minItems": 1,
+          "title": "Rows",
+          "type": "array"
+        },
+        "template": {
+          "const": "stat_card",
+          "title": "Template",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 40,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        }
+      },
+      "required": [
+        "template",
+        "title",
+        "rows"
+      ],
+      "title": "StatCard",
+      "type": "object"
+    },
+    "StatRow": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "maxLength": 24,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        },
+        "value": {
+          "maxLength": 16,
+          "minLength": 1,
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "title": "StatRow",
+      "type": "object"
+    },
+    "TenantItemEntry": {
+      "additionalProperties": false,
+      "description": "One item for one partner: its graphic, and for narrative items the words in its voice.\n\nFeeds are filtered by partner at the API, so an entry carries exactly one partner's item.",
+      "properties": {
+        "approval": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Approval"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "approvalRequired": {
+          "title": "Approvalrequired",
+          "type": "boolean"
+        },
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/AttemptRecord"
+          },
+          "maxItems": 99,
+          "title": "Attempts",
+          "type": "array"
+        },
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "itemKind": {
+          "enum": [
+            "insight",
+            "recap",
+            "stat",
+            "correction",
+            "score"
+          ],
+          "title": "Itemkind",
+          "type": "string"
+        },
+        "kind": {
+          "const": "tenant_item",
+          "title": "Kind",
+          "type": "string"
+        },
+        "localized": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LocalizedInsight"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "overlay": {
+          "$ref": "#/$defs/OverlaySpec"
+        },
+        "rendered": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RenderedInsight"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "state": {
+          "enum": [
+            "on_air",
+            "pending_approval",
+            "rejected"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "kind",
+        "tenantId",
+        "itemKind",
+        "approvalRequired",
+        "state",
+        "localized",
+        "rendered",
+        "overlay",
+        "attempts",
+        "approval"
+      ],
+      "title": "TenantItemEntry",
+      "type": "object"
+    },
     "Verdict": {
       "additionalProperties": false,
       "properties": {
@@ -956,7 +1512,8 @@
       "clock": "#/$defs/ClockEntry",
       "correction": "#/$defs/CorrectionEntry",
       "insight": "#/$defs/InsightEntry",
-      "moment": "#/$defs/MomentEntry"
+      "moment": "#/$defs/MomentEntry",
+      "tenant_item": "#/$defs/TenantItemEntry"
     },
     "propertyName": "kind"
   },
@@ -972,6 +1529,9 @@
     },
     {
       "$ref": "#/$defs/CorrectionEntry"
+    },
+    {
+      "$ref": "#/$defs/TenantItemEntry"
     }
   ],
   "title": "FeedEntry"
