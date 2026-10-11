@@ -13,6 +13,9 @@ param location string
 @description('GitHub repository (owner/name) allowed to deploy from the GitHub environment of the same name. Empty skips the deploy identity, for example when a judge runs `azd up`.')
 param githubRepository string = ''
 
+@description('OIDC subject prefix GitHub reports for that repository; set by the preprovision hook.')
+param githubSubjectPrefix string = ''
+
 @description('Email for budget alerts. Empty skips the budget.')
 param budgetContactEmail string = ''
 
@@ -117,14 +120,14 @@ module web 'modules/container-app.bicep' = {
   }
 }
 
-module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubRepository)) {
+module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubRepository) && !empty(githubSubjectPrefix)) {
   name: 'deploy-identity'
   scope: resourceGroup
   params: {
     name: 'id-gha-${token}'
     location: location
     tags: tags
-    githubRepository: githubRepository
+    githubSubjectPrefix: githubSubjectPrefix
     githubEnvironment: environmentName
     registryName: registry.outputs.name
     containerAppNames: [api.outputs.name, web.outputs.name]

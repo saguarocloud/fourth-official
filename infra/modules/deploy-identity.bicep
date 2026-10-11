@@ -5,8 +5,8 @@ param name string
 param location string
 param tags object
 
-@description('GitHub repository in owner/name form.')
-param githubRepository string
+@description('OIDC subject prefix GitHub reports for the repository (actions/oidc/customization/sub), e.g. repo:owner@123/name@456 when immutable subjects are enabled.')
+param githubSubjectPrefix string
 
 @description('GitHub environment whose jobs may use this identity.')
 param githubEnvironment string
@@ -30,7 +30,7 @@ resource credential 'Microsoft.ManagedIdentity/userAssignedIdentities/federatedI
   name: 'github-${githubEnvironment}'
   properties: {
     issuer: 'https://token.actions.githubusercontent.com'
-    subject: 'repo:${githubRepository}:environment:${githubEnvironment}'
+    subject: '${githubSubjectPrefix}:environment:${githubEnvironment}'
     audiences: ['api://AzureADTokenExchange']
   }
 }

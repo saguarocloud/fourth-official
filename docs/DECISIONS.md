@@ -79,6 +79,7 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - Until the first `azd deploy`, apps run a public placeholder image. `fetch-container-image.bicep` keeps the deployed image when provisioning re-runs.
 - The deploy identity and budget are optional (`GITHUB_DEPLOY_REPOSITORY`, `BUDGET_CONTACT_EMAIL`), so anyone can run `azd up` in their own subscription without them.
 - Container logs reach Log Analytics through Azure Monitor diagnostic settings; the workspace has shared-key access disabled, so no workspace key appears anywhere.
+- The federated credential's subject comes from GitHub's own report of the repository's OIDC subject prefix (`actions/oidc/customization/sub`). This repository uses **immutable, ID-based subjects** (`repo:owner@<id>/name@<id>:environment:dev`), so a renamed or re-created repository with the same name can never obtain a token.
 - `infra/hooks/preprovision.sh` detects which apps already exist (by their `azd-service-name` tag), so re-provisioning keeps the deployed images; azd does not refresh that flag itself.
 - `infra/hooks/postprovision.sh` writes the GitHub environment's secrets (client, tenant and subscription IDs: identifiers, not credentials) and variables after provisioning, preserves any reviewers configured in GitHub, and leaves `main` as the only branch allowed to deploy.
 - Base images and the placeholder image are pinned by digest; Dependabot updates them. CI scans both images with Trivy and fails on fixable critical or high vulnerabilities.

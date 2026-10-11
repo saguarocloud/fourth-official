@@ -143,6 +143,9 @@ def test_github_federated_credential_is_scoped_to_one_environment(
     assert credential.properties["issuer"] == "https://token.actions.githubusercontent.com"
     assert credential.properties["audiences"] == ["api://AzureADTokenExchange"]
     subject = credential.properties["subject"]
+    # Built from the prefix GitHub reports for the repository (immutable, ID-based when enabled),
+    # never from a hand-written owner/name pattern.
+    assert "githubSubjectPrefix" in subject
     assert "environment:" in subject
     assert "ref:" not in subject
     assert "pull_request" not in subject
