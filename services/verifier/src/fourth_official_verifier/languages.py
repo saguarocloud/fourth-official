@@ -168,20 +168,22 @@ def _is_german_noun(word: str) -> bool:
     lower = word.lower()
     if lower in nouns:
         return True
-    # Split into stems of at least three letters, with a linking s or n allowed between them.
+    # Split into stems of at least three letters, with a linking s or n allowed between two stems:
+    # Spielstand, Torchance. A word ends at a stem, or at a stem plus its case or plural ending
+    # (des Gegners, die Torchancen), never at a linking letter ("Torn", "Torss").
     reachable = {0}
+    stem_ends: set[int] = set()
     for start in range(len(lower)):
         if start not in reachable:
             continue
         for end in range(start + 3, len(lower) + 1):
             if lower[start:end] in nouns:
                 reachable.add(end)
-                # A linking s or n joins two stems; it never ends the word ("Tors", "Torn").
+                stem_ends.add(end)
                 if lower[end : end + 1] in {"s", "n"} and end + 1 < len(lower):
                     reachable.add(end + 1)
-    # A noun may end in its case or plural ending: des Gegners, des Tors, die Torchancen.
     ends = {len(lower) - len(ending) for ending in _GERMAN_ENDINGS if lower.endswith(ending)}
-    whole = len(lower) in reachable or bool(ends & reachable)
+    whole = len(lower) in stem_ends or bool(ends & stem_ends)
     return whole and not GERMAN.states_number(lower)
 
 

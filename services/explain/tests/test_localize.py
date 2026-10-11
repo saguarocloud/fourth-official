@@ -4,6 +4,7 @@ the Verifier decides, and the partner's template stands in when nothing else pas
 from dataclasses import dataclass, field
 
 import anyio
+import pytest
 
 from fourth_official_contracts import (
     Insight,
@@ -180,7 +181,6 @@ def test_an_english_partner_airs_the_canonical_words_without_a_model() -> None:
     assert aired(result).headline == CANONICAL.headline
     assert [c.text for c in aired(result).claims] == [c.text for c in CANONICAL.claims]
     assert aired(result).provenance == CANONICAL.provenance
-    assert result.attempts == ()
 
 
 def test_an_english_partner_gets_its_template_when_the_canonical_breaks_its_policy() -> None:
@@ -194,3 +194,72 @@ def test_a_blocked_topic_in_a_draft_costs_a_retry() -> None:
 
     assert result.attempts[0].findings == ("BLOCKED_TOPIC",)
     assert aired(result).provenance.produced_by == "template"
+
+
+# --- Review round -----------------------------------------------------------------------------
+
+
+def test_an_english_partner_s_check_is_recorded() -> None:
+    result = run(NORTHLIGHT, Scripted([]))
+
+    assert [(a.agent, a.model, a.outcome) for a in result.attempts] == [
+        ("localizer", "none", "passed")
+    ]
+
+
+def test_an_english_partner_s_failed_check_is_recorded_before_the_template() -> None:
+    result = run(NORTHLIGHT, Scripted([]), blocked=("ball",))
+
+    assert [(a.number, a.model, a.outcome) for a in result.attempts] == [
+        (1, "none", "failed"),
+        (2, "none", "passed"),
+    ]
+    assert result.attempts[0].findings == ("BLOCKED_TOPIC",)
+
+
+def test_a_timeout_is_retried_once() -> None:
+    result = run(TRIBUNA, Scripted([TimeoutError("slow"), GOOD]))
+
+    assert [(a.outcome, a.error) for a in result.attempts] == [
+        ("error", "TimeoutError"),
+        ("passed", None),
+    ]
+
+
+def test_a_bug_in_our_code_is_never_hidden_behind_a_template() -> None:
+    with pytest.raises(TypeError):
+        run(TRIBUNA, Scripted([TypeError("bug")]))
+
+
+def test_attempts_are_numbered_through_errors_to_the_template() -> None:
+    result = run(TRIBUNA, Scripted([ADDS_A_FACT, RuntimeError("down")]))
+
+    assert [(a.number, a.outcome) for a in result.attempts] == [
+        (1, "failed"),
+        (2, "error"),
+        (3, "passed"),
+    ]
+
+
+def test_a_draft_that_breaks_the_contract_is_malformed() -> None:
+    empty = GOOD.model_copy(
+        update={"claims": [LocalizedClaimDraft(claim_id="cl-1", text=""), GOOD.claims[1]]}
+    )
+
+    result = run(TRIBUNA, Scripted([empty, GOOD]))
+
+    assert result.attempts[0].findings == ("MALFORMED_INSIGHT",)
+
+
+def test_nothing_airs_when_even_the_template_breaks_the_partner_s_policy() -> None:
+    result = run(TRIBUNA, None, blocked=("Gol",))
+
+    assert result.localized is None
+    assert result.attempts[-1].outcome == "failed"
+
+
+def test_a_first_version_is_numbered_one() -> None:
+    localized = aired(run(TRIBUNA, Scripted([GOOD])))
+
+    assert localized.version == 1
+    assert localized.item_id.endswith("-v1")

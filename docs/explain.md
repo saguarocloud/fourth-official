@@ -82,8 +82,9 @@ The Localizer rewrites a verified canonical insight for one partner, in the part
   - the words pass the language's rules;
   - the partner's blocked topics are avoided;
   - the text fits the lower third.
-- **One retry, then the template.** A refused draft is retried once with itself and the findings, then the partner's template stands in. A model error goes straight to the template.
-- **English partners need no model.** Northlight Sport airs the canonical words, checked against its own policy; its template stands in if they break it.
+- **One retry, then the template.** A refused draft is retried once with itself and the findings, then the partner's template stands in. A timeout is retried too. Any other model error goes straight to the template, and a bug in our own code always surfaces.
+- **English partners need no model.** Northlight Sport airs the canonical words, checked against its own policy. They keep the canonical provenance, because they are the Analyst's words. The check is recorded as an attempt by the localizer with no model. If the words break the partner's policy, that failed check is recorded and the template stands in.
+- **If even the template breaks the partner's policy, nothing airs for that moment.** The failed attempts record why.
 
 `scripts/measure-localizer.py` localises every demo moment for each non-English partner with the real model. Measured on 2026-10-11, from the English templates as canonical insights:
 

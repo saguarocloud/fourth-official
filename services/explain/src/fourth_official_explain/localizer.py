@@ -44,7 +44,8 @@ def localization_message(request: LocalizationRequest) -> str:
         lines += ["Your previous draft (JSON):", request.previous.model_dump_json()]
     if request.feedback:
         lines.append("The Verifier refused your previous draft. Fix exactly these findings:")
-        lines += [f"- {f.code}: {f.detail}" for f in request.feedback]
+        # One line each: a finding may quote the draft, and a draft is model output.
+        lines += [f"- {f.code}: {' '.join(f.detail.split())}" for f in request.feedback]
     return "\n".join(lines)
 
 

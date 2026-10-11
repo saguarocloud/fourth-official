@@ -4,7 +4,9 @@ The Localizer's structured output is text only: a headline and each claim's text
 Code copies each claim's type and evidence from the canonical insight, so a draft cannot cite
 anything new, and `verify_localized` checks that every fact survived in its role. A refused
 draft gets one retry with itself and the findings; then the partner's template stands in.
-An English partner airs the canonical words as they are, with no model call.
+An English partner airs the canonical words as they are, with no model call: they keep the
+canonical provenance (the words are the Analyst's), and the check is recorded as an attempt by
+the localizer with no model.
 """
 
 import asyncio
@@ -26,7 +28,7 @@ from fourth_official_contracts import (
     Verdict,
     item_id_for,
 )
-from fourth_official_explain.pipeline import PROGRAMMING_ERRORS, Attempt
+from fourth_official_explain.pipeline import PROGRAMMING_ERRORS, Attempt, Outcome
 from fourth_official_verifier import (
     BlockedTopics,
     MatchFacts,
@@ -169,9 +171,12 @@ def _english(job: _Job) -> Localization:
         draft, canonical, policy=job.policy, provenance=canonical.provenance, version=1
     )
     verdict = verify_localized(localized, canonical, job.moment, job.facts, blocked=job.blocked)
+    # No model writes these words: the check of the canonical text is the one attempt.
+    outcome: Outcome = "passed" if verdict.passed else "failed"
+    check = Attempt(1, "localizer", "none", outcome, tuple(f.code for f in verdict.findings))
     if verdict.passed:
-        return Localization(localized, verdict, ())
-    return _template(job, [])
+        return Localization(localized, verdict, (check,))
+    return _template(job, [check])
 
 
 def _check(

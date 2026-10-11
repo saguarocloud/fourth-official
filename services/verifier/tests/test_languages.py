@@ -258,3 +258,13 @@ def test_words_the_localizer_reached_for_pass(text: str, language: object) -> No
 
 def test_an_inflected_noun_never_hides_a_number() -> None:
     assert "numbers" in problems("die zweiten Pässe", GERMAN)
+
+
+@pytest.mark.parametrize("word", ["Zehnen", "Hunderte", "Tausenden", "Zweiten"])
+def test_a_case_ending_never_turns_a_number_into_a_noun(word: str) -> None:
+    assert not GERMAN.capitalised(word)
+
+
+@pytest.mark.parametrize("word", ["Torss", "Tornen"])
+def test_an_ending_follows_the_last_noun_not_a_linking_letter(word: str) -> None:
+    assert not GERMAN.capitalised(word)
