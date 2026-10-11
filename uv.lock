@@ -538,6 +538,7 @@ dependencies = [
     { name = "fourth-official-contracts" },
     { name = "fourth-official-explain" },
     { name = "fourth-official-match-data" },
+    { name = "fourth-official-policy" },
     { name = "fourth-official-replay" },
     { name = "fourth-official-verifier" },
     { name = "uvicorn", extra = ["standard"] },
@@ -551,6 +552,7 @@ requires-dist = [
     { name = "fourth-official-contracts", editable = "packages/contracts" },
     { name = "fourth-official-explain", editable = "services/explain" },
     { name = "fourth-official-match-data", editable = "services/match-data" },
+    { name = "fourth-official-policy", editable = "services/policy" },
     { name = "fourth-official-replay", editable = "services/replay" },
     { name = "fourth-official-verifier", editable = "services/verifier" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
@@ -663,20 +665,24 @@ name = "fourth-official-replay"
 version = "0.1.0"
 source = { editable = "services/replay" }
 dependencies = [
+    { name = "fourth-official-broadcast" },
     { name = "fourth-official-contracts" },
     { name = "fourth-official-explain" },
     { name = "fourth-official-match-data" },
     { name = "fourth-official-moments" },
+    { name = "fourth-official-policy" },
     { name = "fourth-official-stats" },
     { name = "fourth-official-verifier" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "fourth-official-broadcast", editable = "services/broadcast" },
     { name = "fourth-official-contracts", editable = "packages/contracts" },
     { name = "fourth-official-explain", editable = "services/explain" },
     { name = "fourth-official-match-data", editable = "services/match-data" },
     { name = "fourth-official-moments", editable = "services/moments" },
+    { name = "fourth-official-policy", editable = "services/policy" },
     { name = "fourth-official-stats", editable = "services/stats-engine" },
     { name = "fourth-official-verifier", editable = "services/verifier" },
 ]

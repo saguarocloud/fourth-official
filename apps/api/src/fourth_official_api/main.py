@@ -7,12 +7,18 @@ from typing import Literal
 from fastapi import FastAPI, Response
 from pydantic import BaseModel, ConfigDict
 
-from fourth_official_api.explainers import foundry_explainer, template_explainer
+from fourth_official_api.explainers import (
+    foundry_explainer,
+    foundry_localizer_for,
+    partners_for,
+    template_explainer,
+)
 from fourth_official_api.matchday_routes import matchday_router
 from fourth_official_api.security import SecurityHeaders
 from fourth_official_api.settings import Settings
 from fourth_official_api.start_ledger import blob_start_ledger
 from fourth_official_match_data import MatchStore, demo_store
+from fourth_official_policy import bundled_store
 from fourth_official_replay import Matchday, ReplayConfig, StartLedger
 
 SERVICE_NAME = "fourth-official-api"
@@ -53,6 +59,8 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
+            policies = [loaded.policy for loaded in bundled_store().all()]
+            app.state.tenants = {policy.tenant_id: policy for policy in policies}
             day = matchday
             starts = ledger
             if starts is None and settings.start_ledger is not None:
@@ -70,12 +78,18 @@ def create_app(
                     if settings.foundry
                     else template_explainer
                 )
+                localizer = (
+                    await stack.enter_async_context(foundry_localizer_for(settings.foundry))
+                    if settings.foundry
+                    else None
+                )
                 day = Matchday(
                     store,
                     explainer,
                     config=ReplayConfig(speed=settings.replay_speed),
                     ledger=starts,
                     runs_per_day=settings.runs_per_day,
+                    partners=partners_for(policies, localizer),
                 )
             app.state.matchday = day
             try:

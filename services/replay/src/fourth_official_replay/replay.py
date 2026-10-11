@@ -20,6 +20,7 @@ from fourth_official_contracts import (
     EventVoided,
     GoalEvent,
     InsightEntry,
+    MatchClock,
     MatchEvent,
     Moment,
     MomentEntry,
@@ -31,6 +32,7 @@ from fourth_official_explain.snapshots import ComputedSnapshots
 from fourth_official_match_data import MatchRecord
 from fourth_official_moments import DetectorState, detect
 from fourth_official_replay.log import FeedLog
+from fourth_official_replay.partners import EntryBuilder, Partners
 from fourth_official_stats.prepare import prepare
 from fourth_official_verifier import MatchFacts, render_insight
 
@@ -136,9 +138,19 @@ def _correction_entry(
 
 class _Replay:
     def __init__(
-        self, record: MatchRecord, log: FeedLog, explainer: Explainer, config: ReplayConfig
+        self,
+        record: MatchRecord,
+        log: FeedLog,
+        explainer: Explainer,
+        *,
+        config: ReplayConfig,
+        partners: Partners | None,
     ) -> None:
         self.record, self.log, self.explainer, self.config = record, log, explainer, config
+        self.partners = partners
+        # Where the match is as last published, and the score the partners last showed.
+        self.now: MatchClock = record.match.events[0].clock
+        self.shown: tuple[int, int] | None = None
         self.facts = facts_for(record)
         self.slots = asyncio.Semaphore(config.concurrency)
         self.tasks: set[asyncio.Task[None]] = set()
@@ -148,6 +160,7 @@ class _Replay:
     async def clock(self, event: MatchEvent) -> None:
         home, away = self.facts.score_at(event.seq)
         self.last_clock = self.record.match.seconds(event)
+        self.now = event.clock
         await self.log.publish(
             lambda n: ClockEntry(
                 kind="clock",
@@ -158,6 +171,23 @@ class _Replay:
                 score=Score(home=home, away=away),
             )
         )
+        if self.partners is not None and self.shown != (home, away):
+            self.shown = (home, away)
+            context = self.record.match.context
+            await self._publish_all(
+                await self.partners.score(
+                    match_id=self.log.match_id,
+                    as_of_seq=event.seq,
+                    home=context.home,
+                    away=context.away,
+                    score=(home, away),
+                    at=event.clock,
+                )
+            )
+
+    async def _publish_all(self, builders: list[EntryBuilder]) -> None:
+        for build in builders:
+            await self.log.publish(build)
 
     async def corrections_due(self, event: MatchEvent | None) -> bool:
         """Publish corrections issued by the time of `event` (all of them, if None)."""
@@ -169,6 +199,10 @@ class _Replay:
             await self.log.publish(
                 partial(_correction_entry, self.record, self.log.match_id, correction)
             )
+            if self.partners is not None:
+                await self._publish_all(
+                    await self.partners.correction(correction, self.facts, self.now)
+                )
             published = True
         return published
 
@@ -182,6 +216,11 @@ class _Replay:
                 logger.warning("no verified insight for %s", moment.moment_id)
                 return
             await self._publish_insight(explanation)
+            if self.partners is not None:
+                builders = await self.partners.insight(
+                    explanation.insight, moment, self.facts, self.now
+                )
+                await self._publish_all(builders)
         except Exception:
             logger.exception("explaining %s failed", moment.moment_id)
 
@@ -230,10 +269,12 @@ async def replay(
     *,
     config: ReplayConfig | None = None,
     sleep: Sleep = asyncio.sleep,
+    partners: Partners | None = None,
 ) -> None:
-    """Play the match into `log`, then wait for every explanation and finish the log."""
+    """Play the match into `log`, then wait for every explanation and finish the log. With
+    `partners`, each partner's items are published too."""
     config = config or ReplayConfig()
-    run = _Replay(record, log, explainer, config)
+    run = _Replay(record, log, explainer, config=config, partners=partners)
     events = record.match.events
     state: DetectorState | None = None
     previous: MatchEvent | None = None
@@ -247,6 +288,8 @@ async def replay(
             found: tuple[Moment, ...] = ()
             if last or (index + 1) % config.detect_every == 0 or isinstance(event, GoalEvent):
                 state, found = detect(prepare(record.match.context, events[: index + 1]), state)
+            # Corrections issued by now are timed at this event, not the last published clock.
+            run.now = event.clock
             corrected = await run.corrections_due(event)
             due = record.match.seconds(event) - run.last_clock >= config.clock_every
             if (

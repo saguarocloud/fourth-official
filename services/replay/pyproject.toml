@@ -4,16 +4,20 @@ version = "0.1.0"
 description = "Match replay for Fourth Official: publishes events, moments, verified insights and corrections as a live feed"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+  "fourth-official-broadcast",
   "fourth-official-contracts",
   "fourth-official-explain",
   "fourth-official-match-data",
   "fourth-official-moments",
+  "fourth-official-policy",
   "fourth-official-stats",
   "fourth-official-verifier",
 ]
 
 [tool.uv.sources]
+fourth-official-broadcast = { workspace = true }
 fourth-official-contracts = { workspace = true }
+fourth-official-policy = { workspace = true }
 fourth-official-explain = { workspace = true }
 fourth-official-match-data = { workspace = true }
 fourth-official-moments = { workspace = true }

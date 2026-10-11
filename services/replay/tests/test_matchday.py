@@ -11,6 +11,7 @@ from fourth_official_match_data import demo_store
 from fourth_official_replay import Availability, InMemoryLedger, Matchday, ReplayConfig
 from fourth_official_replay.matchday import MatchdayBusyError
 from fourth_official_verifier import MatchFacts
+from test_partners import partners
 
 
 async def no_wait(seconds: float) -> None:
@@ -249,3 +250,29 @@ def test_a_start_is_claimed_against_the_starts_the_ledger_holds_at_that_moment()
     with pytest.raises(MatchdayBusyError, match="again in"):
         anyio.run(run)
     assert [m.state for m in day.status()] == ["idle"] * 3
+
+
+def test_with_partners_each_run_publishes_partner_items_with_fresh_schedules() -> None:
+    made: list[object] = []
+
+    def factory() -> object:
+        made.append(partners())
+        return made[-1]
+
+    day = Matchday(
+        demo_store(),
+        template_only,
+        sleep=no_wait,
+        cooldown=0.0,
+        partners=factory,  # type: ignore[arg-type]
+    )
+
+    async def run() -> None:
+        await day.start(now=0.0)
+        await day.wait()
+
+    anyio.run(run)
+
+    kinds = {getattr(e, "tenant_id", None) for e in day.feed("m42").entries}
+    assert {"northlight-sport", "tribuna-austral", "rheinblick-sport"} <= kinds
+    assert len(made) == 3  # one per match
