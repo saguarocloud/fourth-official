@@ -1,0 +1,147 @@
+{
+  "$defs": {
+    "MatchClock": {
+      "additionalProperties": false,
+      "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
+      "properties": {
+        "minute": {
+          "maximum": 104,
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Period",
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Second",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "period",
+        "minute",
+        "second"
+      ],
+      "title": "MatchClock",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/metric-snapshot.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "asOf": {
+      "$ref": "#/$defs/MatchClock"
+    },
+    "asOfSeq": {
+      "maximum": 10000000,
+      "minimum": 1,
+      "title": "Asofseq",
+      "type": "integer"
+    },
+    "inputs": {
+      "items": {
+        "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+        "type": "string"
+      },
+      "maxItems": 5000,
+      "title": "Inputs",
+      "type": "array"
+    },
+    "matchId": {
+      "pattern": "^m[0-9]{1,12}$",
+      "title": "Matchid",
+      "type": "string"
+    },
+    "metric": {
+      "enum": [
+        "possession",
+        "field_tilt",
+        "passes",
+        "pass_completion",
+        "shots",
+        "shots_on_target",
+        "xg",
+        "ppda",
+        "pressing_intensity",
+        "momentum",
+        "control_chaos"
+      ],
+      "title": "Metric",
+      "type": "string"
+    },
+    "scope": {
+      "pattern": "^([A-Z]{3}|match)$",
+      "title": "Scope",
+      "type": "string"
+    },
+    "snapshotId": {
+      "maxLength": 96,
+      "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+      "title": "Snapshotid",
+      "type": "string"
+    },
+    "supersedes": {
+      "anyOf": [
+        {
+          "maxLength": 96,
+          "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Supersedes"
+    },
+    "value": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Value"
+    },
+    "version": {
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    },
+    "window": {
+      "enum": [
+        "5m",
+        "15m",
+        "match"
+      ],
+      "title": "Window",
+      "type": "string"
+    }
+  },
+  "required": [
+    "snapshotId",
+    "matchId",
+    "metric",
+    "scope",
+    "window",
+    "asOf",
+    "asOfSeq",
+    "value",
+    "inputs",
+    "version",
+    "supersedes"
+  ],
+  "title": "MetricSnapshot",
+  "type": "object"
+}

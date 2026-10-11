@@ -8,6 +8,7 @@ members = [
     "fourth-official-api",
     "fourth-official-contracts",
     "fourth-official-simulator",
+    "fourth-official-stats",
 ]
 
 [[package]]
@@ -205,6 +206,17 @@ requires-dist = [{ name = "pydantic", specifier = ">=2.14" }]
 name = "fourth-official-simulator"
 version = "0.1.0"
 source = { editable = "services/simulator" }
+dependencies = [
+    { name = "fourth-official-contracts" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "fourth-official-contracts", editable = "packages/contracts" }]
+
+[[package]]
+name = "fourth-official-stats"
+version = "0.1.0"
+source = { editable = "services/stats-engine" }
 dependencies = [
     { name = "fourth-official-contracts" },
 ]

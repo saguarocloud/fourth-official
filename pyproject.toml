@@ -8,7 +8,7 @@ requires-python = ">=3.12,<3.13"
 package = false
 
 [tool.uv.workspace]
-members = ["apps/api", "packages/contracts", "services/simulator"]
+members = ["apps/api", "packages/contracts", "services/simulator", "services/stats-engine"]
 
 [dependency-groups]
 dev = [
@@ -50,7 +50,7 @@ select = [
 ignore = ["PLR2004"]  # magic values: tests compare against literal fixtures by design
 
 [tool.ruff.lint.per-file-ignores]
-"**/tests/**" = ["S101"]  # assert is how pytest works
+"**/tests/**" = ["S101", "PLR0913"]  # assert is how pytest works; builders take options
 # The simulator is a seeded, deterministic simulation: `random` is the right tool here. Never use it
 # for tokens or identifiers; those must come from `secrets`.
 "services/simulator/src/**" = ["S311"]
@@ -76,6 +76,8 @@ mypy_path = [
   "packages/contracts/src",
   "packages/contracts/tests",
   "services/simulator/src",
+  "services/stats-engine/src",
+  "services/stats-engine/tests",
   "infra/tests",
 ]
 files = [
@@ -85,6 +87,8 @@ files = [
   "packages/contracts/tests",
   "services/simulator/src",
   "services/simulator/tests",
+  "services/stats-engine/src",
+  "services/stats-engine/tests",
   "infra/tests",
 ]
 plugins = ["pydantic.mypy"]
@@ -92,16 +96,16 @@ plugins = ["pydantic.mypy"]
 # --- Tests and coverage ------------------------------------------------------
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
-testpaths = ["apps/api/tests", "packages/contracts/tests", "services/simulator/tests"]
+testpaths = ["apps/api/tests", "packages/contracts/tests", "services/simulator/tests", "services/stats-engine/tests"]
 # Infrastructure tests need the Azure CLI with Bicep; run them with `make check-infra`.
-pythonpath = ["infra/tests", "packages/contracts/tests", "services/simulator/tests"]
+pythonpath = ["infra/tests", "packages/contracts/tests", "services/simulator/tests", "services/stats-engine/tests"]
 markers = ["integration: needs emulators or Azure; excluded from the default run"]
 xfail_strict = true
 filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
-source = ["fourth_official_api", "fourth_official_contracts", "fourth_official_simulator"]
+source = ["fourth_official_api", "fourth_official_contracts", "fourth_official_simulator", "fourth_official_stats"]
 
 [tool.coverage.report]
 fail_under = 80

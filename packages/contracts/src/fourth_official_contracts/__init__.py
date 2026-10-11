@@ -42,6 +42,14 @@ from fourth_official_contracts.events import (
     parse_match_event,
     parse_match_event_json,
 )
+from fourth_official_contracts.metrics import (
+    METRIC_SNAPSHOT_ADAPTER,
+    MetricName,
+    MetricSnapshot,
+    MetricWindow,
+    parse_metric_snapshot,
+    snapshot_id_for,
+)
 from fourth_official_contracts.primitives import (
     FIRST_HALF_MINUTES,
     MAX_BALL_SPEED_KMH,
@@ -67,6 +75,7 @@ __all__ = [
     "MATCH_EVENT_ADAPTER",
     "MATCH_EVENT_TYPES",
     "MAX_BALL_SPEED_KMH",
+    "METRIC_SNAPSHOT_ADAPTER",
     "PITCH_LENGTH_M",
     "PITCH_WIDTH_M",
     "SECOND_HALF_MINUTES",
@@ -91,6 +100,9 @@ __all__ = [
     "MatchClock",
     "MatchEvent",
     "MatchId",
+    "MetricName",
+    "MetricSnapshot",
+    "MetricWindow",
     "OffsideEvent",
     "PassEvent",
     "PeriodEndEvent",
@@ -116,4 +128,6 @@ __all__ = [
     "parse_correction_json",
     "parse_match_event",
     "parse_match_event_json",
+    "parse_metric_snapshot",
+    "snapshot_id_for",
 ]
