@@ -19,6 +19,9 @@ param containerAppNames string[]
 @description('Runtime identity attached to those apps; updating an app re-asserts its identity assignment.')
 param appIdentityName string
 
+@description('Container Apps environment hosting those apps; updating an app re-asserts that it joins it.')
+param managedEnvironmentName string
+
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: name
   location: location
@@ -75,6 +78,25 @@ resource containerAppsContributor 'Microsoft.Authorization/roleAssignments@2022-
     }
   }
 ]
+
+resource managedEnvironment 'Microsoft.App/managedEnvironments@2025-07-01' existing = {
+  name: managedEnvironmentName
+}
+
+resource environmentJoin 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(managedEnvironment.id, identity.id, '358470bc-b998-42bd-ab17-a7e34c199c0f')
+  scope: managedEnvironment
+  properties: {
+    // Container Apps Contributor on the environment grants only read and
+    // managedEnvironments/join/action there, which ARM checks on every revision update.
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '358470bc-b998-42bd-ab17-a7e34c199c0f'
+    )
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
 
 resource appIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
   name: appIdentityName

@@ -168,15 +168,23 @@ def test_deploy_identity_can_only_modify_the_container_apps_themselves(
 
     assert contributor_assignments
     for assignment in contributor_assignments:
-        # Scoped to each app, not the resource group: the environment itself stays out of reach.
-        assert "Microsoft.App/containerApps" in assignment.body.get("scope", ""), assignment.body
+        # Scoped to each app, plus the environment (where the role grants only read and join, which
+        # ARM checks on every revision update); never the resource group.
+        scope = assignment.body.get("scope", "")
+        assert "Microsoft.App/containerApps" in scope or "Microsoft.App/managedEnvironments" in scope
+    environment_scoped = [
+        a
+        for a in contributor_assignments
+        if "Microsoft.App/managedEnvironments" in a.body.get("scope", "")
+    ]
+    assert len(environment_scoped) == 1
 
 
 # Expected scope of each role, by resource type in the assignment's `scope` (None: resource group).
 EXPECTED_ROLE_SCOPES = {
     ACR_PULL: "Microsoft.ContainerRegistry/registries",
     ACR_PUSH: "Microsoft.ContainerRegistry/registries",
-    CONTAINER_APPS_CONTRIBUTOR: "Microsoft.App/containerApps",
+    CONTAINER_APPS_CONTRIBUTOR: "Microsoft.App/",
     MANAGED_IDENTITY_OPERATOR: "Microsoft.ManagedIdentity/userAssignedIdentities",
     READER: None,
 }
