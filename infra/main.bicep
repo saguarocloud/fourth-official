@@ -132,6 +132,7 @@ module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubReposit
     registryName: registry.outputs.name
     containerAppNames: [api.outputs.name, web.outputs.name]
     appIdentityName: appIdentity.outputs.name
+    managedEnvironmentName: containerAppsEnvironment.outputs.name
   }
 }
 

@@ -19,6 +19,9 @@ param containerAppNames string[]
 @description('Runtime identity attached to those apps; updating an app re-asserts its identity assignment.')
 param appIdentityName string
 
+@description('Container Apps environment hosting those apps; updating an app re-asserts that it joins it.')
+param managedEnvironmentName string
+
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: name
   location: location
@@ -59,7 +62,8 @@ resource containerApps 'Microsoft.App/containerApps@2025-07-01' existing = [
   }
 ]
 
-// Scoped to each app rather than the resource group, so the environment itself stays out of reach.
+// Scoped to each app, not the resource group. The environment gets the same role below, which there
+// amounts to read and join (its write actions have nothing to act on at that scope).
 resource containerAppsContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
   for (appName, i) in containerAppNames: {
     name: guid(containerApps[i].id, identity.id, '358470bc-b998-42bd-ab17-a7e34c199c0f')
@@ -75,6 +79,26 @@ resource containerAppsContributor 'Microsoft.Authorization/roleAssignments@2022-
     }
   }
 ]
+
+resource managedEnvironment 'Microsoft.App/managedEnvironments@2025-07-01' existing = {
+  name: managedEnvironmentName
+}
+
+resource environmentJoin 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(managedEnvironment.id, identity.id, '358470bc-b998-42bd-ab17-a7e34c199c0f')
+  scope: managedEnvironment
+  properties: {
+    // Container Apps Contributor on the environment amounts to read and
+    // managedEnvironments/join/action there (its write actions do not apply at that scope);
+    // ARM checks join on every revision update.
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '358470bc-b998-42bd-ab17-a7e34c199c0f'
+    )
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
 
 resource appIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
   name: appIdentityName

@@ -157,7 +157,7 @@ def test_outputs_never_expose_secrets(compiled: CompiledTemplate) -> None:
         assert not re.search(r"key|secret|password|connectionstring", name, re.IGNORECASE), name
 
 
-def test_deploy_identity_can_only_modify_the_container_apps_themselves(
+def test_deploy_identity_container_apps_role_is_on_the_apps_and_environment_only(
     compiled: CompiledTemplate,
 ) -> None:
     contributor_assignments = [
@@ -166,18 +166,33 @@ def test_deploy_identity_can_only_modify_the_container_apps_themselves(
         if "deploy-identity" in a.module and CONTAINER_APPS_CONTRIBUTOR in str(a.body)
     ]
 
-    assert contributor_assignments
-    for assignment in contributor_assignments:
-        # Scoped to each app, not the resource group: the environment itself stays out of reach.
-        assert "Microsoft.App/containerApps" in assignment.body.get("scope", ""), assignment.body
+    # One assignment per app (a copy loop over the app names) and one on the environment, where the
+    # role amounts to read and join, which ARM checks on every revision update. Never the group.
+    app_scoped = [
+        a
+        for a in contributor_assignments
+        if "Microsoft.App/containerApps'" in str(a.body.get("scope"))
+    ]
+    environment_scoped = [
+        a
+        for a in contributor_assignments
+        if "Microsoft.App/managedEnvironments'" in str(a.body.get("scope"))
+    ]
+    assert len(contributor_assignments) == len(app_scoped) + len(environment_scoped)
+    assert len(environment_scoped) == 1
+    (app_loop,) = app_scoped
+    assert "containerAppNames" in str(app_loop.body.get("copy"))
 
 
-# Expected scope of each role, by resource type in the assignment's `scope` (None: resource group).
-EXPECTED_ROLE_SCOPES = {
-    ACR_PULL: "Microsoft.ContainerRegistry/registries",
-    ACR_PUSH: "Microsoft.ContainerRegistry/registries",
-    CONTAINER_APPS_CONTRIBUTOR: "Microsoft.App/containerApps",
-    MANAGED_IDENTITY_OPERATOR: "Microsoft.ManagedIdentity/userAssignedIdentities",
+# Allowed scopes of each role, by resource type in the assignment's `scope` (None: resource group).
+EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
+    ACR_PULL: ("Microsoft.ContainerRegistry/registries'",),
+    ACR_PUSH: ("Microsoft.ContainerRegistry/registries'",),
+    CONTAINER_APPS_CONTRIBUTOR: (
+        "Microsoft.App/containerApps'",
+        "Microsoft.App/managedEnvironments'",
+    ),
+    MANAGED_IDENTITY_OPERATOR: ("Microsoft.ManagedIdentity/userAssignedIdentities'",),
     READER: None,
 }
 
@@ -193,7 +208,7 @@ def test_every_role_assignment_has_its_narrowest_scope(compiled: CompiledTemplat
         if expected is None:
             assert scope is None, (role, scope)
         else:
-            assert expected in str(scope), (role, scope)
+            assert any(allowed in str(scope) for allowed in expected), (role, scope)
 
 
 def test_container_logs_flow_without_shared_keys(compiled: CompiledTemplate) -> None:
