@@ -326,7 +326,7 @@ Breakpoints:
 - **Below 768:** the match wall goes to one column; stats go two across.
 - **Broadcast Preview only:** 1800 and up puts the rundown beside the monitor; 720 and below is the phone layout above.
 - **Approvals only:** 1280 and up puts the call sheet beside the desk and the stage beside the reading; 720 and below turns the decisions log into cards.
-- **Corrections only:** 1280 and up puts the incident's facts beside its board and lays item boards out at `minmax(28rem, 1fr)`; 720 and below stacks each board's panels and the facts, and the fan scrolls sideways.
+- **Corrections only:** 1280 and up puts the incident's facts beside its board and lays item boards out at `minmax(28rem, 1fr)`; 720 and below stacks each board's panels and the facts, and the fan switches to its stacked layout.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
