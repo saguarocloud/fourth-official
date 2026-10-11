@@ -11,7 +11,15 @@ union with a new `kind`.
 
 from typing import Annotated, Any, Literal
 
-from pydantic import ConfigDict, Field, StringConstraints, TypeAdapter, model_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    TypeAdapter,
+    model_serializer,
+    model_validator,
+)
 
 from fourth_official_contracts.primitives import (
     EventId,
@@ -93,9 +101,14 @@ class Amendment(WireModel):
             raise ValueError("one amendment cannot change both goal credit and a card")
         return self
 
-    def to_wire(self) -> dict[str, Any]:
-        # Absent means "unchanged", so only the fields that were set are written.
-        return self.model_dump(mode="json", exclude_unset=True)
+    @model_serializer(mode="wrap")
+    def _only_changed_fields(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        # Absent means "unchanged" and `assistId: null` means "remove the assist", so every dump
+        # path (to_wire, model_dump, model_dump_json) writes only the fields that were set.
+        dumped: dict[str, Any] = handler(self)
+        fields = type(self).model_fields
+        keep = {key for name in self.model_fields_set for key in (name, fields[name].alias)}
+        return {key: value for key, value in dumped.items() if key in keep}
 
 
 class EventAmended(EventTargeting):
@@ -103,12 +116,6 @@ class EventAmended(EventTargeting):
 
     kind: Literal["EVENT_AMENDED"]
     changes: Amendment
-
-    def to_wire(self) -> dict[str, Any]:
-        return {
-            **self.model_dump(mode="json", exclude={"changes"}),
-            "changes": self.changes.to_wire(),
-        }
 
 
 Correction = Annotated[EventVoided | EventAmended, Field(discriminator="kind")]
@@ -120,7 +127,11 @@ CORRECTION_ADAPTER: TypeAdapter[Correction] = TypeAdapter(
 
 
 def parse_correction(raw: object) -> Correction:
-    """Validate decoded wire data (a dict from JSON, camelCase keys) into its correction model."""
+    """Validate decoded wire data (a dict from JSON, camelCase keys) into its correction model.
+
+    The `parse_*` functions are the boundary entry points: they accept camelCase keys only.
+    Constructing models by field name is for trusted Python code.
+    """
     return CORRECTION_ADAPTER.validate_python(raw, by_alias=True, by_name=False)
 
 

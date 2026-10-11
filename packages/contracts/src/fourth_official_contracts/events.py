@@ -313,7 +313,11 @@ MATCH_EVENT_ADAPTER: TypeAdapter[MatchEvent] = TypeAdapter(
 
 
 def parse_match_event(raw: object) -> MatchEvent:
-    """Validate decoded wire data (a dict from JSON, camelCase keys) into its event model."""
+    """Validate decoded wire data (a dict from JSON, camelCase keys) into its event model.
+
+    The `parse_*` functions are the boundary entry points: they accept camelCase keys only.
+    Constructing models by field name is for trusted Python code.
+    """
     return MATCH_EVENT_ADAPTER.validate_python(raw, by_alias=True, by_name=False)
 
 

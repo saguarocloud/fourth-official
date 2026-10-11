@@ -190,3 +190,10 @@ def test_parses_correction_json_text_directly() -> None:
     raw = CORRECTION | {"changes": {"scorerId": "HCY-11"}}
 
     assert parse_correction_json(json.dumps(raw)).to_wire() == raw
+
+
+def test_every_dump_path_omits_unchanged_amendment_fields() -> None:
+    correction = parse_correction(CORRECTION | {"changes": {"scorerId": "HCY-11"}})
+
+    assert json.loads(correction.model_dump_json())["changes"] == {"scorerId": "HCY-11"}
+    assert correction.model_dump()["changes"] == {"scorerId": "HCY-11"}
