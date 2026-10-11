@@ -21,6 +21,9 @@ from fourth_official_contracts.tenants import TENANT_LOCALES
 from fourth_official_verifier import MatchFacts, render
 from fourth_official_verifier.render import SCORE_SEPARATOR
 
+# Lower is more urgent: a correction preempts an insight, which preempts the score.
+PRIORITY: dict[str, int] = {"correction_strap": 0, "lower_third": 2, "score_bug": 5}
+
 # Correction straps in each language: written with references and rendered by code.
 STRAPS: dict[Locale, dict[str, str]] = {
     "en-GB": {
@@ -45,7 +48,8 @@ STRAPS: dict[Locale, dict[str, str]] = {
 
 
 def correction_strap_text(correction: Correction, facts: MatchFacts, locale: Locale) -> str:
-    """What a correction changed, in the partner's language, rendered from the match."""
+    """What a correction changed, in the partner's language, rendered from the match. Raises
+    `RenderError` only if the match facts cannot render the target goal's club or minute."""
     say = STRAPS[locale]
     target = next((e for e in facts.match.events if e.event_id == correction.target_event_id), None)
     if not isinstance(target, GoalEvent):
@@ -75,13 +79,15 @@ def lower_third(
 ) -> OverlaySpec:
     """A partner's insight on air: its headline, and its first claim under it."""
     headline, claims = rendered
+    if not claims:
+        raise ValueError("a lower third shows the insight's first claim; there is none")
     return OverlaySpec(
         item_id=localized.item_id,
         tenant_id=localized.tenant_id,
         locale=localized.locale,
         in_at=timing[0],
         out_at=timing[1],
-        priority=2,
+        priority=PRIORITY["lower_third"],
         content=LowerThird(template="lower_third", headline=headline, line=claims[0]),
         disclosure=disclosure,
         provenance_url=None,
@@ -93,14 +99,15 @@ def lower_third(
 def correction_strap(
     *, tenant_id: TenantId, item_id: str, text: str, timing: Timing
 ) -> OverlaySpec:
-    """A correction on air: the most urgent graphic a partner shows."""
+    """A correction on air: the most urgent graphic a partner shows. `text` comes from
+    `correction_strap_text` in the partner's own locale (`TENANT_LOCALES[tenant_id]`)."""
     return OverlaySpec(
         item_id=item_id,
         tenant_id=tenant_id,
-        locale=TENANT_LOCALES[tenant_id],  # type: ignore[arg-type]
+        locale=TENANT_LOCALES[tenant_id],
         in_at=timing[0],
         out_at=timing[1],
-        priority=0,
+        priority=PRIORITY["correction_strap"],
         content=CorrectionStrap(template="correction_strap", text=text),
         disclosure=None,
         provenance_url=None,
@@ -124,15 +131,15 @@ def score_bug(
     return OverlaySpec(
         item_id=item_id,
         tenant_id=tenant_id,
-        locale=locale,  # type: ignore[arg-type]
+        locale=locale,
         in_at=timing[0],
         out_at=timing[1],
-        priority=5,
+        priority=PRIORITY["score_bug"],
         content=ScoreBug(
             template="score_bug",
             home=home,
             away=away,
-            score=f"{score[0]}{SCORE_SEPARATOR[locale]}{score[1]}",  # type: ignore[index]
+            score=f"{score[0]}{SCORE_SEPARATOR[locale]}{score[1]}",
             clock=f"{clock.minute:02d}:{clock.second:02d}",
         ),
         disclosure=None,

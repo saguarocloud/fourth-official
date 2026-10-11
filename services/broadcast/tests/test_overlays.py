@@ -2,7 +2,13 @@
 
 import pytest
 
-from fourth_official_broadcast import correction_strap_text, lower_third, score_bug
+from fourth_official_broadcast import (
+    PRIORITY,
+    correction_strap,
+    correction_strap_text,
+    lower_third,
+    score_bug,
+)
 from fourth_official_contracts import (
     Disclosure,
     EventAmended,
@@ -113,3 +119,20 @@ def test_a_correction_to_an_unknown_event_still_has_a_strap() -> None:
     facts = facts_for(demo_store().record("m42"))
 
     assert correction_strap_text(stray, facts, "de-DE").startswith("KORREKTUR:")
+
+
+def test_a_lower_third_needs_a_claim_to_show() -> None:
+    with pytest.raises(ValueError, match="claim"):
+        lower_third(LOCALIZED, ("Gol", ()), GENERATED, AT)
+
+
+def test_a_strap_airs_in_its_partner_s_language() -> None:
+    overlay = correction_strap(
+        tenant_id="rheinblick-sport",
+        item_id="it-rheinblick-sport-c-m42-01",
+        text="KORREKTUR: x",
+        timing=AT,
+    )
+
+    assert overlay.locale == "de-DE"
+    assert overlay.priority == PRIORITY["correction_strap"]

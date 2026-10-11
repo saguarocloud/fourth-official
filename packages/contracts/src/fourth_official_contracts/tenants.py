@@ -24,7 +24,7 @@ TopicId = Literal[
 DisclosureMode = Literal["label-all", "label-unless-approved", "eu-strict"]
 Template = Literal["lower_third", "stat_card", "correction_strap", "score_bug"]
 # Each partner broadcasts in one locale.
-TENANT_LOCALES: dict[str, str] = {
+TENANT_LOCALES: dict[TenantId, Locale] = {
     "northlight-sport": "en-GB",
     "tribuna-austral": "es-MX",
     "rheinblick-sport": "de-DE",

@@ -74,3 +74,25 @@ def test_every_template_has_an_on_screen_time_within_the_contract(template: str)
     assert timing is not None
     start, end = timing
     assert 0 < (end.minute * 60 + end.second) - (start.minute * 60 + start.second) <= 60
+
+
+def test_a_graphic_with_only_a_sliver_of_the_half_left_is_dropped() -> None:
+    _, sliver = place(Schedule(max_per_minute=6), "lower_third", clock(59, 58, period=1))
+    _, strap = place(Schedule(max_per_minute=6), "correction_strap", clock(59, 58, period=1))
+
+    assert sliver is None
+    # A correction is worth airing however briefly.
+    assert strap == (clock(59, 58, period=1), clock(59, 59, period=1))
+
+
+def test_a_schedule_needs_a_pace_of_at_least_one() -> None:
+    with pytest.raises(ValueError, match="at least one"):
+        Schedule(max_per_minute=0)
+
+
+def test_old_starts_are_forgotten() -> None:
+    schedule = Schedule(max_per_minute=6)
+    for minute in range(46, 60):
+        schedule, _ = place(schedule, "lower_third", clock(minute))
+
+    assert len(schedule.narrative) <= 6

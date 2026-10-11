@@ -2,6 +2,7 @@
 
 from fourth_official_broadcast.director import ON_SCREEN_SECONDS, Schedule, Timing, place
 from fourth_official_broadcast.overlays import (
+    PRIORITY,
     STRAPS,
     correction_strap,
     correction_strap_text,
@@ -11,6 +12,7 @@ from fourth_official_broadcast.overlays import (
 
 __all__ = [
     "ON_SCREEN_SECONDS",
+    "PRIORITY",
     "STRAPS",
     "Schedule",
     "Timing",

@@ -22,6 +22,8 @@ ON_SCREEN_SECONDS: dict[Template, int] = {
     "score_bug": 30,
 }
 MAX_DELAY_SECONDS = 90
+# A graphic with less time than this left in the half is not worth airing; a correction is.
+MIN_ON_SCREEN_SECONDS = 3
 PACE_WINDOW_SECONDS = 60
 _LAST_SECOND = {1: FIRST_HALF_MINUTES[1] * 60 + 59, 2: SECOND_HALF_MINUTES[1] * 60 + 59}
 
@@ -34,8 +36,12 @@ class Schedule:
     period: int = 1
     # When each template's slot is free again, in seconds of the current period.
     free_at: tuple[tuple[Template, int], ...] = ()
-    # When narrative graphics started, in seconds of the current period.
+    # When recent narrative graphics started, in seconds of the current period, in order.
     narrative: tuple[int, ...] = field(default=())
+
+    def __post_init__(self) -> None:
+        if self.max_per_minute < 1:
+            raise ValueError("a partner's pace must allow at least one graphic a minute")
 
 
 def _seconds(clock: MatchClock) -> int:
@@ -49,7 +55,7 @@ def _clock(period: int, seconds: int) -> MatchClock:
 def _paced(start: int, starts: tuple[int, ...], limit: int) -> int:
     """The first second at or after `start` with room for another narrative graphic."""
     while True:
-        recent = sorted(s for s in starts if start - PACE_WINDOW_SECONDS < s <= start)
+        recent = [s for s in starts if start - PACE_WINDOW_SECONDS < s <= start]
         if len(recent) < limit:
             return start
         start = recent[-limit] + PACE_WINDOW_SECONDS
@@ -69,10 +75,14 @@ def place(schedule: Schedule, template: Template, at: MatchClock) -> tuple[Sched
     if start - _seconds(at) > MAX_DELAY_SECONDS or start >= last:
         return schedule, None
     end = min(start + ON_SCREEN_SECONDS[template], last)
+    if end - start < MIN_ON_SCREEN_SECONDS and template != "correction_strap":
+        return schedule, None
     free[template] = end
+    # Only starts within the pace window matter for the next graphic.
+    kept = tuple(s for s in schedule.narrative if s > start - PACE_WINDOW_SECONDS)
     placed = replace(
         schedule,
         free_at=tuple(sorted(free.items())),
-        narrative=(*schedule.narrative, start) if narrative else schedule.narrative,
+        narrative=(*kept, start) if narrative else schedule.narrative,
     )
     return placed, (_clock(at.period, start), _clock(at.period, end))
