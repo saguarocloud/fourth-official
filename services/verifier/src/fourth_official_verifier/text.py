@@ -23,8 +23,9 @@ _WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
 _SENTENCE_END = re.compile(r"[.!?;:]\s+|[.!?;:]$|\s-\s")
 # Wording that reaches past the moment an insight is about.
 _FUTURE = re.compile(
-    r"\b(will|eventually|later on|go on to|goes on to|went on to|full[- ]time|final whistle|"
-    r"final score|in the end)\b",
+    r"\b(will|would|shall|soon|later|afterwards?|shortly|finally|eventually|next|going to|"
+    r"about to|go on to|goes on to|went on to|full[- ]time|final whistle|final score|"
+    r"in the end)\b",
     re.IGNORECASE,
 )
 # Stands in for a reference: not a word, not a number, and never the start of a sentence.

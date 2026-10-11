@@ -61,6 +61,13 @@ GOAL = ("m42-e0003", "m42-e0004")
         ("{{club:HCY}} hold on until the {{minute:20}}.", "FUTURE_MINUTE"),
         ("{{club:HCY}} will go on to win this.", "FUTURE_WORDING"),
         ("{{club:HCY}} lead, but not at the final whistle.", "FUTURE_WORDING"),
+        ("{{club:NGT}} equalise soon afterwards.", "FUTURE_WORDING"),
+        ("{{club:HCY}} concede later.", "FUTURE_WORDING"),
+        ("{{club:HCY}} would win.", "FUTURE_WORDING"),
+        ("{{club:HCY}} are about to score.", "FUTURE_WORDING"),
+        ("hunter scores for {{club:HCY}}.", "UNKNOWN_WORD"),
+        ("turner scores for {{club:HCY}}.", "UNKNOWN_WORD"),
+        ("holder scores for {{club:HCY}}.", "UNKNOWN_WORD"),
     ],
 )
 def test_adversarial_claims_are_blocked(text: str, expected: FindingCode) -> None:

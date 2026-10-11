@@ -44,7 +44,8 @@ Tests guarantee that no word in the vocabulary or the openers matches a part of 
 - **Corrections are timed.** `MatchFacts` records the seq from which each void or restatement counts. Nothing is known before it happened, so a later VAR decision never rewrites the score shown for an earlier moment. Retracting items that were true when published is the correction cascade's job, not the Verifier's.
 - **Feedback is sanitised.** A verdict passes only with no findings, and lists every finding (up to 64) with the claim it concerns. Finding details quote at most three short ASCII words from the claim, because they go back to the Analyst as feedback and into the evidence drawer, where the UI must render them as text.
 - **Rendering re-checks.** `render(text, facts, as_of_seq=…, cited=…)` renders only cited snapshots from before the moment, and raises `RenderError` for anything it cannot resolve. `render_insight(insight, facts)` renders a whole insight from its own evidence.
-- **Prose itself isn't verified.** Whether a sentence is *supported* by its evidence, with no extra assertions, is the LLM judge's job.
+- **Prose itself isn't fully verified.** The vocabulary keeps out names, numbers and the future tense, but ordinary verbs can still assert things the evidence doesn't show ("{{club:NGT}} reply" cited against a goal by the other side). Whether a sentence is *supported* by its evidence, with no extra assertions, is the LLM judge's job, and it runs on every insight that passes these checks.
+- **Only verb and plural forms are derived.** Comparatives, adverbs and agent nouns are listed explicitly, because deriving them freely produces surnames ("hunter", "turner", "holder").
 
 ## Template fallback
 

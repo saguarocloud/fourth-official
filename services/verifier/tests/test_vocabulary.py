@@ -50,6 +50,14 @@ def test_inflections_and_compounds_of_known_words_are_known(word: str) -> None:
     assert known(word)
 
 
-@pytest.mark.parametrize("word", ["haaland", "xi", "mbappe", "delgado", "brilliantly-xi", "'s"])
+@pytest.mark.parametrize(
+    "word",
+    ["haaland", "xi", "mbappe", "delgado", "brilliantly-xi", "'s", "hunter", "turner", "holder"],
+)
 def test_anything_else_is_unknown(word: str) -> None:
     assert not known(word)
+
+
+def test_no_temporal_or_modal_word_that_reaches_the_future_is_in_the_vocabulary() -> None:
+    for word in ("soon", "later", "afterwards", "shortly", "finally", "would", "will", "next"):
+        assert not known(word), word

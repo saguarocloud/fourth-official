@@ -4,7 +4,7 @@
 # the squad name pools. Extend freely with ordinary football English.
 
 # --- Function words ---------------------------------------------------------------------------
-a about above across after afterwards again against ahead all almost alone along already also
+a about above across after  again against ahead all almost alone along already also
 although always among amongst an and another any anyone anything anywhere apart around as at
 away back be because been before behind being below beneath beside besides between beyond both
 but by can could despite did do does doing done down during each either else elsewhere enough
@@ -13,10 +13,10 @@ here hers herself him himself his how however if in inside instead into is it it
 least less like little lot many may might more most much must near nearly neither never no nobody
 none nor not nothing now nowhere of off often on only onto or other others otherwise ought our
 ours out outside over own perhaps quite rather really same she should since so some somehow
-someone something sometimes somewhat soon still such than that the their theirs them themselves
+someone something sometimes somewhat  still such than that the their theirs them themselves
 then there these they this those though through throughout thus till to together too toward
 towards under underneath unless until up upon us very was we were what whatever when whenever
-where whereas wherever whether which while who whole whom whose why with within without would
+where whereas wherever whether which while who whole whom whose why with within without 
 yet you your
 don't didn't doesn't isn't wasn't weren't aren't can't couldn't won't wouldn't haven't hasn't
 hadn't shouldn't it's they're they've that's there's what's who's
@@ -79,6 +79,24 @@ afraid alive aware best better clear different due enough equal fair familiar fa
 glad happy likely main obvious only possible proper real right serious similar special strange
 sorry total typical unusual whole worth
 
+# --- Comparatives, superlatives and adverbs (listed: never derived) ---------------------------
+better best bigger biggest braver calmer cheaper cleaner clearer closer closest deeper deepest
+earlier easier faster fastest fewer fresher greater harder heavier higher highest keener larger
+lesser lighter longer looser lower lowest narrower nearer neater newer quicker quickest
+quieter rarer riskier rougher safer sharper sharpest shorter simpler slower smaller smarter
+softer steadier stiffer stronger strongest sweeter tighter tougher weaker wider
+widest worse worst
+attacker defender finisher keeper leader marker passer presser runner scorer striker winger
+winner
+boldly brightly briefly calmly carefully centrally clearly cleanly closely comfortably
+completely constantly crisply decisively deeply defensively deliberately directly easily
+effectively efficiently entirely exactly firmly fully generously hardly heavily highly honestly
+immediately instantly largely lately loosely luckily mainly merely mostly nearly neatly
+nervously newly only partly patiently perfectly physically poorly precisely properly quickly
+quietly rapidly rarely readily really recently relentlessly roughly safely sharply simply
+slightly slowly smartly smoothly softly solidly steadily strongly suddenly superbly surely
+swiftly tidily tightly truly unluckily urgently usually wildly widely
+
 # --- Irregular forms ---------------------------------------------------------------------------
 beaten bent began begun bore blew blown broke broken brought built caught chose chosen came drew
 drawn drove driven ate fell felt fought found flew forgot forgotten froze gave given got gotten
@@ -88,9 +106,9 @@ sought spent split spoke spread stood stole struck stuck swept swung taught thou
 told took taken tore torn understood woke won wore worn wove wrote written
 
 # --- Time and degree ----------------------------------------------------------------------------
-again ago already currently early earlier far finally first-time immediately instantly just
+again ago already currently early earlier far  first-time immediately instantly just
 largely lately late meanwhile mostly nearly now often previously quickly rarely
-recently roughly sharply shortly simply slightly suddenly today tonight usually
+recently roughly sharply  simply slightly suddenly today tonight usually
 
 # --- Analysis -----------------------------------------------------------------------------------
 account average balance better best change chaos comparison context control count deal decline

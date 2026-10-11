@@ -33,7 +33,9 @@ NUMBER_WORDS = frozenset(
     """.split()  # noqa: SIM905 - a word list reads best as text
 )
 
-_SUFFIXES = ("s", "es", "ed", "d", "ing", "er", "ers", "est", "ly")
+# Only verb and plural inflections are derived. Agent nouns, comparatives and adverbs (-er, -est,
+# -ly) are listed explicitly: derived freely they make surnames ("hunter", "turner", "holder").
+_SUFFIXES = ("s", "es", "ed", "d", "ing")
 
 
 # Sections whose words are used as written: function words and irregular forms do not inflect
@@ -75,7 +77,7 @@ def _bases(word: str) -> set[str]:
             if len(stem) > 2 and stem[-1] == stem[-2]:
                 candidates.add(stem[:-1])  # stopped -> stop
             if stem.endswith("i"):
-                candidates.add(stem[:-1] + "y")  # tried, tidily -> try, tidy
+                candidates.add(stem[:-1] + "y")  # tried -> try
     return candidates
 
 
