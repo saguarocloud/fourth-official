@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import type { FeedEntry } from "@/contracts/feed";
+import type { FeedEntry, TenantItemEntry } from "@/contracts/feed";
+import feedM42Partners from "@/fixtures/feed-m42-partners.json";
 import feedM42 from "@/fixtures/feed-m42.json";
 
 import { applyEntry, emptyLive, foldFeed, itemState, liveVerdict, parseEntry } from "./live";
 
 const FEED = feedM42 as unknown as FeedEntry[];
+const PARTNER_FEED = feedM42Partners as unknown as FeedEntry[];
 
 describe("foldFeed", () => {
   const live = foldFeed(FEED);
@@ -80,6 +82,27 @@ describe("parseEntry", () => {
     ["not an object", "[1, 2]"],
   ])("refuses %s", (_, raw) => {
     expect(parseEntry(raw, "m42")).toBeNull();
+  });
+});
+
+describe("parseEntry, for a partner's item", () => {
+  const item = PARTNER_FEED.find((e) => e.kind === "tenant_item")!;
+  const overlay = (item as TenantItemEntry).overlay;
+
+  it("accepts a well-formed one", () => {
+    expect(parseEntry(JSON.stringify(item), "m42")).toEqual(item);
+  });
+
+  it.each([
+    ["no partner", { ...item, tenantId: 7 }],
+    ["no overlay", { ...item, overlay: null }],
+    ["no item id", { ...item, overlay: { ...overlay, itemId: undefined } }],
+    ["no content", { ...item, overlay: { ...overlay, content: "x" } }],
+    ["no template", { ...item, overlay: { ...overlay, content: {} } }],
+    ["a broken in time", { ...item, overlay: { ...overlay, inAt: { minute: "1" } } }],
+    ["no out time", { ...item, overlay: { ...overlay, outAt: undefined } }],
+  ])("refuses one with %s", (_, entry) => {
+    expect(parseEntry(JSON.stringify(entry), "m42")).toBeNull();
   });
 });
 

@@ -1,0 +1,650 @@
+/* Broadcast Preview: the rundown drives one program monitor. Around the frame, the fourth
+ * official's board; inside it, each partner's own graphics. ---------------------------------- */
+
+.preview__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.preview__notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.preview__notice::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--led-amber);
+}
+
+.preview__desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+}
+
+.preview__monitor-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* Partner keys: a vision mixer's bus, numbered 1 to 3. -------------------------------------- */
+.partner-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.partner-key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 40px;
+  padding: 0 var(--space-3) 0 var(--space-2);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-2);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+
+.partner-key:hover {
+  background: var(--panel-3);
+  color: var(--ink-1);
+}
+
+.partner-key[aria-pressed="true"] {
+  background: var(--panel-3);
+  border-color: var(--ink-3);
+  color: var(--ink-1);
+  box-shadow: none;
+}
+
+.partner-key__cap {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.partner-key[aria-pressed="true"] .partner-key__cap {
+  background: var(--led-white);
+  border-color: var(--led-white);
+  color: var(--panel-0);
+}
+
+.partner-key__code {
+  display: none;
+}
+
+/* A visible cap on every key with a shortcut, beside its aria-keyshortcuts. */
+.key-cap {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+  font-family: var(--font-data);
+  font-size: 0.625rem;
+  color: var(--ink-3);
+}
+
+.partner-key__language {
+  font-size: var(--text-xs);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.partner-key__tally {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--led-off);
+  transition: background var(--duration-light) var(--ease-out);
+}
+
+.partner-key__tally[data-lit] {
+  background: var(--led-red);
+}
+
+/* Monitor: the panel around the frame. ------------------------------------------------------- */
+.monitor {
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+}
+
+.monitor__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.monitor__mode {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-1);
+}
+
+.monitor__tally {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--led-off);
+  transition: background var(--duration-light) var(--ease-out);
+}
+
+.monitor__tally[data-lit] {
+  background: radial-gradient(circle at 35% 35%, #ff8a80 0 18%, var(--led-red) 45%);
+}
+
+.monitor__partner {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-right: auto;
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+}
+
+.monitor__locale {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.monitor__frame {
+  padding: var(--space-3);
+  background: var(--panel-0);
+}
+
+/* The stage is authored at 1920 by 1080; --u is one authored pixel at the shown width. */
+.monitor__screen {
+  --u: calc(100cqw / 1920);
+  position: relative;
+  container-type: inline-size;
+}
+
+.monitor__stage {
+  --gfx-ink: #ffffff;
+  --gfx-panel: #10151a;
+  --gfx-accent: var(--led-white);
+  --gfx-face: var(--font-graphics), var(--font-ui);
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 40%, #1a4a2c 0%, #123620 55%, #0b2615 100%);
+  font-family: var(--gfx-face);
+}
+
+.monitor__pitch {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: rgb(255 255 255 / 0.18);
+  stroke-width: 3;
+}
+
+.monitor__held {
+  position: absolute;
+  top: calc(60 * var(--u));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: calc(8 * var(--u)) calc(20 * var(--u));
+  border: calc(2 * var(--u)) solid var(--led-amber);
+  background: rgb(7 9 11 / 0.85);
+  color: var(--led-amber);
+  font-family: var(--font-ui);
+  font-size: max(11px, calc(26 * var(--u)));
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Safe areas: 90% action, 80% title, as broadcast engineers draw them. */
+.monitor__guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.monitor__guide {
+  position: absolute;
+  border: 1px dashed rgb(255 255 255 / 0.45);
+}
+
+.monitor__guide[data-area="action"] {
+  inset: 5%;
+}
+
+/* The two areas differ by dash pattern, not hue: colour is reserved for state. */
+.monitor__guide[data-area="title"] {
+  inset: 10%;
+  border: 1px dotted rgb(255 255 255 / 0.35);
+}
+
+/* Graphics: positioned in authored pixels, inside the title-safe area. ---------------------- */
+.gfx {
+  position: absolute;
+  color: var(--gfx-ink);
+  animation: gfx-in 360ms var(--ease-out) both;
+}
+
+@keyframes gfx-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(24 * var(--u)));
+  }
+}
+
+.gfx-third {
+  left: calc(192 * var(--u));
+  right: calc(480 * var(--u));
+  bottom: calc(120 * var(--u));
+  display: grid;
+}
+
+.gfx-third__headline {
+  display: flex;
+  align-items: center;
+  gap: calc(20 * var(--u));
+  justify-self: start;
+  max-width: 100%;
+  padding: calc(14 * var(--u)) calc(28 * var(--u));
+  background: var(--gfx-accent);
+  color: var(--gfx-on-accent, #0b0f12);
+  font-size: calc(46 * var(--u));
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.gfx-third__line {
+  padding: calc(16 * var(--u)) calc(28 * var(--u));
+  background: var(--gfx-panel);
+  font-size: calc(36 * var(--u));
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.gfx-badge {
+  flex: none;
+  padding: calc(4 * var(--u)) calc(10 * var(--u));
+  border: calc(2 * var(--u)) solid currentColor;
+  font-family: var(--font-ui);
+  font-size: calc(20 * var(--u));
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+}
+
+.gfx-strap {
+  left: 0;
+  right: 0;
+  bottom: calc(108 * var(--u));
+  display: flex;
+  align-items: center;
+  gap: calc(24 * var(--u));
+  padding: calc(20 * var(--u)) calc(192 * var(--u));
+  background: var(--gfx-strap-bg, #ffb43a);
+  color: var(--gfx-strap-ink, #120c02);
+  font-size: calc(40 * var(--u));
+  font-weight: 600;
+  line-height: 1.15;
+}
+
+.gfx-strap__lead {
+  font-weight: 700;
+}
+
+.gfx-bug {
+  top: calc(108 * var(--u));
+  left: calc(192 * var(--u));
+  display: flex;
+  align-items: stretch;
+  background: var(--gfx-panel);
+  font-size: calc(34 * var(--u));
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gfx-bug > span {
+  display: flex;
+  align-items: center;
+  padding: calc(12 * var(--u)) calc(18 * var(--u));
+}
+
+.gfx-bug__score {
+  background: var(--gfx-accent);
+  color: var(--gfx-on-accent, #0b0f12);
+}
+
+.gfx-bug__clock {
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+/* Partners: three looks inside the frame only. ----------------------------------------------- */
+.monitor__stage[data-tenant="northlight-sport"] {
+  --gfx-panel: #0e1a2b;
+  --gfx-accent: #3ddc97;
+  --gfx-on-accent: #0e1a2b;
+  --gfx-strap-bg: #3ddc97;
+  --gfx-strap-ink: #0e1a2b;
+}
+
+.monitor__stage[data-tenant="tribuna-austral"] {
+  --gfx-panel: #1c120c;
+  --gfx-accent: #ff7a1a;
+  --gfx-on-accent: #1c120c;
+  --gfx-strap-bg: #ff7a1a;
+  --gfx-strap-ink: #1c120c;
+}
+
+.monitor__stage[data-tenant="tribuna-austral"] .gfx-third__headline,
+.monitor__stage[data-tenant="tribuna-austral"] .gfx-strap__lead,
+.monitor__stage[data-tenant="tribuna-austral"] .gfx-bug {
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+.monitor__stage[data-tenant="rheinblick-sport"] {
+  --gfx-ink: #13232c;
+  --gfx-panel: #f1ece3;
+  --gfx-accent: #13232c;
+  --gfx-on-accent: #f1ece3;
+  --gfx-strap-bg: #b5552a;
+  --gfx-strap-ink: #ffffff;
+}
+
+.monitor__stage[data-tenant="rheinblick-sport"] .gfx-third__headline {
+  border-left: calc(10 * var(--u)) solid #b5552a;
+  font-weight: 600;
+}
+
+.monitor__stage[data-tenant="rheinblick-sport"] .gfx-bug__score {
+  background: #b5552a;
+  color: #ffffff;
+}
+
+/* Rundown: rows ranked by time; the partner columns never move. ----------------------------- */
+.rundown {
+  min-width: 0;
+}
+
+.rundown__empty {
+  padding: var(--space-5);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-key);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.rundown__table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: var(--text-sm);
+}
+
+.rundown__table thead th {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline-strong);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.rundown__table thead th:nth-child(1) {
+  width: 4.5rem;
+}
+
+.rundown__table thead th:nth-child(2) {
+  width: 18%;
+}
+
+.rundown__table thead th[data-current] {
+  color: var(--ink-1);
+}
+
+.rundown__table tbody tr {
+  border-bottom: 1px solid var(--hairline);
+  transition: background var(--duration-ui) var(--ease-out);
+}
+
+.rundown__table tbody tr:hover {
+  background: var(--panel-1);
+}
+
+.rundown__table tbody tr[data-selected] {
+  background: var(--panel-2);
+  box-shadow: inset 2px 0 0 var(--led-white);
+}
+
+.rundown__table td,
+.rundown__table tbody th {
+  padding: var(--space-3);
+  vertical-align: top;
+  text-align: left;
+  font-weight: 400;
+}
+
+.rundown__table td[data-current] {
+  background: rgb(255 255 255 / 0.025);
+}
+
+.rundown__time {
+  font-weight: 500;
+  color: var(--ink-1);
+}
+
+.rundown__pick {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rundown__table td .rundown__pick {
+  padding: var(--space-1);
+  margin: calc(-1 * var(--space-1));
+  width: calc(100% + 2 * var(--space-1));
+  border-radius: var(--radius-key);
+}
+
+.rundown__table td .rundown__pick:hover {
+  background: rgb(255 255 255 / 0.04);
+}
+
+.rundown__pick:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.rundown__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.rundown__icon {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.rundown__title {
+  color: var(--ink-1);
+}
+
+.rundown__state {
+  display: flex;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-1);
+}
+
+.rundown__words {
+  display: block;
+  color: var(--ink-2);
+  overflow-wrap: break-word;
+}
+
+.rundown__none {
+  color: var(--ink-3);
+}
+
+/* Wide screens: the rundown sits beside the monitor. ---------------------------------------- */
+@media (min-width: 1800px) {
+  .preview__desk {
+    grid-template-columns: minmax(0, 1fr) minmax(44rem, 1fr);
+    align-items: start;
+  }
+
+  .preview__monitor {
+    position: sticky;
+    top: var(--space-4);
+  }
+}
+
+/* Phones: each row becomes a card; the partner columns read as labelled lines. ------------- */
+@media (max-width: 720px) {
+  .rundown__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .rundown__table,
+  .rundown__table tbody,
+  .rundown__table tr,
+  .rundown__table td,
+  .rundown__table tbody th {
+    display: block;
+    width: 100%;
+  }
+
+  .rundown__table tbody tr {
+    padding: var(--space-2) 0;
+  }
+
+  .rundown__table td,
+  .rundown__table tbody th {
+    padding: var(--space-1) var(--space-3);
+  }
+
+  .rundown__table td[data-partner]::before {
+    content: attr(data-partner);
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    color: var(--ink-3);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gfx {
+    animation: none;
+  }
+}
+
+/* Phones: the partner keys share one row; the language reads from the monitor bar. */
+@media (max-width: 720px) {
+  .partner-keys {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    width: 100%;
+  }
+
+  .partner-key {
+    position: relative;
+    min-width: 0;
+    gap: var(--space-2);
+    height: 44px;
+  }
+
+  .partner-key__name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .partner-key__code {
+    display: inline;
+    flex: 1;
+    font-weight: 600;
+    text-align: left;
+  }
+
+  .monitor__bar {
+    flex-wrap: nowrap;
+  }
+
+  .monitor__partner {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  .monitor__locale {
+    display: none;
+  }
+
+  .partner-key__language {
+    display: none;
+  }
+}

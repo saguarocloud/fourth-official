@@ -27,6 +27,7 @@ from fourth_official_match_data import demo_store
 from fourth_official_replay import FeedLog, ReplayConfig, replay
 from fourth_official_replay.replay import correction_board, correction_summary
 from fourth_official_verifier import MatchFacts
+from test_partners import partners
 
 replay_module = importlib.import_module("fourth_official_replay.replay")
 PAUSES: dict[str, list[float]] = {}
@@ -325,3 +326,16 @@ def test_the_web_app_fixture_is_this_replay() -> None:
     fixture = Path(__file__).parents[3] / "apps/web/src/fixtures/feed-m42.json"
 
     assert json.loads(fixture.read_text(encoding="utf-8")) == [e.to_wire() for e in featured()]
+
+
+def test_the_web_app_partners_fixture_is_this_replay_with_partners() -> None:
+    """apps/web tests the Broadcast Preview against m42 with every partner's items (templates)."""
+    fixture = Path(__file__).parents[3] / "apps/web/src/fixtures/feed-m42-partners.json"
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(
+            demo_store().record("m42"), log, template_only, sleep=no_wait, partners=partners()
+        )
+    )
+
+    assert json.loads(fixture.read_text(encoding="utf-8")) == [e.to_wire() for e in log.entries]

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-11T13:41:13+00:00",
+  "generatedAt": "2026-10-11T18:00:00+00:00",
   "title": "Design System: Fourth Official",
   "extensions": {
     "colorMeta": {
@@ -257,6 +257,10 @@
       "mono": {
         "displayName": "Key cap",
         "purpose": "Keyboard shortcut caps on keys only."
+      },
+      "graphics": {
+        "displayName": "Graphics",
+        "purpose": "Barlow Condensed 500 to 700 with italic (--font-graphics): lower thirds, straps and score bugs inside the Broadcast Preview monitor only; never in the chrome."
       }
     },
     "shadows": [
@@ -306,6 +310,11 @@
         "name": "disclosure-chevron",
         "value": "rotate(90deg), 220ms ease-out",
         "purpose": "Match Live: the provenance chevron opening; stopped under reduced motion."
+      },
+      {
+        "name": "gfx-in",
+        "value": "360ms ease-out, fade and 24u rise",
+        "purpose": "Broadcast Preview: a graphic animating in inside the monitor, as on air; none under reduced motion."
       }
     ],
     "breakpoints": [
@@ -324,6 +333,79 @@
       {
         "name": "stacked",
         "value": "768px"
+      },
+      {
+        "name": "preview-beside",
+        "value": "1800px"
+      },
+      {
+        "name": "preview-phone",
+        "value": "720px"
+      }
+    ],
+    "partnerThemes": [
+      {
+        "id": "northlight-sport",
+        "name": "Northlight Sport",
+        "code": "NLS",
+        "key": "1",
+        "language": "English",
+        "locale": "en-GB",
+        "panel": "#0E1A2B",
+        "accent": "#3DDC97",
+        "onAccent": "#0E1A2B",
+        "ink": "#FFFFFF",
+        "strap": {
+          "background": "#3DDC97",
+          "ink": "#0E1A2B"
+        },
+        "type": "Sentence case."
+      },
+      {
+        "id": "tribuna-austral",
+        "name": "Tribuna Austral",
+        "code": "TRA",
+        "key": "2",
+        "language": "Spanish",
+        "locale": "es-MX",
+        "panel": "#1C120C",
+        "accent": "#FF7A1A",
+        "onAccent": "#1C120C",
+        "ink": "#FFFFFF",
+        "strap": {
+          "background": "#FF7A1A",
+          "ink": "#1C120C"
+        },
+        "type": "Italic uppercase lower-third headline, strap lead and score bug."
+      },
+      {
+        "id": "rheinblick-sport",
+        "name": "Rheinblick Sport",
+        "code": "RHB",
+        "key": "3",
+        "language": "German",
+        "locale": "de-DE",
+        "panel": "#F1ECE3",
+        "accent": "#13232C",
+        "onAccent": "#F1ECE3",
+        "ink": "#13232C",
+        "rule": "#B5552A",
+        "strap": {
+          "background": "#B5552A",
+          "ink": "#FFFFFF"
+        },
+        "type": "Formal weight (headline 600); a copper rule on the headline and a copper score."
+      }
+    ],
+    "partnerThemesNote": "Partner colours are graphics, not signals: they appear inside the Broadcast Preview monitor's 16:9 stage only, never in the chrome.",
+    "screens": [
+      {
+        "name": "Broadcast Preview",
+        "path": "/preview",
+        "rail": "none; main takes the rail's column from 1024px (data-rail=\"none\")",
+        "firstViewport": "Title and verdict naming who holds items; match keys and partner keys; the program monitor at full width; the rundown beneath, beside it from 1800px (minmax(0,1fr) minmax(44rem,1fr)) with the monitor sticky.",
+        "keyboard": "1/2/3 partner on the monitor; G safe areas; Esc back to program. Ignored in fields and with Alt, Ctrl or Meta.",
+        "phone": "At 720px and below: partner keys become a three-up grid reading cap and code; the monitor bar hides the locale; rundown rows become cards labelled by partner code; the table keeps explicit roles."
       }
     ]
   },
@@ -364,7 +446,7 @@
       "name": "Status Lamp",
       "kind": "chip",
       "refersTo": null,
-      "description": "One colour, one icon, one label per item state.",
+      "description": "One colour, one icon, one label per item state (On air, Published, Pending approval, Retracted, Amended, Dropped, Queued).",
       "html": "<span class=\"ds-lamp\" data-tone=\"amber\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 22h14\"/><path d=\"M5 2h14\"/><path d=\"M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22\"/><path d=\"M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2\"/></svg>Pending approval</span>",
       "css": ".ds-lamp { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-lamp[data-tone=green] { color:#3ee07f; } .ds-lamp[data-tone=red] { color:#ff4a3d; } .ds-lamp[data-tone=amber] { color:#ffb43a; } .ds-lamp[data-tone=violet] { color:#bc9dff; } .ds-lamp[data-tone=muted] { color:#a1abb4; }"
     },
@@ -407,6 +489,38 @@
       "description": "Match Live: one verified moment. Minute and kind (icon + label) left; headline, correction strap, claims and meta (Published lamp only when published, AI tag only when model-written, provenance disclosure) right. Retracted is struck in red; amended keeps 'As published' claims struck in violet.",
       "html": "<article class=\"ds-wire\" data-state=\"amended\"><div class=\"ds-wire__when\"><span class=\"ds-wire__min\">61'</span><span class=\"ds-wire__kind\">Goal</span></div><div class=\"ds-wire__body\"><h3 class=\"ds-wire__head\">Okafor doubles the lead</h3><p class=\"ds-wire__strap\"><span class=\"ds-wire__strap-label\">Corrected</span>Scorer reassigned to Mensah.</p><p class=\"ds-wire__label\">As published</p><ul class=\"ds-wire__claims\"><li>Okafor's second of the season.</li></ul><p class=\"ds-wire__meta\"><span class=\"ds-wire__ai\">AI</span><span>Verified on attempt 1 · model narrator · prompt v3</span></p></div></article>",
       "css": ".ds-wire { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:grid; grid-template-columns:7.5rem minmax(0,1fr); gap:16px; padding:24px; background:#0d1013; color:#e9edf0; font-size:14px; } .ds-wire__when { display:grid; align-content:start; gap:8px; } .ds-wire__min { font-size:20px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; } .ds-wire__kind, .ds-wire__label, .ds-wire__strap-label { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-wire__body { display:grid; gap:12px; } .ds-wire__head { margin:0; font-size:16px; font-weight:600; letter-spacing:-0.01em; } .ds-wire__strap { display:flex; gap:12px; align-items:baseline; margin:0; padding:8px 12px; border:1px solid #2d363e; border-radius:2px; background:#07090b; font-size:13px; } .ds-wire[data-state=amended] .ds-wire__strap-label { color:#bc9dff; } .ds-wire[data-state=retracted] .ds-wire__strap-label { color:#ff4a3d; } .ds-wire__label, .ds-wire__meta { margin:0; } .ds-wire__claims { margin:0; padding-left:16px; } .ds-wire[data-state=amended] .ds-wire__claims { color:#a1abb4; text-decoration:line-through; text-decoration-color:#bc9dff; text-decoration-thickness:1px; } .ds-wire[data-state=retracted] .ds-wire__head, .ds-wire[data-state=retracted] .ds-wire__claims { color:#a1abb4; text-decoration:line-through; text-decoration-color:#ff4a3d; text-decoration-thickness:1px; } .ds-wire__meta { display:flex; gap:16px; align-items:center; color:#a1abb4; font-size:13px; } .ds-wire__ai { display:inline-flex; align-items:center; height:18px; padding:0 6px; border:1px solid color-mix(in oklab, #63b4ff 60%, transparent); border-radius:2px; color:#63b4ff; font-size:10px; font-weight:700; letter-spacing:0.08em; }"
+    },
+    {
+      "name": "Partner Key",
+      "kind": "button",
+      "refersTo": "partner-key",
+      "description": "Broadcast Preview: a vision mixer's bus, one 40px key per partner numbered 1 to 3: cap, name, language, and a tally lit red when that partner has a graphic on air. The pressed key lights its cap white.",
+      "html": "<div class=\"ds-pk\" role=\"group\" aria-label=\"Partner on the monitor\"><button class=\"ds-pk__key\" aria-pressed=\"true\" aria-keyshortcuts=\"1\"><span class=\"ds-pk__cap\" aria-hidden=\"true\">1</span>Northlight Sport<span class=\"ds-pk__lang\">English</span><span class=\"ds-pk__tally\" data-lit=\"true\"></span></button><button class=\"ds-pk__key\" aria-pressed=\"false\" aria-keyshortcuts=\"2\"><span class=\"ds-pk__cap\" aria-hidden=\"true\">2</span>Tribuna Austral<span class=\"ds-pk__lang\">Spanish</span><span class=\"ds-pk__tally\"></span></button></div>",
+      "css": ".ds-pk { display:flex; flex-wrap:wrap; gap:8px; } .ds-pk__key { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:12px; height:40px; padding:0 12px 0 8px; border:1px solid #2d363e; border-radius:2px; background:#151a1e; box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:#a1abb4; font-size:13px; font-weight:500; cursor:pointer; transition:background 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-pk__key:hover { background:#1c2227; color:#e9edf0; } .ds-pk__key[aria-pressed=true] { background:#1c2227; border-color:#7c8791; color:#e9edf0; box-shadow:none; } .ds-pk__key:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-pk__cap { display:grid; place-items:center; width:24px; height:24px; border:1px solid #2d363e; border-radius:2px; background:#07090b; font-family:'Geist Mono', ui-monospace, monospace; font-size:11px; color:#7c8791; } .ds-pk__key[aria-pressed=true] .ds-pk__cap { background:#f2f5f7; border-color:#f2f5f7; color:#07090b; } .ds-pk__lang { font-size:11px; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-pk__tally { width:8px; height:8px; border-radius:999px; background:rgb(255 255 255 / 0.07); } .ds-pk__tally[data-lit=true] { background:#ff4a3d; }"
+    },
+    {
+      "name": "Key Cap",
+      "kind": "custom",
+      "refersTo": "key-cap",
+      "description": "The visible shortcut on a small key: 18px, panel-0, Geist Mono 10px ink-3. Every shortcut has a visible cap and aria-keyshortcuts.",
+      "html": "<button class=\"ds-key-sm\" aria-pressed=\"false\" aria-keyshortcuts=\"G\"><span class=\"ds-cap\" aria-hidden=\"true\">G</span>Safe areas</button>",
+      "css": ".ds-key-sm { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:8px; height:28px; padding:0 12px; border:1px solid #2d363e; border-radius:2px; background:#151a1e; box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:#e9edf0; font-size:13px; font-weight:500; cursor:pointer; } .ds-key-sm:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-cap { display:inline-grid; place-items:center; min-width:18px; height:18px; padding:0 4px; border:1px solid #2d363e; border-radius:2px; background:#07090b; font-family:'Geist Mono', ui-monospace, monospace; font-size:10px; color:#7c8791; }"
+    },
+    {
+      "name": "Program Monitor",
+      "kind": "custom",
+      "refersTo": "program-monitor",
+      "description": "Broadcast Preview: a bar (Program/Preview tally, partner, LED clock) over a 16:9 stage authored at 1920x1080 (--u = 100cqw/1920) on a placeholder pitch, no video. Graphics in the partner's own look and Barlow Condensed: lower third with the policy's exact disclosure label, correction strap preempting it, score bug on the match clock in program. Safe areas: action 90% dashed, title 80% dotted; they differ by dash pattern, not hue.",
+      "html": "<section class=\"ds-mon\"><header class=\"ds-mon__bar\"><span class=\"ds-mon__mode\"><span class=\"ds-mon__tally\" data-lit=\"true\"></span>Program</span><span class=\"ds-mon__partner\">Northlight Sport <span>English · en-GB</span></span><span class=\"ds-mon__clock\">61:04</span></header><div class=\"ds-mon__frame\"><div class=\"ds-mon__stage\" data-tenant=\"northlight-sport\" role=\"img\" aria-label=\"Northlight Sport on air now\"><div class=\"ds-gfx-bug\"><span>ARD</span><span class=\"ds-gfx-bug__score\">2-1</span><span>KES</span><span>61:04</span></div><div class=\"ds-gfx-third\"><div class=\"ds-gfx-third__headline\">Okafor doubles the lead<span class=\"ds-gfx-badge\">AI-assisted</span></div><p class=\"ds-gfx-third__line\">A second in eight minutes as Ardmore press higher.</p></div><span class=\"ds-mon__guide\" data-area=\"action\"></span><span class=\"ds-mon__guide\" data-area=\"title\"></span></div></div></section>",
+      "css": ".ds-mon { width:640px; border:1px solid #20272d; border-radius:2px; background:#0d1013; font-family:var(--font-ui, Geist, system-ui, sans-serif); } .ds-mon__bar { display:flex; align-items:center; gap:16px; padding:8px 12px; border-bottom:1px solid #20272d; color:#e9edf0; font-size:13px; } .ds-mon__mode { display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-mon__tally { width:10px; height:10px; border-radius:999px; background:rgb(255 255 255 / 0.07); } .ds-mon__tally[data-lit=true] { background:radial-gradient(circle at 35% 35%, #ff8a80 0 18%, #ff4a3d 45%); } .ds-mon__partner { margin-right:auto; } .ds-mon__partner span { margin-left:12px; font-size:11px; color:#7c8791; } .ds-mon__clock { font-family:'Geist Mono', ui-monospace, monospace; color:#f2f5f7; font-variant-numeric:tabular-nums; } .ds-mon__frame { padding:12px; background:#07090b; } .ds-mon__stage { --u:calc(100cqw / 1920); --gfx-panel:#0e1a2b; --gfx-accent:#3ddc97; --gfx-on-accent:#0e1a2b; position:relative; container-type:inline-size; aspect-ratio:16 / 9; overflow:hidden; background:radial-gradient(ellipse at 50% 40%, #1a4a2c 0%, #123620 55%, #0b2615 100%); font-family:'Barlow Condensed', var(--font-ui, Geist), sans-serif; color:#ffffff; } .ds-gfx-bug { position:absolute; top:calc(108 * var(--u)); left:calc(192 * var(--u)); display:flex; background:var(--gfx-panel); font-size:calc(34 * var(--u)); font-weight:700; line-height:1; } .ds-gfx-bug > span { padding:calc(12 * var(--u)) calc(18 * var(--u)); } .ds-gfx-bug__score { background:var(--gfx-accent); color:var(--gfx-on-accent); } .ds-gfx-third { position:absolute; left:calc(192 * var(--u)); right:calc(480 * var(--u)); bottom:calc(120 * var(--u)); display:grid; animation:ds-gfx-in 360ms cubic-bezier(0.16,1,0.3,1) both; } .ds-gfx-third__headline { display:flex; align-items:center; gap:calc(20 * var(--u)); justify-self:start; padding:calc(14 * var(--u)) calc(28 * var(--u)); background:var(--gfx-accent); color:var(--gfx-on-accent); font-size:calc(46 * var(--u)); font-weight:700; line-height:1.1; } .ds-gfx-third__line { margin:0; padding:calc(16 * var(--u)) calc(28 * var(--u)); background:var(--gfx-panel); font-size:calc(36 * var(--u)); font-weight:500; } .ds-gfx-badge { padding:calc(4 * var(--u)) calc(10 * var(--u)); border:calc(2 * var(--u)) solid currentColor; font-family:var(--font-ui, Geist, system-ui, sans-serif); font-size:calc(20 * var(--u)); font-weight:600; } .ds-mon__guide { position:absolute; pointer-events:none; } .ds-mon__guide[data-area=action] { inset:5%; border:1px dashed rgb(255 255 255 / 0.45); } .ds-mon__guide[data-area=title] { inset:10%; border:1px dotted rgb(255 255 255 / 0.35); } @keyframes ds-gfx-in { from { opacity:0; transform:translateY(calc(24 * var(--u))); } } @media (prefers-reduced-motion: reduce) { .ds-gfx-third { animation:none; } }"
+    },
+    {
+      "name": "Rundown",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Broadcast Preview: the monitor's text equivalent. Rows newest first: time, moment (kind icon and label; corrections add their title), then one column per partner that never moves. Each partner cell is a button that previews that partner's version, with the shared lamp: Queued, On air, Published (aired), Pending approval, Dropped.",
+      "html": "<table class=\"ds-rd\"><thead><tr><th>Time</th><th>Moment</th><th data-current=\"true\">NLS</th><th>TRA</th></tr></thead><tbody><tr data-selected=\"true\"><td class=\"ds-rd__time\">61'</td><th scope=\"row\"><span class=\"ds-rd__label\">Goal</span></th><td data-current=\"true\"><button class=\"ds-rd__pick\"><span class=\"ds-rd__lamp\" data-tone=\"red\">On air</span><span class=\"ds-rd__words\">Okafor doubles the lead</span></button></td><td><button class=\"ds-rd__pick\"><span class=\"ds-rd__lamp\" data-tone=\"amber\">Pending approval</span><span class=\"ds-rd__words\" lang=\"es-MX\">Okafor amplía la ventaja</span></button></td></tr></tbody></table>",
+      "css": ".ds-rd { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:640px; border-collapse:collapse; table-layout:fixed; font-size:13px; color:#e9edf0; } .ds-rd thead th { padding:8px 12px; border-bottom:1px solid #2d363e; font-size:11px; font-weight:600; letter-spacing:0.08em; text-align:left; text-transform:uppercase; color:#7c8791; } .ds-rd thead th[data-current=true] { color:#e9edf0; } .ds-rd tbody tr { border-bottom:1px solid #20272d; } .ds-rd tbody tr[data-selected=true] { background:#151a1e; box-shadow:inset 2px 0 0 #f2f5f7; } .ds-rd td, .ds-rd tbody th { padding:12px; vertical-align:top; text-align:left; font-weight:400; } .ds-rd td[data-current=true] { background:rgb(255 255 255 / 0.025); } .ds-rd__time { font-weight:500; font-variant-numeric:tabular-nums; } .ds-rd__label { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-rd__pick { display:grid; gap:2px; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; } .ds-rd__pick:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-rd__lamp { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-rd__lamp[data-tone=red] { color:#ff4a3d; } .ds-rd__lamp[data-tone=amber] { color:#ffb43a; } .ds-rd__words { color:#a1abb4; }"
     }
   ],
   "narrative": {
@@ -417,7 +531,7 @@
       "5x7 dot-matrix LED readouts with faint unlit dots for scorelines and clocks.",
       "Colour only as signal light: one colour, one icon and one label per state.",
       "Square-cut 2px keys; perfectly round lamps.",
-      "Geist for UI text with tabular figures; Geist Mono only on key caps."
+      "Geist for UI text with tabular figures; Geist Mono only on key caps; Barlow Condensed only inside the Broadcast Preview monitor."
     ],
     "rules": [
       {
@@ -454,6 +568,11 @@
         "name": "The One Moment Rule",
         "body": "This is the single authored motion moment: the IN panel's lit dots light up 260ms after OUT, over 420ms ease-out, like the board being raised. No other element animates for effect.",
         "section": "components"
+      },
+      {
+        "name": "The Stage Rule",
+        "body": "Partner colours live inside the monitor's stage only, never in the chrome. Around the frame the board's palette and signal lights apply unchanged; inside it, no partner colour means state.",
+        "section": "colors"
       }
     ],
     "dos": [
@@ -468,7 +587,9 @@
       "**Do** honour `prefers-reduced-motion`: all animation and transition durations collapse to 0.01ms (Match Live also stops the verifying spinner and the provenance chevron's rotation outright).",
       "**Do** label replay mode, synthetic data and AI content.",
       "**Do** keep what went out visible: strike retracted text in red, and keep amended claims struck in violet under \"As published\".",
-      "**Do** let a key's label carry its state (Starting…, Matchday running, Ready in m:ss) rather than hiding why it is disabled."
+      "**Do** let a key's label carry its state (Starting…, Matchday running, Ready in m:ss) rather than hiding why it is disabled.",
+      "**Do** give every keyboard shortcut a visible key cap and `aria-keyshortcuts`.",
+      "**Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows."
     ],
     "donts": [
       "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
@@ -476,8 +597,8 @@
       "**Don't** use green, amber, red or violet for anything that is not a state; don't use blue for anything but the AI tag.",
       "**Don't** colour a clock or scoreline by state.",
       "**Don't** convey state by colour alone.",
-      "**Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners and the disclosure chevron).",
-      "**Don't** use partner or tenant brand colours in the chrome; they belong only inside Broadcast Preview.",
+      "**Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners, the disclosure chevron, and broadcast graphics animating in within 360ms inside the monitor, as they do on air).",
+      "**Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.",
       "**Don't** mark moment kinds with colour; a kind is an icon and a label.",
       "**Don't** repeat a correction's state with a lamp when its strap already names it."
     ]

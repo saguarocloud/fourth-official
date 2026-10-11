@@ -55,6 +55,10 @@ typography:
     fontFamily: "Geist Mono, ui-monospace, monospace"
     fontSize: "0.6875rem"
     fontWeight: 400
+  graphics:
+    fontFamily: "Barlow Condensed, Geist, sans-serif"
+    fontWeight: 700
+    fontStyle: "normal | italic"
 rounded:
   key: "2px"
   lamp: "999px"
@@ -139,6 +143,25 @@ components:
     textColor: "{colors.ink-1}"
     rounded: "{rounded.key}"
     padding: "8px 12px"
+  partner-key:
+    backgroundColor: "{colors.panel-2}"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.key}"
+    padding: "0 12px 0 8px"
+    height: "40px"
+  partner-key-current:
+    backgroundColor: "{colors.panel-3}"
+    textColor: "{colors.ink-1}"
+  key-cap:
+    backgroundColor: "{colors.panel-0}"
+    textColor: "{colors.ink-3}"
+    rounded: "{rounded.key}"
+    padding: "0 4px"
+    height: "18px"
+  program-monitor:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "12px"
 ---
 
 # Design System: Fourth Official
@@ -158,7 +181,7 @@ The system refuses the generic dark SaaS dashboard: rounded-card soup, glowing c
 - 5x7 dot-matrix LED readouts with faint unlit dots for scorelines and clocks.
 - Colour only as signal light: one colour, one icon and one label per state.
 - Square-cut 2px keys; perfectly round lamps.
-- Geist for UI text with tabular figures; Geist Mono only on key caps.
+- Geist for UI text with tabular figures; Geist Mono only on key caps; Barlow Condensed only inside the Broadcast Preview monitor.
 
 ## Colors
 
@@ -198,16 +221,26 @@ A neutral black chrome with six signal lights; the lights are the only chroma on
 | retracted | red | CircleSlash | Retracted (text struck through in red) |
 | amended | violet | PenLine | Amended |
 | dropped | ink-3 / ink-2 | CircleDashed | Dropped |
+| queued | ink-3 / ink-2 | Clock3 | Queued |
 
 **The One Blue Rule.** Blue is reserved for the AI tag. Nothing else is blue.
 
 **The White Clock Rule.** Clocks and scorelines are lit white. A number becomes a state colour only when it is itself a state (a pending count, an SLO breach).
+
+### Partner looks (Broadcast Preview monitor only)
+Each partner's graphics are drawn in its own look, inside the 16:9 stage and nowhere else. These colours are graphics, not signals.
+- **Northlight Sport** (NLS, English, en-GB): navy panel #0E1A2B, aurora green accent #3DDC97 with navy ink on it; sentence case. Strap: green with navy ink.
+- **Tribuna Austral** (TRA, Spanish, es-MX): panel #1C120C, orange accent #FF7A1A with #1C120C ink on it; the lower-third headline, strap lead and score bug set italic uppercase. Strap: orange with #1C120C ink.
+- **Rheinblick Sport** (RHB, German, de-DE): stone panel #F1ECE3, ink #13232C; a 10-unit copper #B5552A rule on the headline and a copper score; formal weight (headline 600). Strap: copper with white ink.
+
+**The Stage Rule.** Partner colours live inside the monitor's stage only, never in the chrome. Around the frame the board's palette and signal lights apply unchanged; inside it, no partner colour means state.
 
 ## Typography
 
 **Display font:** none; the LED readout takes the display role.
 **Body font:** Geist (with system-ui, sans-serif)
 **Mono font:** Geist Mono (with ui-monospace), reserved for code, IDs and measurement; not used as a costume.
+**Graphics font:** Barlow Condensed 500 to 700, with italic (`--font-graphics`, falling back to Geist), the condensed broadcast face for lower thirds, straps and score bugs. Used inside the Broadcast Preview monitor only; the chrome never sets it.
 
 **Character:** Geist is neutral and engineered, so the dot-matrix readouts carry all the personality. Every number uses tabular figures (`time`, `dd`, `.tabular`, stat values, table numerics) so live values never shift the layout.
 
@@ -225,11 +258,16 @@ A neutral black chrome with six signal lights; the lights are the only chroma on
 
 ## Layout
 
-The shell is a three-column grid: top bar across, nav rail left, main wall centre, live rail right (`232px | 1fr | 360px`). The top bar holds identity (mark, product, studio, replay label), hairline-separated readouts (event-to-air p95 vs SLO, pending approvals, corrections, cost so far) and the LED studio clock at the far right.
+The shell is a three-column grid: top bar across, nav rail left, main wall centre, live rail right (`232px | 1fr | 360px`). A screen without a live rail gives the rail's column to main (`data-rail="none"` on the shell, from 1024 up), so no empty column sits beside it. The top bar holds identity (mark, product, studio, replay label), hairline-separated readouts (event-to-air p95 vs SLO, pending approvals, corrections, cost so far) and the LED studio clock at the far right.
 
 The main wall leads with the page header and verdict, then the match wall: a two-column grid with 16px gaps where the featured match spans both columns and carries the largest board; other boards sit two across below. The live rail holds the latest correction as an OUT/IN board above the activity log.
 
 **Match Live** (`/match`) uses the same shell with the corrections in the live rail. The main column runs, top to bottom: page header (title, "Home v Away · Meridian League", verdict line); a controls row (`.match-live__controls`, flex, wraps, `--space-3` by `--space-4` gaps) with the match keys left and the start key right; the LED scoreboard; the minute-by-minute wire; the synthetic-data footnote. The scoreboard is one column: the scoreline field on top, a names row beneath it with each club's name under its code (the row spans the scoreline's own width, `calc(var(--scoreline-max) + 2 * var(--space-5))`), then a centred clock row (LED clock, broadcast minute, run-state lamp). The scoreline is capped at `--scoreline-max: 44rem` so the wire still shows beneath the board on a wide screen. Below 768 the board and wire pad `--space-4`, wire items drop to one column with minute and kind on one baseline, and the start key aligns left; because the rail then falls below the wire, the header shows a jump link ("2 corrections" with a Lucide ArrowDown) to `#corrections-heading`, hidden at wider widths.
+
+**Broadcast Preview** (`/preview`) has no live rail, so main takes the full width. The first viewport runs: page header (title, "Home v Away · Meridian League", verdict line naming who holds items: "N moments in three voices: M graphics cleared for air, K pending approval at Tribuna Austral", or "across N partners" when more than one); a controls row (`.preview__controls`, flex, wraps, space-between) with the match keys left and the partner keys right; the program monitor at full width with its small keys beneath (Safe areas, Back to program); the rundown beneath the monitor. From 1800 up the rundown sits beside the monitor (`minmax(0, 1fr) minmax(44rem, 1fr)`, aligned to the top) and the monitor is sticky (`top: --space-4`), so the frame stays in view while the rundown scrolls. A reconnecting stream shows the amber notice line above the desk; the synthetic-data footnote closes the page.
+
+- **Keyboard:** 1, 2 and 3 put a partner on the monitor; G toggles the safe-area guides; Esc returns from a previewed row to program. Keys are ignored while typing in a field and when Alt, Ctrl or Meta is held.
+- **Phones (720 and below):** the partner keys become a three-up grid reading cap and partner code (name for screen readers, language dropped; the monitor bar names it); the monitor bar stays on one line, the partner name truncates and the locale hides; rundown rows become cards, each partner cell labelled by its code; the table keeps explicit `role`s (`rowgroup`, `row`, `cell`, `rowheader`) so its semantics survive the restyle.
 
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
@@ -239,6 +277,7 @@ Breakpoints:
 - **1024 to 1279:** nav collapses to a 64px icon rail (labels kept for screen readers), `64 | 1fr | 300`; the featured board stacks to a single column.
 - **Below 1024:** everything stacks (top, nav as a horizontal icon strip with 40x44 targets, main, rail); top-bar readouts become a two-column grid; main padding 16px.
 - **Below 768:** the match wall goes to one column; stats go two across.
+- **Broadcast Preview only:** 1800 and up puts the rundown beside the monitor; 720 and below is the phone layout above.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -266,7 +305,7 @@ A square-cut hardware key, as on a vision mixer; the primary key is the lit one.
 - **Primary:** led-white face, panel-0 text; hover goes pure white.
 - **Danger:** red text on a red-tinted edge. **Quiet:** transparent, ink-2.
 - **Hover / Active:** hover moves to panel-3; press translates 1px down and drops the bevel (160ms, ease-out).
-- **Shortcuts:** not yet implemented. When the Approvals screen adds A, R and E, the key gains a visible cap and `aria-keyshortcuts` together with the handler, never one without the other.
+- **Shortcuts:** every shortcut has a visible key cap and `aria-keyshortcuts`, shipped together with the handler, never one without the other. Broadcast Preview has 1/2/3, G and Esc; Approvals will add A, R and E the same way.
 - **Loading / Disabled:** spinner and `aria-busy`; disabled at 50% opacity.
 - **Label:** the key's content sits in an inline-flex, `--space-2`-gapped, `white-space: nowrap` span (`.key > span`), so an icon and label never wrap apart.
 
@@ -354,6 +393,33 @@ A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), 
 ### Data table
 13px, left-aligned headers in ink-2 weight 500 over a strong hairline, 8px by 12px cells on hairline rows, panel-2 row hover, right-aligned tabular numerics, uppercase label caption.
 
+### Partner keys (Broadcast Preview)
+A vision mixer's bus: one key per partner in a group labelled "Partner on the monitor", numbered 1 to 3. 40px tall (44px on phones), panel-2 face, strong hairline edge, key bevel, 13px weight 500 ink-2. Contents, in order: a 24px cap (panel-0, Geist Mono, ink-3), the partner name, its language as an 11px uppercase label in ink-3, and an 8px tally lamp, lit red when that partner has a graphic on air (announced ", on air"), unlit (led-off) otherwise. The current key is `aria-pressed`: panel-3, ink-3 edge, ink-1, no bevel, and its cap lights white with panel-0 text.
+
+### Key cap
+The visible shortcut on a small key (`.key-cap`): 18px tall, 18px minimum width, 4px side padding, panel-0 face, strong hairline edge, 2px radius, Geist Mono 10px in ink-3, hidden from screen readers (the key carries `aria-keyshortcuts`). Every shortcut has one.
+
+### Program monitor (Broadcast Preview)
+One partner's broadcast as its viewers would see it, in a panel-1 housing with a hairline edge.
+- **Bar:** the mode as an 11px uppercase label led by a 10px tally ("Program", lit red with the specular highlight when a lower third or strap is on air; "Preview" when a rundown row is chosen, never lit); the partner name (13px ink-1) with "Language · locale" in 11px ink-3; the 2px-dot LED match clock (00:00 before kick-off) at the right.
+- **Stage:** a 16:9 frame in a panel-0 surround padded 12px, authored at 1920 by 1080; `--u: calc(100cqw / 1920)` is one authored pixel at the shown width, so every graphic scales with the frame. The feed is a placeholder pitch (faint 18% white lines on dark green); there is no video. The stage is `role="img"`; the rundown is its text equivalent.
+- **Held:** in preview, a lower third pending approval carries an amber "Pending approval · held off air" label at the top centre.
+- **Safe areas** (G): action safe at 90% (dashed, 45% white) and title safe at 80% (dotted, 35% white). They differ by dash pattern, not hue: colour is reserved for state. Graphics sit inside title safe.
+
+### Broadcast graphics (inside the monitor)
+Set in Barlow Condensed in each partner's look.
+- **Lower third:** a headline bar (46u, 700, the partner's accent) over a line panel (36u, 500). The headline carries the disclosure badge with the policy's exact label (none when the policy shows none), set in Geist, never restyled.
+- **Correction strap:** a full-width strap (40u, 600) whose lead before the colon is bold. It preempts the lower third: while a strap is up, no lower third shows.
+- **Score bug:** top left inside title safe; home, score (accent), away, clock. In program the clock runs on the match clock; in preview it shows the time the score changed.
+- **Motion:** each graphic animates in over at most 360ms ease-out (fade and a 24u rise); none under reduced motion.
+
+### Rundown (Broadcast Preview)
+The monitor's accessible equivalent: a table, one row per moment and correction, newest first; headed "Rundown". Empty, a dashed panel says what will appear.
+- **Columns:** time (broadcast minute, tabular, 4.5rem); moment (kind icon and label as an 11px uppercase ink-3 label; kinds are icons, not colour; corrections use RefreshCcw and add their title in ink-1, and only corrections carry a title); then one column per partner, headed by code, that never moves. The current partner's column header is ink-1 and its cells carry a faint 2.5% white wash.
+- **Cells:** each partner cell is a button that puts that partner on the monitor and previews that row; the moment cell previews the row for the current partner (`aria-pressed`). A cell shows the shared status lamp, the AI tag when the version carries a disclosure, and the partner's words in ink-2 in its own `lang`; "Not sent" in ink-3 when that partner has no version.
+- **States** (the shared lamp, read at the match clock): Queued (not yet due), On air, Published (aired), Pending approval (held), Dropped (rejected).
+- **Selected row:** panel-2 with a 2px board-white inset rule on the left.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -369,6 +435,8 @@ A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), 
 - **Do** keep what went out visible: strike retracted text in red, and keep amended claims struck in violet under "As published".
 - **Do** let a key's label carry its state (Starting…, Matchday running, Ready in m:ss) rather than hiding why it is disabled.
 - **Do** label replay mode, synthetic data and AI content.
+- **Do** give every keyboard shortcut a visible key cap and `aria-keyshortcuts`.
+- **Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows.
 
 ### Don't:
 - **Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).
@@ -376,11 +444,10 @@ A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), 
 - **Don't** use green, amber, red or violet for anything that is not a state; don't use blue for anything but the AI tag.
 - **Don't** colour a clock or scoreline by state.
 - **Don't** convey state by colour alone.
-- **Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners and the disclosure chevron).
+- **Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners, the disclosure chevron, and broadcast graphics animating in within 360ms inside the monitor, as they do on air).
 - **Don't** mark moment kinds with colour; a kind is an icon and a label.
 - **Don't** repeat a correction's state with a lamp when its strap already names it.
-- **Don't** use partner or tenant brand colours in the chrome; they belong only inside Broadcast Preview.
+- **Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.
 
 ### Open items
-- A condensed broadcast face for Broadcast Preview graphics (lower thirds, score bugs) has not been introduced; Geist is the only text face today.
 - A light theme for Provenance and the public Verify page has not been built; the system is dark only (`color-scheme: dark`).

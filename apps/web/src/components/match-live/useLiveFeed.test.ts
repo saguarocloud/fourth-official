@@ -6,15 +6,15 @@ import { emptyLive } from "@/domain/live";
 import { FakeEventSource, FEED } from "./testing";
 import { reduceFeed, RETRY_MS, useLiveFeed } from "./useLiveFeed";
 
-const START = { matchId: "m42", live: emptyLive(0), connection: "connecting" as const };
+const START = { matchId: "m42", view: emptyLive(0), connection: "connecting" as const };
 
 describe("reduceFeed", () => {
   it("folds entries and resets to a new run's empty picture", () => {
     const withEntry = reduceFeed(START, { type: "entry", entry: FEED[0]! });
-    expect(withEntry.live.lastSeq).toBe(FEED[0]!.entrySeq);
+    expect(withEntry.view.lastSeq).toBe(FEED[0]!.entrySeq);
 
     const reset = reduceFeed(withEntry, { type: "reset", generation: 4 });
-    expect(reset.live).toEqual(emptyLive(4));
+    expect(reset.view).toEqual(emptyLive(4));
   });
 
   it("tracks the connection and starts over on subscribe", () => {
