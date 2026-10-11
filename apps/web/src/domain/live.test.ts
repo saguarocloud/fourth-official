@@ -106,3 +106,16 @@ describe("liveVerdict", () => {
     expect(liveVerdict(emptyLive(1), "failed").tone).toBe("red");
   });
 });
+
+describe("partner items", () => {
+  it("are not Match Live's to show: they only move the feed on", () => {
+    const live = foldFeed(FEED.slice(0, 10));
+    const partnerItem = { kind: "tenant_item", entrySeq: live.lastSeq + 1 } as unknown as FeedEntry;
+
+    const next = applyEntry(live, partnerItem);
+
+    expect(next.lastSeq).toBe(live.lastSeq + 1);
+    expect(next.items).toBe(live.items);
+    expect(next.corrections).toBe(live.corrections);
+  });
+});

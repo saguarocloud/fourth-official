@@ -95,6 +95,9 @@ export function applyEntry(live: LiveMatch, entry: FeedEntry): LiveMatch {
         items: live.items.map((item) => withCorrections(item, corrections)),
       };
     }
+    case "tenant_item":
+      // A partner's graphic: shown by the Broadcast Preview, not here.
+      return next;
   }
 }
 

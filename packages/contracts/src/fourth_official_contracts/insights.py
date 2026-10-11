@@ -65,9 +65,9 @@ HeadlineText = Annotated[str, StringConstraints(min_length=1, max_length=120)]
 _REFUSED_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Co", "Cn", "Zl", "Zp"})
 
 
-def _single_line(text: str) -> None:
+def single_line(text: str) -> None:
     if any(unicodedata.category(c) in _REFUSED_CATEGORIES for c in text):
-        raise ValueError("claim text must be a single line of printable characters")
+        raise ValueError("text must be a single line of printable characters")
 
 
 class Evidence(WireModel):
@@ -83,7 +83,7 @@ class Claim(WireModel):
 
     @model_validator(mode="after")
     def _text_is_backed_by_evidence(self) -> "Claim":
-        _single_line(self.text)
+        single_line(self.text)
         if not (self.evidence.event_ids or self.evidence.metric_snapshot_ids):
             raise ValueError("a claim needs at least one piece of evidence")
         cited = set(self.evidence.metric_snapshot_ids)
@@ -108,14 +108,16 @@ def insight_id_for(moment_id: str, *, attempt: int) -> str:
     return f"in-{moment_id.removeprefix('mo-')}-a{attempt}"
 
 
+InsightId = Annotated[
+    str,
+    StringConstraints(
+        max_length=72, pattern=r"^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$"
+    ),
+]
+
+
 class Insight(WireModel):
-    insight_id: Annotated[
-        str,
-        StringConstraints(
-            max_length=72,
-            pattern=r"^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$",
-        ),
-    ]
+    insight_id: InsightId
     match_id: MatchId
     moment_id: MomentId
     as_of_seq: Seq
@@ -138,7 +140,7 @@ class Insight(WireModel):
         for item in self.claims:
             if any(match_of(e) != self.match_id for e in item.evidence.event_ids):
                 raise ValueError(f"claim {item.claim_id} cites an event from another match")
-        _single_line(self.headline)
+        single_line(self.headline)
         cited = {s for c in self.claims for s in c.evidence.metric_snapshot_ids}
         for kind, argument in claim_references(self.headline):
             if kind == "value" and argument not in cited:

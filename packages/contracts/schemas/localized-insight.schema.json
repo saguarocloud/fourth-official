@@ -1,0 +1,206 @@
+{
+  "$defs": {
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "claimId": {
+          "pattern": "^cl-[0-9]{1,3}$",
+          "title": "Claimid",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        },
+        "text": {
+          "maxLength": 280,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "stat",
+            "comparison",
+            "causal",
+            "milestone"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claimId",
+        "type",
+        "text",
+        "evidence"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "eventIds": {
+          "items": {
+            "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Eventids",
+          "type": "array"
+        },
+        "metricSnapshotIds": {
+          "items": {
+            "maxLength": 96,
+            "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Metricsnapshotids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "eventIds",
+        "metricSnapshotIds"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Who produced the insight and how: recorded for every published item.",
+      "properties": {
+        "agent": {
+          "pattern": "^[a-z][a-z-]{1,31}$",
+          "title": "Agent",
+          "type": "string"
+        },
+        "model": {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+          "title": "Model",
+          "type": "string"
+        },
+        "producedBy": {
+          "enum": [
+            "model",
+            "template"
+          ],
+          "title": "Producedby",
+          "type": "string"
+        },
+        "promptVersion": {
+          "pattern": "^v[0-9]{1,3}\\.[0-9]{1,3}$",
+          "title": "Promptversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "promptVersion",
+        "model",
+        "producedBy"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/localized-insight.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "asOfSeq": {
+      "maximum": 10000000,
+      "minimum": 1,
+      "title": "Asofseq",
+      "type": "integer"
+    },
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/Claim"
+      },
+      "maxItems": 5,
+      "minItems": 1,
+      "title": "Claims",
+      "type": "array"
+    },
+    "headline": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Headline",
+      "type": "string"
+    },
+    "insightId": {
+      "maxLength": 72,
+      "pattern": "^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$",
+      "title": "Insightid",
+      "type": "string"
+    },
+    "itemId": {
+      "maxLength": 128,
+      "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+      "title": "Itemid",
+      "type": "string"
+    },
+    "locale": {
+      "enum": [
+        "en-GB",
+        "es-MX",
+        "de-DE"
+      ],
+      "title": "Locale",
+      "type": "string"
+    },
+    "matchId": {
+      "pattern": "^m[0-9]{1,12}$",
+      "title": "Matchid",
+      "type": "string"
+    },
+    "momentId": {
+      "maxLength": 64,
+      "pattern": "^mo-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}$",
+      "title": "Momentid",
+      "type": "string"
+    },
+    "policyVersion": {
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Policyversion",
+      "type": "integer"
+    },
+    "provenance": {
+      "$ref": "#/$defs/Provenance"
+    },
+    "tenantId": {
+      "enum": [
+        "northlight-sport",
+        "tribuna-austral",
+        "rheinblick-sport"
+      ],
+      "title": "Tenantid",
+      "type": "string"
+    },
+    "version": {
+      "maximum": 1000,
+      "minimum": 1,
+      "title": "Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "itemId",
+    "tenantId",
+    "locale",
+    "insightId",
+    "matchId",
+    "momentId",
+    "asOfSeq",
+    "version",
+    "headline",
+    "claims",
+    "provenance",
+    "policyVersion"
+  ],
+  "title": "LocalizedInsight",
+  "type": "object"
+}

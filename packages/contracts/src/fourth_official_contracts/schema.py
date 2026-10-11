@@ -14,8 +14,11 @@ from fourth_official_contracts.events import MATCH_EVENT_ADAPTER
 from fourth_official_contracts.feed import FEED_ENTRY_ADAPTER
 from fourth_official_contracts.ground_truth import GROUND_TRUTH_ADAPTER
 from fourth_official_contracts.insights import INSIGHT_ADAPTER
+from fourth_official_contracts.localized import LOCALIZED_INSIGHT_ADAPTER
 from fourth_official_contracts.metrics import METRIC_SNAPSHOT_ADAPTER
 from fourth_official_contracts.moments import MOMENT_ADAPTER
+from fourth_official_contracts.overlays import OVERLAY_SPEC_ADAPTER
+from fourth_official_contracts.tenants import TENANT_POLICY_ADAPTER
 from fourth_official_contracts.verdicts import VERDICT_ADAPTER
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
@@ -68,6 +71,21 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             MOMENT_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "moment.schema.json",
             "Moment",
+        ),
+        "localized-insight.schema.json": _with_header(
+            LOCALIZED_INSIGHT_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "localized-insight.schema.json",
+            "LocalizedInsight",
+        ),
+        "overlay-spec.schema.json": _with_header(
+            OVERLAY_SPEC_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "overlay-spec.schema.json",
+            "OverlaySpec",
+        ),
+        "tenant-policy.schema.json": _with_header(
+            TENANT_POLICY_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "tenant-policy.schema.json",
+            "TenantPolicy",
         ),
         "verdict.schema.json": _with_header(
             VERDICT_ADAPTER.json_schema(by_alias=True, mode="validation"),

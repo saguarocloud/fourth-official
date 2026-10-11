@@ -1,6 +1,6 @@
 /* Generated from packages/contracts/schemas by `npm run contracts`. Do not edit. */
 
-export type FeedEntry = ClockEntry | MomentEntry | InsightEntry | CorrectionEntry;
+export type FeedEntry = ClockEntry | MomentEntry | InsightEntry | CorrectionEntry | TenantItemEntry;
 export type Asofseq = number;
 export type Minute = number;
 export type Period = 1 | 2;
@@ -179,6 +179,65 @@ export type Kind6 = "correction";
 export type Matchid8 = string;
 export type Outtext = string;
 export type Summary = string;
+export type Decidedat = string;
+export type Decision = "approved" | "rejected";
+export type Editor = string;
+export type Approvalrequired = boolean;
+/**
+ * @maxItems 99
+ */
+export type Attempts1 = AttemptRecord[];
+export type Entryseq4 = number;
+export type Itemkind = "insight" | "recap" | "stat" | "correction" | "score";
+export type Kind7 = "tenant_item";
+export type Asofseq3 = number;
+/**
+ * @minItems 1
+ * @maxItems 5
+ */
+export type Claims2 = [Claim, ...Claim[]];
+export type Headline2 = string;
+export type Insightid2 = string;
+export type Itemid = string;
+export type Locale1 = "en-GB" | "es-MX" | "de-DE";
+export type Matchid9 = string;
+export type Momentid2 = string;
+export type Policyversion = number;
+export type Tenantid = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
+export type Version = number;
+export type Matchid10 = string;
+export type Content = LowerThird | StatCard | CorrectionStrap | ScoreBug;
+export type Headline3 = string;
+export type Line = string;
+export type Template = "lower_third";
+/**
+ * @minItems 1
+ * @maxItems 3
+ */
+export type Rows = [StatRow, ...StatRow[]];
+export type Label = string;
+export type Value = string;
+export type Template1 = "stat_card";
+export type Title = string;
+export type Template2 = "correction_strap";
+export type Text1 = string;
+export type Away1 = string;
+export type Clock = string;
+export type Home1 = string;
+export type Score1 = string;
+export type Template3 = "score_bug";
+export type Label1 = string | null;
+export type Mode = "label-all" | "label-unless-approved" | "eu-strict";
+export type Reason2 = "ai_generated" | "ai_assisted_reviewed" | "data";
+export type Itemid1 = string;
+export type Locale2 = "en-GB" | "es-MX" | "de-DE";
+export type Priority = number;
+export type Provenanceurl = string | null;
+export type Supersedes = string | null;
+export type Tenantid1 = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
+export type Version1 = number;
+export type State = "on_air" | "pending_approval" | "rejected";
+export type Tenantid2 = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
 
 /**
  * The match clock and score as published so far (corrections in force applied).
@@ -343,4 +402,91 @@ export interface Amendment {
   clock?: MatchClock | null;
   ownGoal?: Owngoal;
   scorerId?: Scorerid;
+}
+/**
+ * One item for one partner: its graphic, and for narrative items the words in its voice.
+ *
+ * Feeds are filtered by partner at the API, so an entry carries exactly one partner's item.
+ */
+export interface TenantItemEntry {
+  approval: Approval | null;
+  approvalRequired: Approvalrequired;
+  attempts: Attempts1;
+  entrySeq: Entryseq4;
+  itemKind: Itemkind;
+  kind: Kind7;
+  localized: LocalizedInsight | null;
+  matchId: Matchid10;
+  overlay: OverlaySpec;
+  rendered: RenderedInsight | null;
+  state: State;
+  tenantId: Tenantid2;
+}
+/**
+ * A named editor's decision on an item before it goes on air.
+ */
+export interface Approval {
+  decidedAt: Decidedat;
+  decision: Decision;
+  editor: Editor;
+}
+export interface LocalizedInsight {
+  asOfSeq: Asofseq3;
+  claims: Claims2;
+  headline: Headline2;
+  insightId: Insightid2;
+  itemId: Itemid;
+  locale: Locale1;
+  matchId: Matchid9;
+  momentId: Momentid2;
+  policyVersion: Policyversion;
+  provenance: Provenance;
+  tenantId: Tenantid;
+  version: Version;
+}
+export interface OverlaySpec {
+  content: Content;
+  disclosure: Disclosure | null;
+  inAt: MatchClock;
+  itemId: Itemid1;
+  locale: Locale2;
+  outAt: MatchClock;
+  priority: Priority;
+  provenanceUrl: Provenanceurl;
+  supersedes: Supersedes;
+  tenantId: Tenantid1;
+  version: Version1;
+}
+export interface LowerThird {
+  headline: Headline3;
+  line: Line;
+  template: Template;
+}
+export interface StatCard {
+  rows: Rows;
+  template: Template1;
+  title: Title;
+}
+export interface StatRow {
+  label: Label;
+  value: Value;
+}
+export interface CorrectionStrap {
+  template: Template2;
+  text: Text1;
+}
+export interface ScoreBug {
+  away: Away1;
+  clock: Clock;
+  home: Home1;
+  score: Score1;
+  template: Template3;
+}
+/**
+ * How AI involvement is shown on an item: the label (rendered by code, never by a model).
+ */
+export interface Disclosure {
+  label: Label1;
+  mode: Mode;
+  reason: Reason2;
 }
