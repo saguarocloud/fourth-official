@@ -252,7 +252,8 @@ def provenance_router() -> APIRouter:
         except UnreadableRecordError:
             return _verdict(None, False, "the stored record no longer reads")
         except AzureError:
-            logger.exception("could not read the record of %s", item_id)
+            # The item id came from the request: it is not written to the log.
+            logger.exception("could not read a provenance record from storage")
             raise HTTPException(
                 status_code=503, detail="records cannot be read right now", headers=NO_STORE
             ) from None
