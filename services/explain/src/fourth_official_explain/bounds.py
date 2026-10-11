@@ -11,6 +11,9 @@ from typing import Any
 from agent_framework import FunctionInvocationContext, FunctionMiddleware
 from pydantic import BaseModel
 
+# Tools that read the match at a point in it; the others (get_player) are timeless.
+AT_A_POINT = frozenset({"get_match_state", "get_metric", "compare_windows", "list_moments"})
+
 
 def bounded_arguments(name: str, arguments: Mapping[str, Any], as_of_seq: int) -> dict[str, Any]:
     """The arguments of a Match Data call, clamped to `as_of_seq`."""
@@ -19,7 +22,7 @@ def bounded_arguments(name: str, arguments: Mapping[str, Any], as_of_seq: int) -
         to_seq = min(int(bounded.get("to_seq", as_of_seq)), as_of_seq)
         bounded["to_seq"] = to_seq
         bounded["from_seq"] = min(int(bounded.get("from_seq", 1)), to_seq)
-    else:
+    elif name in AT_A_POINT:
         asked = bounded.get("as_of_seq")
         bounded["as_of_seq"] = as_of_seq if asked is None else min(int(asked), as_of_seq)
     return bounded
