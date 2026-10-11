@@ -442,6 +442,11 @@ def test_a_policy_names_its_duty_editor() -> None:
         parse_tenant_policy({**POLICY, "dutyEditor": "nobody<script>"})
 
 
+def test_an_approval_carries_no_reason() -> None:
+    with pytest.raises(ValidationError):
+        parse_feed_entry(approval_case("on_air", True, {**APPROVED, "reason": "Fine"}))
+
+
 def test_a_rejection_says_why() -> None:
     rejected = {**APPROVED, "decision": "rejected", "reason": "Wrong tone for our audience"}
 

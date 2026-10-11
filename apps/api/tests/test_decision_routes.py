@@ -3,44 +3,24 @@ Decisions come only from the studio's own pages, like starting the matchday."""
 
 from collections.abc import Iterator
 
-import anyio
 import pytest
 from fastapi.testclient import TestClient
 
+from fourth_official_api.decision_routes import _headers_of, _status_of
 from fourth_official_api.main import create_app
 from fourth_official_api.settings import Settings
 from fourth_official_contracts import TenantItemEntry, parse_feed_entry
-from fourth_official_match_data import demo_store
-from fourth_official_replay import Matchday, ReplayConfig
-from test_partners import no_wait, partners, template_only
+from fourth_official_replay.errors import (
+    CorrectedSinceError,
+    DecisionError,
+    FullTimeError,
+    NoRoomOnAirError,
+    NotAwaitingError,
+    ReplayedSinceError,
+)
+from paused import Paused
 
 STUDIO = {"X-Requested-By": "fourth-official"}
-
-
-class Paused:
-    """A matchday whose featured match, once played, waits before full time until released: its
-    held items are on the feed and the feed is still open."""
-
-    def __init__(self) -> None:
-        self.released = anyio.Event()
-        self.day = Matchday(
-            demo_store(), template_only, config=ReplayConfig(), sleep=no_wait, partners=partners
-        )
-        feed = self.day.feed("m42")
-        finish = feed.finish
-
-        async def held_open() -> None:
-            await self.released.wait()
-            await finish()
-
-        feed.finish = held_open  # type: ignore[method-assign]
-
-    def held(self) -> list[TenantItemEntry]:
-        return [
-            e
-            for e in self.day.feed("m42").entries
-            if isinstance(e, TenantItemEntry) and e.state == "pending_approval"
-        ]
 
 
 @pytest.fixture
@@ -49,16 +29,14 @@ def paused() -> Iterator[tuple[TestClient, Paused]]:
     with TestClient(create_app(Settings(version="test"), matchday=held.day)) as client:
         assert client.post("/api/matchday", headers=STUDIO).status_code == 202
         assert client.portal is not None
-        client.portal.call(wait_for_a_held_item, held)
+        client.portal.call(held.until_held)
         yield client, held
         client.portal.call(held.released.set)
         client.portal.call(held.day.wait)
 
 
-async def wait_for_a_held_item(held: Paused) -> None:
-    with anyio.fail_after(10):
-        while not held.held():
-            await anyio.sleep(0)
+def body(held: Paused, decision: str = "approved", **extra: object) -> dict[str, object]:
+    return {"decision": decision, "generation": held.generation, **extra}
 
 
 def path(item: TenantItemEntry) -> str:
@@ -74,7 +52,7 @@ def test_an_approval_puts_the_item_on_air_signed_by_the_editor(
     client, held = paused
     item = held.held()[0]
 
-    answer = client.post(path(item), json={"decision": "approved"}, headers=STUDIO)
+    answer = client.post(path(item), json=body(held), headers=STUDIO)
 
     assert answer.status_code == 200, answer.json()
     assert answer.headers["cache-control"] == "no-store"
@@ -91,7 +69,7 @@ def test_a_rejection_keeps_the_reason(paused: tuple[TestClient, Paused]) -> None
     item = held.held()[0]
 
     answer = client.post(
-        path(item), json={"decision": "rejected", "reason": "Not our tone"}, headers=STUDIO
+        path(item), json=body(held, "rejected", reason="Not our tone"), headers=STUDIO
     )
 
     assert answer.status_code == 200
@@ -101,30 +79,52 @@ def test_a_rejection_keeps_the_reason(paused: tuple[TestClient, Paused]) -> None
 def test_an_item_already_decided_is_a_conflict(paused: tuple[TestClient, Paused]) -> None:
     client, held = paused
     item = held.held()[0]
-    client.post(path(item), json={"decision": "approved"}, headers=STUDIO)
+    client.post(path(item), json=body(held), headers=STUDIO)
 
-    again = client.post(path(item), json={"decision": "approved"}, headers=STUDIO)
+    again = client.post(path(item), json=body(held), headers=STUDIO)
 
     assert again.status_code == 409
     assert again.json()["detail"] == "this item is not awaiting a decision"
 
 
 @pytest.mark.parametrize(
-    "body",
+    "change",
     [
         {"decision": "maybe"},
         {"decision": "rejected"},
         {"decision": "rejected", "reason": "x" * 201},
+        {"decision": "rejected", "reason": "two\nlines"},
+        {"decision": "rejected", "reason": "hidden\u202etext"},
         {"decision": "approved", "editor": "Someone Else"},
-        {},
+        {"generation": None},
     ],
 )
 def test_a_malformed_decision_is_refused(
-    paused: tuple[TestClient, Paused], body: dict[str, object]
+    paused: tuple[TestClient, Paused], change: dict[str, object]
 ) -> None:
     client, held = paused
+    sent = {k: v for k, v in {**body(held), **change}.items() if v is not None}
 
-    assert client.post(path(held.held()[0]), json=body, headers=STUDIO).status_code in (409, 422)
+    assert client.post(path(held.held()[0]), json=sent, headers=STUDIO).status_code == 422
+    assert held.held()
+
+
+def test_a_reason_given_with_an_approval_is_not_kept(paused: tuple[TestClient, Paused]) -> None:
+    client, held = paused
+
+    answer = client.post(path(held.held()[0]), json=body(held, reason="Fine"), headers=STUDIO)
+
+    assert answer.json()["approval"]["reason"] is None
+
+
+def test_a_decision_made_in_an_earlier_run_is_refused(paused: tuple[TestClient, Paused]) -> None:
+    client, held = paused
+    stale = {**body(held), "generation": held.day.feed("m42").generation - 1}
+
+    answer = client.post(path(held.held()[0]), json=stale, headers=STUDIO)
+
+    assert answer.status_code == 409
+    assert answer.json()["detail"] == "the matchday has been replayed since; reload to see it"
     assert held.held()
 
 
@@ -137,7 +137,7 @@ def test_decisions_come_only_from_the_studio(
 ) -> None:
     client, held = paused
 
-    answer = client.post(path(held.held()[0]), json={"decision": "approved"}, headers=headers)
+    answer = client.post(path(held.held()[0]), json=body(held), headers=headers)
 
     assert answer.status_code == 403
     assert held.held()
@@ -154,13 +154,43 @@ def test_decisions_come_only_from_the_studio(
 def test_unknown_items_partners_and_matches_are_not_found(
     paused: tuple[TestClient, Paused], where: str
 ) -> None:
-    client, _ = paused
+    client, held = paused
 
-    assert client.post(where, json={"decision": "approved"}, headers=STUDIO).status_code == 404
+    assert client.post(where, json=body(held), headers=STUDIO).status_code == 404
 
 
 def test_a_malformed_item_id_is_refused(paused: tuple[TestClient, Paused]) -> None:
-    client, _ = paused
+    client, held = paused
     where = "/api/tenants/tribuna-austral/matches/m42/items/<script>/decision"
 
-    assert client.post(where, json={"decision": "approved"}, headers=STUDIO).status_code == 422
+    assert client.post(where, json=body(held), headers=STUDIO).status_code == 422
+
+
+def test_after_full_time_a_decision_is_gone(paused: tuple[TestClient, Paused]) -> None:
+    client, held = paused
+    item = held.held()[0]
+    assert client.portal is not None
+    client.portal.call(held.released.set)
+    client.portal.call(held.day.wait)
+
+    answer = client.post(path(item), json=body(held), headers=STUDIO)
+
+    assert answer.status_code == 410
+    assert answer.json()["detail"] == "the match has reached full time; held items stay off air"
+
+
+@pytest.mark.parametrize(
+    ("refused", "status", "retry"),
+    [
+        (NotAwaitingError(), 409, None),
+        (ReplayedSinceError(), 409, None),
+        (CorrectedSinceError(), 409, None),
+        (FullTimeError(), 410, None),
+        (NoRoomOnAirError(), 503, "5"),
+    ],
+)
+def test_each_refusal_has_its_own_status(
+    refused: DecisionError, status: int, retry: str | None
+) -> None:
+    assert _status_of(refused) == status
+    assert _headers_of(refused).get("Retry-After") == retry

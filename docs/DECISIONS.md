@@ -230,8 +230,10 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Choice.**
 - **A decision is an entry.** Approving or rejecting publishes the item's next version on the match's append-only feed: the same item id, the same words, the editor's `approval` record and the new state. Approved items are placed on air by the partner's director from the current match clock. Their label becomes "reviewed" where the policy says so: "Asistido por IA · Revisado por T. Ibarra", or no label under `label-unless-approved`. A rejection keeps the item off air and must give a one-line reason, which stays with the item.
 - **The contract checks every decision.** The entry is built through `TenantItemEntry`, so an item airs only if approved, a rejection always records its reason, and a reviewed label always has its approval behind it.
-- **One decision per item.** Decisions are serialised per matchday. The second of two simultaneous decisions on the same item is refused (409).
-- **Only during the match.** After full time the feed is closed, and held items stay off air.
+- **One decision per item, for one run.** Decisions are serialised per matchday, and a new run waits for a decision under way. The second of two simultaneous decisions on the same item is refused (409). A decision names the run it was made in, and the feed refuses it if another run has started, even mid-decision (409).
+- **Never against a correction.** If a correction since the hold targets an event an item's claims rest on, the item stays off air and the decision is refused (409). An editor cannot put a withdrawn fact on air.
+- **Only during the match.** After full time the feed is closed and held items stay off air (410). When the partner's graphics are full that minute, the decision is refused with 503 and `Retry-After`, and the item stays held.
+- **Reasons only for rejections.** A rejection must give a one-line reason (checked at the edge, 422). An approval carries none.
 - **From the studio only.** `POST /api/tenants/{t}/matches/{m}/items/{id}/decision` uses the matchday start's guard: a required `X-Requested-By` header that a cross-site form cannot send, with any browser `Origin` refused. The web app's same-origin proxy is the only caller.
 - **Who decided.** Without sign-in, a decision is recorded against the partner's duty editor (`dutyEditor` in its policy). This is a named demo identity, not a signed-in person. With Entra ID the editor is the signed-in user, and the endpoint then also needs authorisation per partner.
 

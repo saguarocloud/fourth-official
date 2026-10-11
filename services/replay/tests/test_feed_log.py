@@ -5,6 +5,7 @@ import pytest
 
 from fourth_official_contracts import ClockEntry, MatchClock, Score
 from fourth_official_replay import FeedLog
+from fourth_official_replay.log import FeedFinishedError, StaleRunError
 
 
 def clock(entry_seq: int, as_of_seq: int = 1) -> ClockEntry:
@@ -113,3 +114,21 @@ def test_finishing_wakes_waiters_and_marks_the_run_done() -> None:
         return seen[0]
 
     assert anyio.run(scenario) is True
+
+
+def test_an_entry_meant_for_an_earlier_run_is_refused() -> None:
+    log = FeedLog("m42")
+    anyio.run(log.reset)
+
+    with pytest.raises(StaleRunError):
+        anyio.run(lambda: log.publish(clock, generation=log.generation - 1))
+    anyio.run(lambda: log.publish(clock, generation=log.generation))
+    assert len(log.entries) == 1
+
+
+def test_a_finished_feed_says_so_in_its_own_error() -> None:
+    log = FeedLog("m42")
+    anyio.run(log.finish)
+
+    with pytest.raises(FeedFinishedError):
+        anyio.run(log.publish, clock)

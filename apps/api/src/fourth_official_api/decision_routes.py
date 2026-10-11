@@ -12,7 +12,7 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Header, HTTPException, Path, Request, Response
-from pydantic import StringConstraints, model_validator
+from pydantic import AfterValidator, Field, StringConstraints, model_validator
 
 from fourth_official_api.matchday_routes import (
     START_HEADER,
@@ -23,21 +23,55 @@ from fourth_official_api.matchday_routes import (
     _tenant,
 )
 from fourth_official_contracts import WireModel
+from fourth_official_contracts.insights import single_line
 from fourth_official_replay import DecisionError, UnknownItemError
+from fourth_official_replay.errors import FullTimeError, NoRoomOnAirError
 
 ItemIdParam = Annotated[str, Path(max_length=160, pattern=r"^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]+$")]
 NO_STORE = {"Cache-Control": "no-store"}
 
 
+def _line(text: str) -> str:
+    single_line(text)
+    return text
+
+
 class DecisionRequest(WireModel):
     decision: Literal["approved", "rejected"]
-    reason: Annotated[str, StringConstraints(min_length=1, max_length=200)] | None = None
+    # The run the editor saw (the feed's generation): a page left open across a replay cannot
+    # decide on the new run's item of the same id.
+    generation: Annotated[int, Field(ge=0)]
+    # Checked here as the contract checks it, so a bad reason is refused before any work.
+    reason: (
+        Annotated[
+            str,
+            StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
+            AfterValidator(_line),
+        ]
+        | None
+    ) = None
 
     @model_validator(mode="after")
     def _a_rejection_says_why(self) -> "DecisionRequest":
-        if self.decision == "rejected" and (self.reason is None or not self.reason.strip()):
+        if self.decision == "rejected" and self.reason is None:
             raise ValueError("a rejection gives its reason")
         return self
+
+
+def _status_of(refused: DecisionError) -> int:
+    """409 for a conflict with the item's state; 410 once the match is over; 503 (retry) when
+    the partner's graphics are full this minute."""
+    if isinstance(refused, FullTimeError):
+        return 410
+    if isinstance(refused, NoRoomOnAirError):
+        return 503
+    return 409
+
+
+def _headers_of(refused: DecisionError) -> dict[str, str]:
+    if isinstance(refused, NoRoomOnAirError):
+        return {**NO_STORE, "Retry-After": "5"}
+    return NO_STORE
 
 
 def _to_the_millisecond(moment: datetime) -> datetime:
@@ -72,13 +106,17 @@ def decision_router(*, allowed_origins: frozenset[str] = frozenset()) -> APIRout
                 policy.tenant_id,
                 item_id,
                 body.decision,
-                reason=body.reason,
+                # Only a rejection keeps a reason.
+                reason=body.reason if body.decision == "rejected" else None,
                 now=_to_the_millisecond(datetime.now(UTC)),
+                generation=body.generation,
             )
         except UnknownItemError as unknown:
             raise HTTPException(status_code=404, detail=str(unknown), headers=NO_STORE) from None
         except DecisionError as refused:
-            raise HTTPException(status_code=409, detail=str(refused), headers=NO_STORE) from None
+            raise HTTPException(
+                status_code=_status_of(refused), detail=str(refused), headers=_headers_of(refused)
+            ) from None
         return entry.to_wire()
 
     return router

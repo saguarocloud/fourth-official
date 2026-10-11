@@ -44,6 +44,7 @@ from fourth_official_contracts import (
 from fourth_official_explain import Attempt
 from fourth_official_explain.localize import Localizer, localize
 from fourth_official_policy import approval_required, disclose
+from fourth_official_replay.errors import DecisionError, NoRoomOnAirError, NotAwaitingError
 from fourth_official_verifier import BlockedTopics, MatchFacts, render_insight
 
 logger = logging.getLogger(__name__)
@@ -52,10 +53,6 @@ Decision = Literal["approved", "rejected"]
 DEFAULT_CONCURRENCY = 3
 # Builds a partner's feed entry once the log assigns its position.
 EntryBuilder = Callable[[int], TenantItemEntry]
-
-
-class DecisionError(ValueError):
-    """An editor's decision that cannot be applied. The message is safe to show."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,6 +107,7 @@ class Partners:
         concurrency: int = DEFAULT_CONCURRENCY,
     ) -> None:
         self._partners = tuple(partners)
+        self._policies = {p.policy.tenant_id: p.policy for p in self._partners}
         self._localizer = localizer
         # Bounds the Localizer's model calls in flight, however many moments arrive at once.
         self._slots = asyncio.Semaphore(concurrency)
@@ -196,26 +194,25 @@ class Partners:
         now: datetime,
     ) -> EntryBuilder:
         """The held item's next entry once its partner's duty editor decides: approved, it airs
-        from `at` (the match clock now) labelled as reviewed where the policy says so; rejected, it
-        stays off air with the reason. The words are the ones the editor saw, unchanged."""
-        partner = next((p for p in self._partners if p.policy.tenant_id == item.tenant_id), None)
-        if partner is None:
-            raise DecisionError(f"{item.tenant_id} is not a partner of this match")
+        from `at` (the match clock now), or the first free slot after it, labelled as reviewed
+        where the policy says so; rejected, it stays off air with the reason. The words are the
+        ones the editor saw, unchanged."""
         if item.state != "pending_approval" or item.localized is None or item.rendered is None:
-            raise DecisionError("this item is not awaiting a decision")
-        policy = partner.policy
+            raise NotAwaitingError
+        policy = self._policies[item.tenant_id]
         try:
             approval = Approval(
                 editor=policy.duty_editor, decided_at=now, decision=decision, reason=reason
             )
         except ValidationError:
+            # The API checks reasons first; this keeps any other caller to the contract.
             raise DecisionError("a rejection needs a reason of one line") from None
         if decision == "rejected":
             overlay = item.overlay
         else:
             timing = await self._place(policy.tenant_id, "lower_third", at)
             if timing is None:
-                raise DecisionError("no room on air this minute; try again shortly")
+                raise NoRoomOnAirError
             disclosure = disclose(policy, item.item_kind, approval)
             if disclosure is None:  # pragma: no cover - narrative is always disclosed
                 raise ValueError("an insight is always disclosed")

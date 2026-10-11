@@ -7,7 +7,7 @@ import anyio
 import pytest
 
 from fourth_official_contracts import MatchClock, TenantItemEntry, parse_feed_entry
-from fourth_official_replay.partners import DecisionError
+from fourth_official_replay.errors import DecisionError
 from test_partners import of, partners
 
 NOW = datetime(2026, 10, 11, 15, 0, tzinfo=UTC)

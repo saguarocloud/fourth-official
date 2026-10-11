@@ -149,9 +149,11 @@ class Approval(WireModel):
     ) = None
 
     @model_validator(mode="after")
-    def _a_rejection_says_why(self) -> "Approval":
+    def _a_rejection_and_only_a_rejection_says_why(self) -> "Approval":
         if self.decision == "rejected" and self.reason is None:
             raise ValueError("a rejection gives its reason")
+        if self.decision == "approved" and self.reason is not None:
+            raise ValueError("an approval carries no reason")
         return self
 
 
