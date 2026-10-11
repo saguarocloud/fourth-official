@@ -1,5 +1,5 @@
-"""Canonical wire contracts for Fourth Official: match events, corrections, metric snapshots and
-ground truth."""
+"""Canonical wire contracts for Fourth Official: match events, corrections, metric snapshots,
+moments and ground truth."""
 
 from fourth_official_contracts.corrections import (
     CORRECTION_ADAPTER,

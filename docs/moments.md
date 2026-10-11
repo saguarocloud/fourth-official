@@ -38,6 +38,10 @@ These come from a metric moving. They are checked once per minute of monotone ma
 
 Requiring three checks delays a real collapse by about a minute compared with two. The tests pin the false-alarm rate on ordinary matches.
 
+### On the demo matchday
+
+The detector finds every planted goal, sending-off and VAR overturn by its events. It finds the featured match's pressing collapse (Northgate, from 61') at 68', and invents no other pressing story across the three matches (`tests/test_moments_on_demo.py`). On other seeds, a collapse from a high press to a low one is found 5 to 11 minutes after it starts. The five-minute window has to fill with the new behaviour, and the shift must then hold for three checks.
+
 ## Incremental detection
 
 `detect(match, state)` reads only the events after `state.last_seq` and returns the moments it found plus the state to resume from. A live worker calls it as events arrive. A test shows that detecting a match in pieces finds exactly the moments that detecting it at once does.
