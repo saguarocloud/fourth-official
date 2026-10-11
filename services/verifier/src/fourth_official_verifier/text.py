@@ -96,13 +96,23 @@ def _is_opener(match: re.Match[str], starts: set[int], plain: str) -> bool:
     return match.start() in starts or len(before) in starts or not before
 
 
-def check_text(text: str, player_names: Iterable[str]) -> TextProblems:
-    """Everything wrong with the words of a claim or headline."""
+# Phrases that state a count, allowed only where cited evidence states the same: the caller
+# passes them in when it has checked the evidence.
+SECOND_YELLOW = re.compile(r"\bsecond[ -]yellow\b", re.IGNORECASE)
+
+
+def check_text(
+    text: str, player_names: Iterable[str], *, evidenced: Iterable[re.Pattern[str]] = ()
+) -> TextProblems:
+    """Everything wrong with the words of a claim or headline. `evidenced` phrases are accepted
+    because the evidence the text cites states them."""
     plain = _plain(text)
     if not _ALLOWED.match(plain.replace(_HOLE, " ")):
         return TextProblems(unsupported=True)
     plain, raw = _strip_names(plain, _name_forms(player_names))
     plain = _PLACE_PHRASES.sub(_HOLE, plain)
+    for phrase in evidenced:
+        plain = phrase.sub(_HOLE, plain)
     numbers = _NUMBERS.findall(plain)
     plain = _NUMBERS.sub(_HOLE, plain)
     names: list[str] = []

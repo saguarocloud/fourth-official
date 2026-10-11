@@ -12,6 +12,8 @@ TERMS = frozenset({"VAR", "PPDA", "xG"})
 
 # Capitalised words allowed only at the start of a sentence: a closed set, none of which is a
 # plausible surname (a test checks them against the squad name pools).
+# Closed on purpose: an ordinary word that is also a common surname (Long, Young, White, Walker)
+# must never open a sentence, or a real player's name could pass as one.
 SENTENCE_OPENERS = frozenset(
     """
     a after all an at before both by despite each every few for from here however in into it its
@@ -21,6 +23,7 @@ SENTENCE_OPENERS = frozenset(
     goal goals penalty chance chances save saved red card cards press collapse surge lead
     equaliser winner comeback control chaos momentum danger tempo shift switch
     offside overturned ruled disallowed denied missed late early
+    big clinical another brief costly crucial decisive sudden superb narrow
     """.split()  # noqa: SIM905 - a word list reads best as text
 )
 

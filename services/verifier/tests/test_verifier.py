@@ -196,6 +196,28 @@ def test_headlines_may_open_with_a_football_noun() -> None:
 
 
 @pytest.mark.parametrize(
+    "headline",
+    ["Big chance for {{club:HCY}}", "Crucial break by {{club:HCY}}", "Clinical {{club:HCY}}"],
+)
+def test_common_headline_words_may_open_a_sentence(headline: str) -> None:
+    assert verify(insight(headline=headline), GOAL_MOMENT, FACTS).passed
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "Zorblat scores for {{club:HCY}}.",
+        "{{club:HCY}} score. Then Zorblat runs.",
+        # Ordinary words that are also surnames never open a sentence.
+        "Quick scores for {{club:HCY}}.",
+        "Long scores for {{club:HCY}}.",
+    ],
+)
+def test_an_unknown_capitalised_word_is_a_name_even_where_a_sentence_starts(text: str) -> None:
+    assert "UNVERIFIED_NAME" in codes(insight(claim(text, events=GOAL)))
+
+
+@pytest.mark.parametrize(
     "text",
     [
         "{{club:HCY}} work the ball into the final third before the goal.",

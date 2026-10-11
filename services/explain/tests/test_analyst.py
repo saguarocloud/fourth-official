@@ -70,6 +70,19 @@ def test_the_request_carries_the_moment_and_any_findings() -> None:
     assert "BARE_NUMBER: numbers must be references" in retry
 
 
+def test_a_retry_shows_the_draft_to_fix() -> None:
+    goal = moment("goal")
+    finding = Finding(claim_id="cl-1", code="BARE_NUMBER", detail="numbers must be references")
+
+    retry = request_message(
+        DraftRequest(moment=goal, attempt=2, feedback=(finding,), previous=DRAFT)
+    )
+
+    assert "Your previous draft (JSON):" in retry
+    assert DRAFT.model_dump_json() in retry
+    assert retry.index("previous draft") < retry.index("BARE_NUMBER")
+
+
 def test_the_drafter_asks_for_a_structured_draft_and_returns_it() -> None:
     stub = Stub(DRAFT, [])
     drafter = AgentDrafter(run=stub, provenance=PROVENANCE)

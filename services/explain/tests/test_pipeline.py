@@ -86,6 +86,19 @@ def test_a_failed_draft_is_retried_with_the_findings_as_feedback() -> None:
     assert result.insight.insight_id.endswith("-a2")
 
 
+def test_a_retry_carries_the_draft_it_fixes_and_a_new_model_starts_fresh() -> None:
+    goal = moment("goal")
+    bad = with_text(good_draft(goal), "{{club:HCY}} have had 3 shots.")
+    worse = with_text(good_draft(goal), "{{club:HCY}} have had 4 shots.")
+    first = Scripted(FAST, [bad, worse, worse])
+    second = Scripted(QUALITY, [good_draft(goal)])
+
+    run(goal, first, second)
+
+    assert [r.previous for r in first.requests] == [None, bad, worse]
+    assert second.requests[0].previous is None
+
+
 def test_after_its_retries_the_next_model_is_tried() -> None:
     goal = moment("goal")
     bad = with_text(good_draft(goal), "{{club:HCY}} have had 3 shots.")

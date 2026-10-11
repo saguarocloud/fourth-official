@@ -61,3 +61,26 @@ def test_anything_else_is_unknown(word: str) -> None:
 def test_no_temporal_or_modal_word_that_reaches_the_future_is_in_the_vocabulary() -> None:
     for word in ("soon", "later", "afterwards", "shortly", "finally", "would", "will", "next"):
         assert not known(word), word
+
+
+# Ordinary words the Analyst used on the demo matchday and the Verifier refused (October 2026).
+# Units (seconds, km, hour) stay out: they state measures no reference can render.
+@pytest.mark.parametrize(
+    "word",
+    [
+        "receives", "receiving", "opportunity", "location", "arises", "outcome",
+        "prior", "opposing", "preceding", "occurs", "became", "linked", "enabling",
+        "according", "intercepted", "shooter", "progressive", "forward", "layoff", "cited",
+        "initially", "nearby",
+    ],
+)  # fmt: skip
+def test_ordinary_words_the_analyst_reaches_for_are_known(word: str) -> None:
+    assert known(word)
+
+
+# Units state measures no reference renders; vague counts state a number no reference checks.
+@pytest.mark.parametrize(
+    "word", ["seconds", "km", "kilometers", "hour", "mph", "multiple", "series", "several"]
+)
+def test_units_and_vague_counts_stay_unknown(word: str) -> None:
+    assert not known(word)

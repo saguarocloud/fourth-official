@@ -39,3 +39,6 @@ pnpm-debug.log*
 # Local model cache and eval scratch output (committed reports live in eval/reports/)
 .model-cache/
 eval/runs/
+
+# Reports from scripts/measure-analyst.py
+analyst-report*.json
