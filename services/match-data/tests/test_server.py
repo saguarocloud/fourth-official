@@ -10,6 +10,7 @@ from mcp.client.session import ClientSession
 from mcp.server.fastmcp import FastMCP
 from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult, TextContent
+from starlette.testclient import TestClient
 
 from fourth_official_match_data import __main__ as entry
 from fourth_official_match_data import create_server, demo_store
@@ -141,3 +142,34 @@ def test_the_command_line_serves_stdio_or_http(monkeypatch: pytest.MonkeyPatch) 
     assert served[0][:3] == ("stdio", "127.0.0.1", 8100)
     assert served[1][:3] == ("streamable-http", "0.0.0.0", 8123)  # noqa: S104
     assert served[1][3] == [*LOOPBACK, "x.example"]
+
+
+def test_health_answers_probes_on_any_host_with_the_release() -> None:
+    server = create_server(demo_store(), host="0.0.0.0", version="abc123")  # noqa: S104
+
+    with TestClient(server.streamable_http_app(), base_url="http://10.0.0.7:8100") as client:
+        response = client.get("/healthz")
+
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert response.json() == {
+        "status": "ok",
+        "service": "fourth-official-match-data",
+        "version": "abc123",
+    }
+
+
+def test_in_a_container_the_hosts_and_release_come_from_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    served: list[tuple[list[str], str]] = []
+
+    def fake_run(self: FastMCP, transport: str) -> None:
+        security = self.settings.transport_security
+        served.append((list(security.allowed_hosts) if security else [], transport))
+
+    monkeypatch.setattr(FastMCP, "run", fake_run)
+    monkeypatch.setenv("MATCH_DATA_ALLOWED_HOSTS", " data.internal.example , other.example ")
+    entry.main(["--http", "--host", "0.0.0.0"])  # noqa: S104
+
+    assert served == [([*LOOPBACK, "data.internal.example", "other.example"], "streamable-http")]
