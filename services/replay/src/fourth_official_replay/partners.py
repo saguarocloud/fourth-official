@@ -10,7 +10,11 @@ import asyncio
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from functools import partial
+from typing import Literal
+
+from pydantic import ValidationError
 
 from fourth_official_broadcast import (
     Schedule,
@@ -22,6 +26,7 @@ from fourth_official_broadcast import (
     score_bug,
 )
 from fourth_official_contracts import (
+    Approval,
     AttemptRecord,
     ClubCode,
     Correction,
@@ -39,9 +44,11 @@ from fourth_official_contracts import (
 from fourth_official_explain import Attempt
 from fourth_official_explain.localize import Localizer, localize
 from fourth_official_policy import approval_required, disclose
+from fourth_official_replay.errors import DecisionError, NoRoomOnAirError, NotAwaitingError
 from fourth_official_verifier import BlockedTopics, MatchFacts, render_insight
 
 logger = logging.getLogger(__name__)
+Decision = Literal["approved", "rejected"]
 # Localisations in flight at once, across the match's partners and moments.
 DEFAULT_CONCURRENCY = 3
 # Builds a partner's feed entry once the log assigns its position.
@@ -100,6 +107,7 @@ class Partners:
         concurrency: int = DEFAULT_CONCURRENCY,
     ) -> None:
         self._partners = tuple(partners)
+        self._policies = {p.policy.tenant_id: p.policy for p in self._partners}
         self._localizer = localizer
         # Bounds the Localizer's model calls in flight, however many moments arrive at once.
         self._slots = asyncio.Semaphore(concurrency)
@@ -174,6 +182,59 @@ class Partners:
             overlay=overlay,
             attempts=attempts,
             approval=None,
+        )
+
+    async def decide(
+        self,
+        item: TenantItemEntry,
+        decision: Decision,
+        *,
+        reason: str | None,
+        at: MatchClock,
+        now: datetime,
+    ) -> EntryBuilder:
+        """The held item's next entry once its partner's duty editor decides: approved, it airs
+        from `at` (the match clock now), or the first free slot after it, labelled as reviewed
+        where the policy says so; rejected, it stays off air with the reason. The words are the
+        ones the editor saw, unchanged."""
+        if item.state != "pending_approval" or item.localized is None or item.rendered is None:
+            raise NotAwaitingError
+        policy = self._policies[item.tenant_id]
+        try:
+            approval = Approval(
+                editor=policy.duty_editor, decided_at=now, decision=decision, reason=reason
+            )
+        except ValidationError:
+            # The API checks reasons first; this keeps any other caller to the contract.
+            raise DecisionError("a rejection needs a reason of one line") from None
+        if decision == "rejected":
+            overlay = item.overlay
+        else:
+            timing = await self._place(policy.tenant_id, "lower_third", at)
+            if timing is None:
+                raise NoRoomOnAirError
+            disclosure = disclose(policy, item.item_kind, approval)
+            if disclosure is None:  # pragma: no cover - narrative is always disclosed
+                raise ValueError("an insight is always disclosed")
+            rendered = item.rendered
+            overlay = lower_third(
+                item.localized, (rendered.headline, rendered.claims), disclosure, timing
+            )
+        state: Literal["on_air", "rejected"] = "on_air" if decision == "approved" else "rejected"
+        # Built through the contract, not copied, so the decided item is checked like any other.
+        return lambda n: TenantItemEntry(
+            kind="tenant_item",
+            entry_seq=n,
+            match_id=item.match_id,
+            tenant_id=item.tenant_id,
+            item_kind=item.item_kind,
+            approval_required=item.approval_required,
+            state=state,
+            localized=item.localized,
+            rendered=item.rendered,
+            overlay=overlay,
+            attempts=item.attempts,
+            approval=approval,
         )
 
     async def correction(

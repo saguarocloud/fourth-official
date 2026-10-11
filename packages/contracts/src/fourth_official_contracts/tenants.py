@@ -81,6 +81,9 @@ class TenantPolicy(WireModel):
     max_items_per_minute: Annotated[int, Field(ge=1, le=30)]
     templates: Annotated[tuple[Template, ...], Field(min_length=1, max_length=4, strict=False)]
     correction_behaviour: CorrectionBehaviour
+    # Who decides on held items. The demo has no sign-in, so a decision is recorded against the
+    # partner's duty editor; with Entra ID it is the signed-in editor (docs/DECISIONS.md).
+    duty_editor: EditorName
 
     @model_validator(mode="after")
     def _coherent(self) -> "TenantPolicy":
@@ -135,6 +138,23 @@ class Approval(WireModel):
     editor: EditorName
     decided_at: UtcTimestamp
     decision: Literal["approved", "rejected"]
+    # Why the editor said no: kept with the item and shown in its trace.
+    reason: (
+        Annotated[
+            str,
+            StringConstraints(strip_whitespace=True, min_length=1, max_length=200),
+            AfterValidator(_line),
+        ]
+        | None
+    ) = None
+
+    @model_validator(mode="after")
+    def _a_rejection_and_only_a_rejection_says_why(self) -> "Approval":
+        if self.decision == "rejected" and self.reason is None:
+            raise ValueError("a rejection gives its reason")
+        if self.decision == "approved" and self.reason is not None:
+            raise ValueError("an approval carries no reason")
+        return self
 
 
 TENANT_POLICY_ADAPTER: TypeAdapter[TenantPolicy] = TypeAdapter(TenantPolicy)

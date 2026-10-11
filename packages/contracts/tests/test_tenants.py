@@ -33,6 +33,7 @@ POLICY: dict[str, Any] = {
     "maxItemsPerMinute": 4,
     "templates": ["lower_third", "stat_card", "correction_strap", "score_bug"],
     "correctionBehaviour": "auto-amend",
+    "dutyEditor": "L. Vogt",
 }
 
 LOCALIZED: dict[str, Any] = {
@@ -408,9 +409,9 @@ def approval_case(state: str, required: bool, approval: dict[str, Any] | None) -
         ("pending_approval", True, None, True),
         ("pending_approval", False, None, False),
         ("pending_approval", True, APPROVED, False),
-        ("rejected", True, {**APPROVED, "decision": "rejected"}, True),
+        ("rejected", True, {**APPROVED, "decision": "rejected", "reason": "Off tone"}, True),
         ("rejected", True, None, False),
-        ("on_air", True, {**APPROVED, "decision": "rejected"}, False),
+        ("on_air", True, {**APPROVED, "decision": "rejected", "reason": "Off tone"}, False),
     ],
 )
 def test_approval_and_state_agree(
@@ -430,3 +431,36 @@ def test_a_reviewed_label_needs_the_approval_behind_it() -> None:
 
     with pytest.raises(ValidationError):
         parse_feed_entry(data)
+
+
+# --- Editors' decisions ------------------------------------------------------------------------
+
+
+def test_a_policy_names_its_duty_editor() -> None:
+    assert parse_tenant_policy(POLICY).duty_editor == "L. Vogt"
+    with pytest.raises(ValidationError):
+        parse_tenant_policy({**POLICY, "dutyEditor": "nobody<script>"})
+
+
+def test_an_approval_carries_no_reason() -> None:
+    with pytest.raises(ValidationError):
+        parse_feed_entry(approval_case("on_air", True, {**APPROVED, "reason": "Fine"}))
+
+
+def test_a_rejection_says_why() -> None:
+    rejected = {**APPROVED, "decision": "rejected", "reason": "Wrong tone for our audience"}
+
+    assert parse_feed_entry(approval_case("rejected", True, rejected)).approval.reason == (  # type: ignore[union-attr]
+        "Wrong tone for our audience"
+    )
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [None, "", "   ", "two\nlines", "x" * 201],
+)
+def test_a_rejection_without_one_clear_reason_is_refused(reason: str | None) -> None:
+    rejected = {**APPROVED, "decision": "rejected", "reason": reason}
+
+    with pytest.raises(ValidationError):
+        parse_feed_entry(approval_case("rejected", True, rejected))

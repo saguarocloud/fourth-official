@@ -14,3 +14,4 @@ latencyBudgetMs: 10000
 maxItemsPerMinute: 6
 templates: [lower_third, stat_card, correction_strap, score_bug]
 correctionBehaviour: retract-and-notify
+dutyEditor: T. Ibarra

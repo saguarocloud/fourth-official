@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import FastAPI, Response
 from pydantic import BaseModel, ConfigDict
 
+from fourth_official_api.decision_routes import decision_router
 from fourth_official_api.explainers import (
     foundry_explainer,
     foundry_localizer_for,
@@ -106,6 +107,7 @@ def create_app(
         return Health(status="ok", service=SERVICE_NAME, version=settings.version)
 
     app.include_router(matchday_router(_summaries(store)))
+    app.include_router(decision_router())
     docs = [path for path in (app.docs_url, app.redoc_url) if path is not None]
     app.add_middleware(SecurityHeaders, docs_paths=docs)
     return app

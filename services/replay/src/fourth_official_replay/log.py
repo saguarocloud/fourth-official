@@ -13,6 +13,14 @@ from dataclasses import dataclass
 from fourth_official_contracts import FeedEntry
 
 
+class FeedFinishedError(RuntimeError):
+    """The run is over: nothing more is published on this feed until the next run."""
+
+
+class StaleRunError(RuntimeError):
+    """An entry built for an earlier run of the matchday."""
+
+
 @dataclass(frozen=True, slots=True)
 class FeedView:
     """What a reader sees: the run (generation) it belongs to, entries, and whether it is done."""
@@ -57,11 +65,16 @@ class FeedLog:
             self._finished = False
             self._changed.notify_all()
 
-    async def publish(self, build: Callable[[int], FeedEntry]) -> FeedEntry:
-        """Append the entry `build` makes for the next number, and wake every waiting reader."""
+    async def publish(
+        self, build: Callable[[int], FeedEntry], *, generation: int | None = None
+    ) -> FeedEntry:
+        """Append the entry `build` makes for the next number, and wake every waiting reader.
+        With `generation`, the entry is refused if a new run has started since."""
         async with self._changed:
+            if generation is not None and generation != self._generation:
+                raise StaleRunError(f"the feed of {self.match_id} has started a new run")
             if self._finished:
-                raise RuntimeError(f"the feed of {self.match_id} is finished")
+                raise FeedFinishedError(f"the feed of {self.match_id} is finished")
             number = len(self._entries) + 1
             entry = build(number)
             if entry.match_id != self.match_id:

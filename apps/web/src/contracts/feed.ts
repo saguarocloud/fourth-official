@@ -190,6 +190,7 @@ export type Summary = string;
 export type Decidedat = string;
 export type Decision = "approved" | "rejected";
 export type Editor = string;
+export type Reason2 = string | null;
 export type Approvalrequired = boolean;
 /**
  * @maxItems 99
@@ -236,7 +237,7 @@ export type Score1 = string;
 export type Template3 = "score_bug";
 export type Label1 = string | null;
 export type Mode = "label-all" | "label-unless-approved" | "eu-strict";
-export type Reason2 = "ai_generated" | "ai_assisted_reviewed" | "data";
+export type Reason3 = "ai_generated" | "ai_assisted_reviewed" | "data";
 export type Itemid1 = string;
 export type Locale2 = "en-GB" | "es-MX" | "de-DE";
 export type Priority = number;
@@ -437,6 +438,7 @@ export interface Approval {
   decidedAt: Decidedat;
   decision: Decision;
   editor: Editor;
+  reason?: Reason2;
 }
 export interface LocalizedInsight {
   asOfSeq: Asofseq3;
@@ -496,5 +498,5 @@ export interface ScoreBug {
 export interface Disclosure {
   label: Label1;
   mode: Mode;
-  reason: Reason2;
+  reason: Reason3;
 }

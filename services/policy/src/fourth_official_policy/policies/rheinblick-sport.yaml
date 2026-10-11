@@ -14,3 +14,4 @@ latencyBudgetMs: 8000
 maxItemsPerMinute: 4
 templates: [lower_third, stat_card, correction_strap, score_bug]
 correctionBehaviour: auto-amend
+dutyEditor: L. Vogt

@@ -46,6 +46,7 @@ def policy(tenant: str, locale: str, **changes: object) -> TenantPolicy:
             "maxItemsPerMinute": 6,
             "templates": ["lower_third", "correction_strap"],
             "correctionBehaviour": "auto-amend",
+            "dutyEditor": "R. Hale",
             **changes,
         }
     )

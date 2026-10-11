@@ -68,6 +68,11 @@
       "title": "Displayname",
       "type": "string"
     },
+    "dutyEditor": {
+      "pattern": "^[A-Z][A-Za-z.' -]{1,59}$",
+      "title": "Dutyeditor",
+      "type": "string"
+    },
     "latencyBudgetMs": {
       "maximum": 30000,
       "minimum": 1000,
@@ -157,7 +162,8 @@
     "latencyBudgetMs",
     "maxItemsPerMinute",
     "templates",
-    "correctionBehaviour"
+    "correctionBehaviour",
+    "dutyEditor"
   ],
   "title": "TenantPolicy",
   "type": "object"
