@@ -16,7 +16,7 @@ Agents read the match through an MCP server (`services/match-data`), never direc
 - **Output schemas:** every tool returns a typed contract model and publishes its output schema.
 - **Pages:** `get_events` returns at most 100 events and the seq to continue from.
 - **Voids:** a voided goal leaves the score from the VAR decision that overturned it, never earlier. Scorer amendments issued after the final whistle are corrections for the correction cascade; the event stream keeps events as first published.
-- **HTTP:** the server binds loopback by default. In a container it binds all interfaces and accepts only loopback and its listed public host names, which guards against DNS rebinding. Authentication is enforced at the ingress in front of it.
+- **HTTP:** the server binds loopback by default. In a container it binds all interfaces and accepts only loopback and the host names it is served under (`--allowed-host`, or `MATCH_DATA_ALLOWED_HOSTS`, comma-separated), which guards against DNS rebinding. In Azure it sits behind the Container Apps environment's internal ingress: only apps in the environment can reach it, never the internet. `GET /healthz` answers on any host, so the platform's probes reach it by address, and reports the release from `APP_VERSION`.
 - **Tested promise:** a test checks that under any live position, every snapshot and moment served equals what the published events alone give.
 - **Numbers:** all numbers come from the stats engine. An agent quotes them by snapshot ID in claim markup (ADR-006) and never recomputes them.
 - **Store:** the demo store replays the fixed matchday in memory. A store backed by Cosmos DB will implement the same `MatchStore` interface.
