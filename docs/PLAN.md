@@ -44,7 +44,7 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Verifier, LLM judge layer (Foundry evaluation)
 - [x] Analyst agent (Agent Framework on Foundry, Match Data MCP) with verification loop and fallbacks (docs/explain.md)
 - [x] Match replay and live feed: moments, verified insights and corrections, served by the API (docs/replay.md)
-- [ ] Deploy the Analyst: internal Match Data app, agents identity and Foundry settings on the API
+- [ ] Deploy the Analyst: internal Match Data app, agents identity and Foundry settings on the API, and a durable start ledger (Blob) so the spend guards survive scale-to-zero
 - [ ] Match Live screen in the web app, fed by the stream
 - [x] Match Data MCP server: read-only, time-bounded tools (docs/match-data.md)
 - [ ] Match Data MCP server: Container App, Entra-authenticated ingress, Cosmos-backed store

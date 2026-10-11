@@ -19,7 +19,7 @@ The feed is a wire contract (`FeedEntry`, `packages/contracts/schemas/feed-entry
 ## Matchday
 
 `Matchday` replays every match of the demo matchday together.
-- **Spend guards:** a run spends model tokens. Only one runs at a time, runs start at most once per cooldown (15 minutes, counted from the start of the last run), and no more than 24 start in any 24 hours. The guards live in the process, so the API runs as one replica, which a policy test pins.
+- **Spend guards:** a run spends model tokens. Only one runs at a time, runs start at most once per cooldown (15 minutes, counted from the start of the last run), and no more than 24 start in any 24 hours. The guards read when runs started from a `StartLedger`, and the API runs as one replica, which a policy test pins. The default ledger is in memory, which is enough while the API explains with templates (free). Before the Analyst spends real tokens in a deployment, the ledger must be durable: a replica that scales to zero would otherwise forget its starts.
 - **Robust runs:** a moment whose explanation fails is logged and the match carries on. However a run ends, no explanation outlives it. A run that crashes reports `failed`.
 - **One feed per match, reset per run:** each run starts a new generation of the same feed, waking every reader, so a page opened before the run started follows it.
 - **Explainer choice:** with Foundry configured (`FOUNDRY_PROJECT_ENDPOINT`, `MATCH_DATA_URL` and the agents identity's `AZURE_CLIENT_ID`), moments are explained by the Analyst (`docs/explain.md`). Without it, they are explained by the deterministic templates alone, at no cost.

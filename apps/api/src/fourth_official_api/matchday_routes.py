@@ -9,11 +9,12 @@ over instead of skipping entries.
 import asyncio
 import json
 import time
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Header, HTTPException, Path, Query, Request, Response
 from fastapi.responses import StreamingResponse
+from starlette.types import Receive, Scope, Send
 
 from fourth_official_contracts import WireModel
 from fourth_official_replay import FeedLog, Matchday, MatchdayBusyError
@@ -82,6 +83,20 @@ async def events(
             return
         if not view.entries:
             yield ": keep-alive\n\n"
+
+
+class _SlotResponse(StreamingResponse):
+    """A stream that gives its slot back however the response ends, even if it never starts."""
+
+    def __init__(self, *args: Any, release: Callable[[], None], **kwargs: Any) -> None:  # noqa: ANN401
+        super().__init__(*args, **kwargs)
+        self._release = release
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            self._release()
 
 
 def matchday_router(
@@ -155,17 +170,10 @@ def matchday_router(
         if streams.locked():
             raise HTTPException(status_code=503, detail="too many open streams; try again soon")
         await streams.acquire()
-
-        async def limited() -> AsyncGenerator[str]:
-            try:
-                generation = log.generation
-                async for chunk in events(log, generation, resume_point(last_event_id, generation)):
-                    yield chunk
-            finally:
-                streams.release()
-
-        return StreamingResponse(
-            limited(),
+        generation = log.generation
+        return _SlotResponse(
+            events(log, generation, resume_point(last_event_id, generation)),
+            release=streams.release,
             media_type="text/event-stream",
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
         )

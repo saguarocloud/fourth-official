@@ -1,6 +1,7 @@
 """Replaying a match publishes its clock, moments, verified insights and corrections, in order."""
 
 import asyncio
+import importlib
 from functools import cache
 
 import anyio
@@ -24,6 +25,7 @@ from fourth_official_replay import FeedLog, ReplayConfig, replay
 from fourth_official_replay.replay import correction_summary
 from fourth_official_verifier import MatchFacts
 
+replay_module = importlib.import_module("fourth_official_replay.replay")
 PAUSES: dict[str, list[float]] = {}
 
 
@@ -224,3 +226,46 @@ def test_cancelling_a_replay_leaves_no_explanation_running() -> None:
 
     assert asyncio.run(scenario()) == 0
     assert log.finished
+
+
+def test_a_failure_publishing_one_insight_stays_with_that_moment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    record = demo_store().record("m42")
+    log = FeedLog("m42")
+    real = replay_module.render_insight
+    calls: list[int] = []
+
+    def flaky_render(*args: object, **kwargs: object) -> object:
+        calls.append(1)
+        if len(calls) == 2:
+            raise ValueError("render failed")
+        return real(*args, **kwargs)
+
+    monkeypatch.setattr(replay_module, "render_insight", flaky_render)
+
+    async def run() -> None:
+        await replay(record, log, template_only, sleep=no_wait)
+
+    anyio.run(run)
+
+    moments = [e for e in log.entries if isinstance(e, MomentEntry)]
+    insights = [e for e in log.entries if isinstance(e, InsightEntry)]
+    assert len(insights) == len(moments) - 1
+    assert log.finished
+
+
+def test_a_correction_about_an_unknown_event_is_described_generically() -> None:
+    record = demo_store().record("m42")
+    stray = EventAmended(
+        correction_id="c-m42-09",
+        match_id="m42",
+        reason="PROVIDER_RESTATEMENT",
+        issued_at=record.match.events[0].wall_clock,
+        target_event_id="m42-e9999",
+        new_version=2,
+        kind="EVENT_AMENDED",
+        changes=Amendment(assist_id=None),
+    )
+
+    assert correction_summary(record, stray) == "An event amended by the data provider"

@@ -76,17 +76,22 @@ _VOID_REASONS = {
 
 
 def correction_summary(record: MatchRecord, correction: Correction) -> str:
-    """What a correction changed, in words, rendered from the match and the squad lists."""
-    target = next(e for e in record.match.events if e.event_id == correction.target_event_id)
+    """What a correction changed, in words, rendered from the match and the squad lists. Never
+    fails: an unknown target or reason is described generically."""
+    target = next(
+        (e for e in record.match.events if e.event_id == correction.target_event_id), None
+    )
     club = getattr(target, "team_id", None)
-    what = f"{record.club_names[club]} goal" if isinstance(target, GoalEvent) and club else "Event"
-    when = f"at {target.clock.minute}'"
+    name = record.club_names.get(club, "") if club else ""
+    what = f"{name} goal" if isinstance(target, GoalEvent) and name else "An event"
+    when = f" at {target.clock.minute}'" if target is not None else ""
+    why = _VOID_REASONS.get(correction.reason, "by a correction")
     if isinstance(correction, EventVoided):
-        return f"{what} {when} ruled out {_VOID_REASONS[correction.reason]}"
+        return f"{what}{when} ruled out {why}"
     new_scorer = correction.changes.scorer_id
     if new_scorer is not None and new_scorer in record.players:
-        return f"{what} {when} credited to {record.players[new_scorer].name}"
-    return f"{what} {when} amended {_VOID_REASONS[correction.reason]}"
+        return f"{what}{when} credited to {record.players[new_scorer].name}"
+    return f"{what}{when} amended {why}"
 
 
 def _correction_entry(
@@ -140,16 +145,22 @@ class _Replay:
         return published
 
     async def explain(self, moment: Moment) -> None:
+        """Explain one moment and publish its insight. Whatever goes wrong is logged and stays
+        with this moment: the match and the other moments carry on."""
         try:
             async with self.slots:
                 explanation = await self.explainer(moment, self.facts)
-        except Exception:  # one moment's failure must never stop the match or lose the others
+            if explanation.insight is None:
+                logger.warning("no verified insight for %s", moment.moment_id)
+                return
+            await self._publish_insight(explanation)
+        except Exception:
             logger.exception("explaining %s failed", moment.moment_id)
-            return
-        if explanation.insight is None:
-            logger.warning("no verified insight for %s", moment.moment_id)
-            return
+
+    async def _publish_insight(self, explanation: Explanation) -> None:
         insight = explanation.insight
+        if insight is None:  # pragma: no cover - checked by the caller
+            return
         headline, claims = render_insight(insight, self.facts)
         await self.log.publish(
             lambda n: InsightEntry(

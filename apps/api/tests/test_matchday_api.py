@@ -1,6 +1,7 @@
 """The matchday API: list matches, start the replay, read or stream each match's feed."""
 
 import asyncio
+import contextlib
 import json
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
@@ -330,3 +331,38 @@ def test_a_long_feed_is_paged_and_not_finished_until_the_last_page(
     assert (len(first["entries"]), first["hasMore"], first["finished"]) == (10, True, False)
     assert (len(last["entries"]), last["hasMore"], last["finished"]) == (5, False, True)
     assert first["generation"] == 1
+
+
+def test_a_stream_that_fails_before_it_starts_gives_its_slot_back(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(matchday_routes, "MAX_STREAMS", 1)
+    day = Matchday(demo_store(), template_only, sleep=no_wait)
+    app = create_app(Settings(version="test"), matchday=day)
+
+    async def scenario() -> list[int]:
+        app.state.matchday = day
+        statuses: list[int] = []
+        scope = {
+            "type": "http",
+            "method": "GET",
+            "path": "/api/matches/m42/stream",
+            "headers": [],
+            "query_string": b"",
+            "app": app,
+        }
+
+        async def receive() -> dict[str, object]:
+            return {"type": "http.disconnect"}
+
+        async def gone(message: dict[str, object]) -> None:
+            if message["type"] == "http.response.start":
+                statuses.append(int(message["status"]))  # type: ignore[call-overload]
+                raise OSError("client went away")
+
+        for _ in range(3):
+            with contextlib.suppress(OSError):
+                await app(scope, receive, gone)  # type: ignore[arg-type]
+        return statuses
+
+    assert anyio.run(scenario) == [200, 200, 200]

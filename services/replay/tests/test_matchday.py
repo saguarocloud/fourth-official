@@ -6,7 +6,7 @@ import pytest
 from fourth_official_contracts import InsightEntry, Moment
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
-from fourth_official_replay import Matchday, ReplayConfig
+from fourth_official_replay import InMemoryLedger, Matchday, ReplayConfig
 from fourth_official_replay.matchday import MatchdayBusyError
 from fourth_official_verifier import MatchFacts
 
@@ -165,3 +165,18 @@ def test_stopping_cancels_a_run_under_way() -> None:
 
     assert not day.running
     assert all(day.feed(m.match_id).finished for m in day.status())
+
+
+def test_the_guards_read_starts_from_the_ledger_so_a_durable_one_survives_restarts() -> None:
+    shared = InMemoryLedger()
+
+    async def run() -> None:
+        first = Matchday(demo_store(), template_only, sleep=no_wait, ledger=shared)
+        await first.start(now=1_000.0)
+        await first.wait()
+        # A new process (a replica that scaled to zero and back) with the same ledger.
+        second = Matchday(demo_store(), template_only, sleep=no_wait, ledger=shared)
+        with pytest.raises(MatchdayBusyError, match="again in"):
+            await second.start(now=1_100.0)
+
+    anyio.run(run)
