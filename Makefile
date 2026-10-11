@@ -11,7 +11,7 @@ check-python:
 	uv run ruff check .
 	uv run ruff format --check .
 	uv run mypy
-	uv run pytest --cov
+	uv run pytest -n auto --cov
 
 check-web:
 	cd apps/web && npm run lint && npm run format:check && npm run typecheck && npm run coverage

@@ -3,6 +3,7 @@ backed by Cosmos DB will expose the same interface."""
 
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
+from functools import cache
 from types import MappingProxyType
 from typing import Protocol
 
@@ -106,8 +107,9 @@ class InMemoryStore:
         return InMemoryStore(MappingProxyType({**self.records, match_id: updated}))
 
 
+@cache
 def demo_store() -> InMemoryStore:
-    """The fixed demo matchday, fully played."""
+    """The fixed demo matchday, fully played. Built once per process: the store is immutable."""
     records: dict[str, MatchRecord] = {}
     for setup in demo_matchday():
         home, away = setup.home.squad, setup.away.squad
