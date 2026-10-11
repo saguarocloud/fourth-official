@@ -31,7 +31,7 @@ The simulator generates the synthetic Meridian League matches that feed the whol
 
 ## Realism
 
-Calibrated on 200 seeded matches against public aggregate norms for top-flight football. `tests/test_engine.py` checks 60 matches against tight bounds and three style extremes against broad ones.
+Calibrated on 200 seeded matches (seeds 5000–5199, `tests/matches.py` setup) against public aggregate norms for top-flight football. Other seed ranges differ by normal sampling noise of roughly 5–10%. `tests/test_engine.py` checks 60 matches against tight bounds and three style extremes against broad ones.
 
 | Statistic (per match, 200 seeds) | Calibration | Test bound (60 seeds) |
 |---|---|---|
@@ -40,7 +40,7 @@ Calibrated on 200 seeded matches against public aggregate norms for top-flight f
 | Shots | 24.2 | 20–28 |
 | Shots on target | 38% | 32–44% |
 | Goals | 2.71 | 2.2–3.3 |
-| Goals assisted | 81% | 65–90% |
+| Goals assisted | 81% (generous: a pass plus one dribble counts; real figures are about 70–75%) | 65–90% |
 | Fouls | 22.3 | 18–27 |
 | Cards | 3.9 | 2.8–5 |
 | Sendings-off | 0.12 | ≤ 0.3 |
