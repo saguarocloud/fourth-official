@@ -8,7 +8,7 @@ requires-python = ">=3.12,<3.13"
 package = false
 
 [tool.uv.workspace]
-members = ["apps/api"]
+members = ["apps/api", "packages/contracts"]
 
 [dependency-groups]
 dev = [
@@ -26,7 +26,7 @@ dev = [
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["apps/*/src", "apps/*/tests"]
+src = ["apps/*/src", "apps/*/tests", "packages/*/src", "packages/*/tests"]
 
 [tool.ruff.lint]
 select = [
@@ -53,25 +53,32 @@ ban-relative-imports = "all"
 python_version = "3.12"
 strict = true
 warn_unreachable = true
-mypy_path = ["apps/api/src", "infra/tests"]
-files = ["apps/api/src", "apps/api/tests", "infra/tests"]
+mypy_path = ["apps/api/src", "packages/contracts/src", "packages/contracts/tests", "infra/tests"]
+files = [
+  "apps/api/src",
+  "apps/api/tests",
+  "packages/contracts/src",
+  "packages/contracts/tests",
+  "infra/tests",
+]
+plugins = ["pydantic.mypy"]
 
 # --- Tests and coverage ------------------------------------------------------
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
-testpaths = ["apps/api/tests"]
+testpaths = ["apps/api/tests", "packages/contracts/tests"]
 # Infrastructure tests need the Azure CLI with Bicep; run them with `make check-infra`.
-pythonpath = ["infra/tests"]
+pythonpath = ["infra/tests", "packages/contracts/tests"]
 markers = ["integration: needs emulators or Azure; excluded from the default run"]
 xfail_strict = true
 filterwarnings = ["error"]
 
 [tool.coverage.run]
 branch = true
-source = ["fourth_official_api"]
+source = ["fourth_official_api", "fourth_official_contracts"]
 
 [tool.coverage.report]
 fail_under = 80
 show_missing = true
 skip_covered = true
-exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError", "if __name__ == .__main__.:"]

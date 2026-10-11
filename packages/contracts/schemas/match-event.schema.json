@@ -1,0 +1,1564 @@
+{
+  "$defs": {
+    "CardEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "card": {
+          "enum": [
+            "yellow",
+            "second_yellow",
+            "red"
+          ],
+          "title": "Card",
+          "type": "string"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "foulEventId": {
+          "anyOf": [
+            {
+              "pattern": "^m\\d+-e\\d{4,}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Fouleventid"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "CARD",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "card",
+        "foulEventId"
+      ],
+      "title": "CardEvent",
+      "type": "object"
+    },
+    "CarryEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "end": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "CARRY",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "origin",
+        "end"
+      ],
+      "title": "CarryEvent",
+      "type": "object"
+    },
+    "ClearanceEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "CLEARANCE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "at"
+      ],
+      "title": "ClearanceEvent",
+      "type": "object"
+    },
+    "FoulEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "FOUL",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "victimId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Victimid",
+          "type": "string"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "at",
+        "victimId"
+      ],
+      "title": "FoulEvent",
+      "type": "object"
+    },
+    "GoalEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "assistId": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}-\\d{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Assistid"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "ownGoal": {
+          "title": "Owngoal",
+          "type": "boolean"
+        },
+        "scoreAfter": {
+          "$ref": "#/$defs/Score"
+        },
+        "scorerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Scorerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "shotEventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Shoteventid",
+          "type": "string"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "GOAL",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type",
+        "teamId",
+        "scorerId",
+        "assistId",
+        "ownGoal",
+        "shotEventId",
+        "scoreAfter"
+      ],
+      "title": "GoalEvent",
+      "type": "object"
+    },
+    "InterceptionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "INTERCEPTION",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "at"
+      ],
+      "title": "InterceptionEvent",
+      "type": "object"
+    },
+    "MatchClock": {
+      "additionalProperties": false,
+      "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
+      "properties": {
+        "minute": {
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Period",
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Second",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "period",
+        "minute",
+        "second"
+      ],
+      "title": "MatchClock",
+      "type": "object"
+    },
+    "OffsideEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "OFFSIDE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "at"
+      ],
+      "title": "OffsideEvent",
+      "type": "object"
+    },
+    "PassEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "end": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "ground",
+            "lofted",
+            "through",
+            "cross",
+            "switch"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "outcome": {
+          "enum": [
+            "complete",
+            "incomplete"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "receiverId": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}-\\d{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Receiverid"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "speedKmh": {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "title": "Speedkmh",
+          "type": "number"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "PASS",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "origin",
+        "end",
+        "outcome",
+        "receiverId",
+        "kind",
+        "speedKmh"
+      ],
+      "title": "PassEvent",
+      "type": "object"
+    },
+    "PeriodEndEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "type": {
+          "const": "PERIOD_END",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type"
+      ],
+      "title": "PeriodEndEvent",
+      "type": "object"
+    },
+    "PeriodStartEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "type": {
+          "const": "PERIOD_START",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type"
+      ],
+      "title": "PeriodStartEvent",
+      "type": "object"
+    },
+    "PitchPoint": {
+      "additionalProperties": false,
+      "description": "A location in metres from the home side's left corner flag.",
+      "properties": {
+        "x": {
+          "maximum": 105.0,
+          "minimum": 0.0,
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "maximum": 68.0,
+          "minimum": 0.0,
+          "title": "Y",
+          "type": "number"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "PitchPoint",
+      "type": "object"
+    },
+    "PossessionChangeEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "cause": {
+          "enum": [
+            "tackle",
+            "interception",
+            "out_of_play",
+            "foul",
+            "shot_end",
+            "other"
+          ],
+          "title": "Cause",
+          "type": "string"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "POSSESSION_CHANGE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type",
+        "teamId",
+        "cause"
+      ],
+      "title": "PossessionChangeEvent",
+      "type": "object"
+    },
+    "PressureEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "intensity": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Intensity",
+          "type": "number"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "targetId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Targetid",
+          "type": "string"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "PRESSURE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "at",
+        "targetId",
+        "intensity"
+      ],
+      "title": "PressureEvent",
+      "type": "object"
+    },
+    "SaveEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "shotEventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Shoteventid",
+          "type": "string"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "SAVE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "shotEventId"
+      ],
+      "title": "SaveEvent",
+      "type": "object"
+    },
+    "Score": {
+      "additionalProperties": false,
+      "properties": {
+        "away": {
+          "minimum": 0,
+          "title": "Away",
+          "type": "integer"
+        },
+        "home": {
+          "minimum": 0,
+          "title": "Home",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "home",
+        "away"
+      ],
+      "title": "Score",
+      "type": "object"
+    },
+    "SetPieceEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "kick_off",
+            "corner",
+            "free_kick",
+            "throw_in",
+            "goal_kick",
+            "penalty"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "SET_PIECE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "kind",
+        "at"
+      ],
+      "title": "SetPieceEvent",
+      "type": "object"
+    },
+    "ShotEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "bodyPart": {
+          "enum": [
+            "right_foot",
+            "left_foot",
+            "head",
+            "other"
+          ],
+          "title": "Bodypart",
+          "type": "string"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "origin": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "outcome": {
+          "enum": [
+            "goal",
+            "saved",
+            "off_target",
+            "blocked",
+            "woodwork"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "pressure": {
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Pressure",
+          "type": "number"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "speedKmh": {
+          "maximum": 200.0,
+          "minimum": 0.0,
+          "title": "Speedkmh",
+          "type": "number"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "SHOT",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "origin",
+        "bodyPart",
+        "outcome",
+        "speedKmh",
+        "pressure"
+      ],
+      "title": "ShotEvent",
+      "type": "object"
+    },
+    "SubstitutionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "playerOffId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playeroffid",
+          "type": "string"
+        },
+        "playerOnId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playeronid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "SUBSTITUTION",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type",
+        "teamId",
+        "playerOffId",
+        "playerOnId"
+      ],
+      "title": "SubstitutionEvent",
+      "type": "object"
+    },
+    "TackleEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "at": {
+          "$ref": "#/$defs/PitchPoint"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "opponentId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Opponentid",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "won",
+            "lost"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "playerId": {
+          "pattern": "^[A-Z]{3}-\\d{2}$",
+          "title": "Playerid",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "teamId": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Teamid",
+          "type": "string"
+        },
+        "type": {
+          "const": "TACKLE",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "teamId",
+        "playerId",
+        "type",
+        "at",
+        "opponentId",
+        "outcome"
+      ],
+      "title": "TackleEvent",
+      "type": "object"
+    },
+    "VarCheckEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "goal",
+            "penalty",
+            "red_card",
+            "mistaken_identity"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "targetEventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Targeteventid",
+          "type": "string"
+        },
+        "type": {
+          "const": "VAR_CHECK",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type",
+        "targetEventId",
+        "reason"
+      ],
+      "title": "VarCheckEvent",
+      "type": "object"
+    },
+    "VarDecisionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "decision": {
+          "enum": [
+            "confirmed",
+            "overturned"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "eventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Eventid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m\\d+$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "reason": {
+          "enum": [
+            "offside",
+            "foul",
+            "handball",
+            "none"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "seq": {
+          "minimum": 1,
+          "title": "Seq",
+          "type": "integer"
+        },
+        "targetEventId": {
+          "pattern": "^m\\d+-e\\d{4,}$",
+          "title": "Targeteventid",
+          "type": "string"
+        },
+        "type": {
+          "const": "VAR_DECISION",
+          "title": "Type",
+          "type": "string"
+        },
+        "version": {
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "wallClock": {
+          "format": "date-time",
+          "title": "Wallclock",
+          "type": "string"
+        }
+      },
+      "required": [
+        "eventId",
+        "matchId",
+        "seq",
+        "version",
+        "clock",
+        "wallClock",
+        "type",
+        "targetEventId",
+        "decision",
+        "reason"
+      ],
+      "title": "VarDecisionEvent",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/match-event.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "discriminator": {
+    "mapping": {
+      "CARD": "#/$defs/CardEvent",
+      "CARRY": "#/$defs/CarryEvent",
+      "CLEARANCE": "#/$defs/ClearanceEvent",
+      "FOUL": "#/$defs/FoulEvent",
+      "GOAL": "#/$defs/GoalEvent",
+      "INTERCEPTION": "#/$defs/InterceptionEvent",
+      "OFFSIDE": "#/$defs/OffsideEvent",
+      "PASS": "#/$defs/PassEvent",
+      "PERIOD_END": "#/$defs/PeriodEndEvent",
+      "PERIOD_START": "#/$defs/PeriodStartEvent",
+      "POSSESSION_CHANGE": "#/$defs/PossessionChangeEvent",
+      "PRESSURE": "#/$defs/PressureEvent",
+      "SAVE": "#/$defs/SaveEvent",
+      "SET_PIECE": "#/$defs/SetPieceEvent",
+      "SHOT": "#/$defs/ShotEvent",
+      "SUBSTITUTION": "#/$defs/SubstitutionEvent",
+      "TACKLE": "#/$defs/TackleEvent",
+      "VAR_CHECK": "#/$defs/VarCheckEvent",
+      "VAR_DECISION": "#/$defs/VarDecisionEvent"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/PassEvent"
+    },
+    {
+      "$ref": "#/$defs/CarryEvent"
+    },
+    {
+      "$ref": "#/$defs/ShotEvent"
+    },
+    {
+      "$ref": "#/$defs/SaveEvent"
+    },
+    {
+      "$ref": "#/$defs/TackleEvent"
+    },
+    {
+      "$ref": "#/$defs/InterceptionEvent"
+    },
+    {
+      "$ref": "#/$defs/ClearanceEvent"
+    },
+    {
+      "$ref": "#/$defs/PressureEvent"
+    },
+    {
+      "$ref": "#/$defs/FoulEvent"
+    },
+    {
+      "$ref": "#/$defs/CardEvent"
+    },
+    {
+      "$ref": "#/$defs/OffsideEvent"
+    },
+    {
+      "$ref": "#/$defs/SetPieceEvent"
+    },
+    {
+      "$ref": "#/$defs/SubstitutionEvent"
+    },
+    {
+      "$ref": "#/$defs/PossessionChangeEvent"
+    },
+    {
+      "$ref": "#/$defs/GoalEvent"
+    },
+    {
+      "$ref": "#/$defs/VarCheckEvent"
+    },
+    {
+      "$ref": "#/$defs/VarDecisionEvent"
+    },
+    {
+      "$ref": "#/$defs/PeriodStartEvent"
+    },
+    {
+      "$ref": "#/$defs/PeriodEndEvent"
+    }
+  ],
+  "title": "MatchEvent"
+}
