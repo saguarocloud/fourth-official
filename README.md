@@ -28,6 +28,7 @@ make fmt       # auto-format and fix lint where safe
 | `infra/` | Bicep for Azure, with policy tests (`infra/tests`) |
 | `scripts/` | Container and deployment smoke tests |
 | `docs/` | Plan and architecture decisions |
+| `DESIGN.md` | Design system: tokens, components, rules |
 
 All changes go through pull requests; `main` is protected and must stay green. See [CONTRIBUTING.md](CONTRIBUTING.md).
 

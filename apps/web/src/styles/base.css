@@ -1,0 +1,80 @@
+html {
+  background: var(--panel-0);
+}
+
+body {
+  background: var(--panel-0);
+  color: var(--ink-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The transparent outline is what forced-colours mode (Windows High Contrast) paints. */
+:where(a, button, [tabindex]:not(main)):focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-key);
+}
+
+/* The skip link moves focus to <main>; the region itself needs no ring. */
+main:focus {
+  outline: none;
+}
+
+time,
+dd,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -3rem;
+  z-index: 10;
+  padding: var(--space-2) var(--space-3);
+  background: var(--led-white);
+  color: var(--panel-0);
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  top: var(--space-3);
+}
+
+/* LED dot matrix: unlit dots stay faintly visible, as on the physical board. */
+.led path {
+  fill: var(--led-off);
+  transition: fill var(--duration-light) var(--ease-out);
+}
+
+.led[data-tone="white"] path[data-lit="true"] {
+  fill: var(--led-white);
+}
+.led[data-tone="green"] path[data-lit="true"] {
+  fill: var(--led-green);
+}
+.led[data-tone="red"] path[data-lit="true"] {
+  fill: var(--led-red);
+}
+.led[data-tone="amber"] path[data-lit="true"] {
+  fill: var(--led-amber);
+}
+.led[data-tone="blue"] path[data-lit="true"] {
+  fill: var(--led-blue);
+}
+.led[data-tone="violet"] path[data-lit="true"] {
+  fill: var(--led-violet);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+  }
+}

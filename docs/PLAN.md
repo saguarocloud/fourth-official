@@ -12,7 +12,7 @@ Running checklist. Update daily. Times are Mexico City.
 - [x] Deployment model chosen: Bicep + azd, infra local, apps via GitHub Actions with workload identity federation (ADR-004)
 - [x] Tooling and CI pull request (api and web skeletons, quality gates) (#1)
 - [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow) (#3)
-- [ ] Design system pull request (impeccable)
+- [ ] Design system pull request: LED-board control room, `DESIGN.md`, Control Room screen on replay data
 - [ ] Security headers on web and api (CSP, HSTS, frame-ancestors, referrer and permissions policy)
 - [ ] Observability: wire Application Insights into both apps with OpenTelemetry and Entra ID auth (local auth is disabled)
 - [ ] API: explicit CORS allow-list when the web app starts calling it; decide whether public `/docs` stays on for judges
