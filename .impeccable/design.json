@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-11T07:48:25+00:00",
+  "generatedAt": "2026-10-11T13:41:13+00:00",
   "title": "Design System: Fourth Official",
   "extensions": {
     "colorMeta": {
@@ -296,6 +296,16 @@
         "name": "reduced-motion",
         "value": "0.01ms",
         "purpose": "All animation and transition durations under prefers-reduced-motion."
+      },
+      {
+        "name": "wire-spin",
+        "value": "900ms linear infinite",
+        "purpose": "Match Live: the 'Explaining and verifying' spinner on a drafting wire item; functional, stopped under reduced motion."
+      },
+      {
+        "name": "disclosure-chevron",
+        "value": "rotate(90deg), 220ms ease-out",
+        "purpose": "Match Live: the provenance chevron opening; stopped under reduced motion."
       }
     ],
     "breakpoints": [
@@ -381,6 +391,22 @@
       "description": "The correction pattern: what went out (red) and what replaced it (green); IN lights a beat after OUT.",
       "html": "<figure class=\"ds-sub\"><div class=\"ds-sub__panel\" data-side=\"out\"><span class=\"ds-sub__label\">Out</span><span class=\"ds-sub__led\">2-0</span></div><div class=\"ds-sub__panel\" data-side=\"in\"><span class=\"ds-sub__label\">In</span><span class=\"ds-sub__led\">1-0</span></div></figure>",
       "css": ".ds-sub { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0; width:320px; } .ds-sub__panel { display:grid; gap:8px; padding:12px; background:#07090b; border:1px solid #20272d; border-radius:2px; } .ds-sub__label { font-family: var(--font-ui, Geist, system-ui, sans-serif); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-sub__led { font-family:'Geist Mono', ui-monospace, monospace; font-size:28px; font-weight:700; letter-spacing:0.12em; } [data-side=out] .ds-sub__label, [data-side=out] .ds-sub__led { color:#ff4a3d; } [data-side=in] .ds-sub__label, [data-side=in] .ds-sub__led { color:#3ee07f; } [data-side=in] .ds-sub__led { animation:ds-light 420ms cubic-bezier(0.16,1,0.3,1) 260ms both; } @keyframes ds-light { from { color:rgb(255 255 255 / 0.07); } } @media (prefers-reduced-motion: reduce) { [data-side=in] .ds-sub__led { animation:none; } }"
+    },
+    {
+      "name": "Match Key",
+      "kind": "nav",
+      "refersTo": "match-key",
+      "description": "Match Live: one square-cut key per match; the current one is pressed (panel-3, no bevel); a running match shows a 6px red lamp and LIVE.",
+      "html": "<nav class=\"ds-mk\"><a class=\"ds-mk__key\" aria-current=\"page\" href=\"#\">ARD v KES <span class=\"ds-mk__state\" data-live=\"true\">Live</span></a><a class=\"ds-mk__key\" href=\"#\">NOR v SAL <span class=\"ds-mk__state\">FT</span></a></nav>",
+      "css": ".ds-mk { display:flex; gap:8px; } .ds-mk__key { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:12px; height:36px; padding:0 12px; border:1px solid #2d363e; border-radius:2px; background:#151a1e; box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:#a1abb4; font-size:13px; font-weight:500; letter-spacing:0.02em; font-variant-numeric:tabular-nums; text-decoration:none; transition:background 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-mk__key:hover, .ds-mk__key[aria-current=page] { background:#1c2227; color:#e9edf0; } .ds-mk__key[aria-current=page] { box-shadow:none; } .ds-mk__key:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-mk__state { display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-mk__state[data-live=true] { color:#e9edf0; } .ds-mk__state[data-live=true]::before { content:''; width:6px; height:6px; border-radius:999px; background:#ff4a3d; }"
+    },
+    {
+      "name": "Wire Item",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Match Live: one verified moment. Minute and kind (icon + label) left; headline, correction strap, claims and meta (Published lamp only when published, AI tag only when model-written, provenance disclosure) right. Retracted is struck in red; amended keeps 'As published' claims struck in violet.",
+      "html": "<article class=\"ds-wire\" data-state=\"amended\"><div class=\"ds-wire__when\"><span class=\"ds-wire__min\">61'</span><span class=\"ds-wire__kind\">Goal</span></div><div class=\"ds-wire__body\"><h3 class=\"ds-wire__head\">Okafor doubles the lead</h3><p class=\"ds-wire__strap\"><span class=\"ds-wire__strap-label\">Corrected</span>Scorer reassigned to Mensah.</p><p class=\"ds-wire__label\">As published</p><ul class=\"ds-wire__claims\"><li>Okafor's second of the season.</li></ul><p class=\"ds-wire__meta\"><span class=\"ds-wire__ai\">AI</span><span>Verified on attempt 1 · model narrator · prompt v3</span></p></div></article>",
+      "css": ".ds-wire { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:grid; grid-template-columns:7.5rem minmax(0,1fr); gap:16px; padding:24px; background:#0d1013; color:#e9edf0; font-size:14px; } .ds-wire__when { display:grid; align-content:start; gap:8px; } .ds-wire__min { font-size:20px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; } .ds-wire__kind, .ds-wire__label, .ds-wire__strap-label { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-wire__body { display:grid; gap:12px; } .ds-wire__head { margin:0; font-size:16px; font-weight:600; letter-spacing:-0.01em; } .ds-wire__strap { display:flex; gap:12px; align-items:baseline; margin:0; padding:8px 12px; border:1px solid #2d363e; border-radius:2px; background:#07090b; font-size:13px; } .ds-wire[data-state=amended] .ds-wire__strap-label { color:#bc9dff; } .ds-wire[data-state=retracted] .ds-wire__strap-label { color:#ff4a3d; } .ds-wire__label, .ds-wire__meta { margin:0; } .ds-wire__claims { margin:0; padding-left:16px; } .ds-wire[data-state=amended] .ds-wire__claims { color:#a1abb4; text-decoration:line-through; text-decoration-color:#bc9dff; text-decoration-thickness:1px; } .ds-wire[data-state=retracted] .ds-wire__head, .ds-wire[data-state=retracted] .ds-wire__claims { color:#a1abb4; text-decoration:line-through; text-decoration-color:#ff4a3d; text-decoration-thickness:1px; } .ds-wire__meta { display:flex; gap:16px; align-items:center; color:#a1abb4; font-size:13px; } .ds-wire__ai { display:inline-flex; align-items:center; height:18px; padding:0 6px; border:1px solid color-mix(in oklab, #63b4ff 60%, transparent); border-radius:2px; color:#63b4ff; font-size:10px; font-weight:700; letter-spacing:0.08em; }"
     }
   ],
   "narrative": {
@@ -439,8 +465,10 @@
       "**Do** lead every screen with a verdict line.",
       "**Do** use the 2px key radius for hardware and perfect circles for lamps.",
       "**Do** show the focus ring (2px gallery-black gap, 2px board-white ring) on every focusable element.",
-      "**Do** honour `prefers-reduced-motion`: all animation and transition durations collapse to 0.01ms.",
-      "**Do** label replay mode, synthetic data and AI content."
+      "**Do** honour `prefers-reduced-motion`: all animation and transition durations collapse to 0.01ms (Match Live also stops the verifying spinner and the provenance chevron's rotation outright).",
+      "**Do** label replay mode, synthetic data and AI content.",
+      "**Do** keep what went out visible: strike retracted text in red, and keep amended claims struck in violet under \"As published\".",
+      "**Do** let a key's label carry its state (Starting…, Matchday running, Ready in m:ss) rather than hiding why it is disabled."
     ],
     "donts": [
       "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
@@ -448,8 +476,10 @@
       "**Don't** use green, amber, red or violet for anything that is not a state; don't use blue for anything but the AI tag.",
       "**Don't** colour a clock or scoreline by state.",
       "**Don't** convey state by colour alone.",
-      "**Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms.",
-      "**Don't** use partner or tenant brand colours in the chrome; they belong only inside Broadcast Preview."
+      "**Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners and the disclosure chevron).",
+      "**Don't** use partner or tenant brand colours in the chrome; they belong only inside Broadcast Preview.",
+      "**Don't** mark moment kinds with colour; a kind is an icon and a label.",
+      "**Don't** repeat a correction's state with a lamp when its strap already names it."
     ]
   }
 }

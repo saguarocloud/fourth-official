@@ -117,6 +117,28 @@ components:
   tally-lamp:
     rounded: "{rounded.lamp}"
     size: "10px"
+  match-key:
+    backgroundColor: "{colors.panel-2}"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.key}"
+    padding: "0 12px"
+    height: "36px"
+  match-key-current:
+    backgroundColor: "{colors.panel-3}"
+    textColor: "{colors.ink-1}"
+  live-board:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "32px"
+  live-wire:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "24px 32px"
+  correction-strap:
+    backgroundColor: "{colors.panel-0}"
+    textColor: "{colors.ink-1}"
+    rounded: "{rounded.key}"
+    padding: "8px 12px"
 ---
 
 # Design System: Fourth Official
@@ -207,6 +229,8 @@ The shell is a three-column grid: top bar across, nav rail left, main wall centr
 
 The main wall leads with the page header and verdict, then the match wall: a two-column grid with 16px gaps where the featured match spans both columns and carries the largest board; other boards sit two across below. The live rail holds the latest correction as an OUT/IN board above the activity log.
 
+**Match Live** (`/match`) uses the same shell with the corrections in the live rail. The main column runs, top to bottom: page header (title, "Home v Away · Meridian League", verdict line); a controls row (`.match-live__controls`, flex, wraps, `--space-3` by `--space-4` gaps) with the match keys left and the start key right; the LED scoreboard; the minute-by-minute wire; the synthetic-data footnote. The scoreboard is one column: the scoreline field on top, a names row beneath it with each club's name under its code (the row spans the scoreline's own width, `calc(var(--scoreline-max) + 2 * var(--space-5))`), then a centred clock row (LED clock, broadcast minute, run-state lamp). The scoreline is capped at `--scoreline-max: 44rem` so the wire still shows beneath the board on a wide screen. Below 768 the board and wire pad `--space-4`, wire items drop to one column with minute and kind on one baseline, and the start key aligns left; because the rail then falls below the wire, the header shows a jump link ("2 corrections" with a Lucide ArrowDown) to `#corrections-heading`, hidden at wider widths.
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -224,7 +248,7 @@ Flat. There are no drop shadows and no glow. Depth comes from tonal layering of 
 
 ### Shadow Vocabulary
 - **Key bevel** (`box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05)`): a 1px top highlight on default keys; removed on press.
-- **Focus ring** (`box-shadow: 0 0 0 2px #07090b, 0 0 0 4px #f2f5f7`): the only outer ring, on every focusable element.
+- **Focus ring** (`box-shadow: 0 0 0 2px #07090b, 0 0 0 4px #f2f5f7`): the only outer ring, on every focusable element (`a`, `button`, `summary`, `[tabindex]` on `:focus-visible`, with a transparent 2px outline for forced-colours mode).
 
 ### Named Rules
 **The No-Glow Rule.** Lit things are lit by colour, not by blur or bloom. No glow shadows, no gradients behind readouts or charts. The one sanctioned exception is the lit tally lamp's small specular highlight (a radial gradient from #ff8a80 into led-red), which models a physical bulb.
@@ -244,6 +268,7 @@ A square-cut hardware key, as on a vision mixer; the primary key is the lit one.
 - **Hover / Active:** hover moves to panel-3; press translates 1px down and drops the bevel (160ms, ease-out).
 - **Shortcuts:** not yet implemented. When the Approvals screen adds A, R and E, the key gains a visible cap and `aria-keyshortcuts` together with the handler, never one without the other.
 - **Loading / Disabled:** spinner and `aria-busy`; disabled at 50% opacity.
+- **Label:** the key's content sits in an inline-flex, `--space-2`-gapped, `white-space: nowrap` span (`.key > span`), so an icon and label never wrap apart.
 
 ### Chips (AI tag)
 - **Style:** 18px tall, 1px blue border at 60%, blue 10px bold tracked "AI", 2px radius. Shown wherever model-written content appears. It is the only blue element.
@@ -270,7 +295,7 @@ The fourth official's dot matrix, drawn as SVG: all unlit dots in one path and a
 - **Spacing:** 1-dot gap between dots and one blank column between characters; every character has the same width, so a ticking clock never changes size.
 - **Dot size:** whole CSS pixels only (2 to 6) so dots stay on the pixel grid. Clocks use 3px; the OUT/IN board 4px; scorelines 6px.
 - **Unlit dots:** always drawn faintly (led-off), so the readout keeps its shape when values change.
-- **Scorelines scale fluidly:** the scoreline fills its field width (max 26rem on standard boards, 60rem on the featured board), so the featured match reads largest on the wall.
+- **Scorelines scale fluidly:** the scoreline fills its field width (max 26rem on standard boards, 60rem on the featured board), so the featured match reads largest on the wall. On Match Live it is capped at `--scoreline-max` (44rem).
 - **Tones:** white by default; green, red, amber, violet, blue available, used by the state rules above. Lit dots fade between values over 220ms.
 - **Accessibility:** `role="img"` with a spoken label (e.g. "Match clock 68:41"); the visual scoreline is hidden and a screen-reader heading carries full club names.
 
@@ -279,8 +304,49 @@ The fourth official's board, repurposed: what went out (red) and what replaced i
 
 **The One Moment Rule.** This is the single authored motion moment: the IN panel's lit dots light up 260ms after OUT, over 420ms ease-out, like the board being raised. No other element animates for effect.
 
+The two panels shrink to fit a narrow rail (`repeat(2, minmax(0, 1fr))`, `min-width: 0`, and the readout SVG at `max-width: 100%; height: auto`), so a long OUT or IN text scales down rather than overflowing. On Match Live the rail ("Corrections") lists every correction, newest first (empty, a 13px ink-2 sentence says what will appear there); each caption gives the summary (14px ink-1), "N published items corrected." (or "No published item rested on it.") in ink-2, and "Issued hh:mm:ss UTC" in tabular figures. When a corrected item is on the page the summary is a link to it (underline in hairline-strong, `currentColor` on hover), and the item it reaches is outlined (see Wire item, `:target`).
+
 ### Verdict line
-One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one.
+One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable.
+
+### Match keys (Match Live)
+One square-cut key per match in a `nav` labelled "Matches": 36px tall, 12px side padding, panel-2 face with strong hairline edge and the key bevel, 13px weight 500 ink-2, club codes ("ARD v KES") in tabular figures with full names for screen readers. Hover and current (`aria-current="page"`) go panel-3 and ink-1; current drops the bevel, like a pressed key. A running match adds a 6px red lamp and "LIVE" as an 11px uppercase label in ink-1; a finished one a quiet "FT" in ink-3; otherwise nothing.
+
+### Start key (Match Live)
+The primary key with a 14px Lucide Play icon; it starts the replay of the whole matchday. Its label is its state:
+- **Start matchday:** enabled.
+- **Starting…:** while the request is in flight (spinner, `aria-busy`, no icon).
+- **Matchday running:** disabled while any match runs.
+- **Ready in m:ss:** disabled during the cooldown, counting down each second.
+- **Daily limit:** disabled, with the API's reason as a note beside it ("… Ready again at hh:mm UTC.").
+
+Notes are a `role="status"` line of 13px ink-1 text led by an 8px round lamp: amber for a refusal that will clear (409, daily limit), red when the service failed. A note lapses when the running state changes.
+
+### Live scoreboard (Match Live)
+A panel-1 board padded 32px (16px below 768): the 6px-dot LED scoreline ("ARD 2-1 KES") in a recessed panel-0 field, club names in 14px ink-2 under their codes, then the clock row: 3px-dot LED clock (00:00 before kick-off), broadcast minute (16px, 600, tabular, `min-width: 4ch`) and the run state as an 11px uppercase label with a 10px lamp: "Not started" (unlit), "Live" (the lit red tally lamp with its specular highlight, label ink-1), "Full time" (unlit), "Stopped" (amber lamp). A screen-reader heading speaks "Home 2, Away 1, 61'".
+
+### Wire (Match Live)
+"Minute by minute": a panel-1 panel padded 24px by 32px holding a `role="log"` (`aria-live="polite"`, additions only) of moments, newest first, divided by hairlines.
+- **Loading:** three skeleton rows of panel-2 bars (14px and 40px), hidden from screen readers, while the stream connects and nothing has arrived.
+- **Empty:** a 64ch ink-2 sentence; before the matchday starts it invites a start and lists what will appear, once running it says the first verified moment will appear here.
+- **Reconnecting:** a `role="status"` line in amber above the list: "Connection lost. Reconnecting; nothing will be missed."
+
+### Wire item (Match Live)
+A two-column row (`7.5rem | 1fr`, `--space-4` gap, `--space-5` vertical padding; one column below 768).
+- **When:** the broadcast minute (20px, 600, tabular) over the moment kind as an 11px uppercase ink-2 label with a 14px Lucide icon. Kinds are marked by icon, never colour: Goal (CircleDot), Big chance (Crosshair), Red card (RectangleVertical), VAR (Undo2), Press eases (TrendingDown), Press rises (TrendingUp), Momentum and Tactics (Waves).
+- **Body, in order:** headline (16px, 600, -0.01em, an `h3` whose id is `moment-<id>`); the correction strap, if any; "As published" label, if amended; the claims (a 72ch list in ink-1); the meta row.
+- **Meta row:** the Published status lamp, the AI tag only when a model wrote the insight (not for the deterministic template), and the provenance disclosure.
+- **Provenance:** a `details` whose summary is a 14px Lucide ChevronRight (rotates 90deg open over `--duration-light`) and one line: "Verified on attempt N · model … · prompt …", or "Deterministic template, no model" / "… after N model attempts". Open, it lists every attempt in a recessed panel-0 block (`1.5rem | 4.5rem | 1fr`): number, model or "template", and the outcome ("passed every check" in ink-1; refusals and errors in ink-2).
+- **Targeted:** reached from a rail correction (`.wire-item:has(.wire-item__headline:target)`), the item gets a 1px hairline-strong outline offset `--space-2` with the key radius; the headline scrolls in with `--space-6` margin.
+
+States (from `itemState`):
+- **Drafting:** no insight yet. Headline "Goal detected" and a meta line "Explaining and verifying" with a spinning 14px LoaderCircle (900ms linear). No lamp, no tag.
+- **Published:** the Published status lamp (green, CircleCheck) in the meta row. The only state that shows a lamp: on corrected items the strap already names the state.
+- **Retracted** (`EVENT_VOIDED`): headline and claims drop to ink-2 and are struck through with a 1px led-red line; the strap is labelled "Retracted" in red.
+- **Amended** (`EVENT_AMENDED`): the strap is labelled "Corrected" in violet; an "As published" 11px uppercase ink-2 label introduces the original claims, struck through with a 1px led-violet line in ink-2.
+
+### Correction strap
+What changed, on the item it changed: under the headline, a recessed panel-0 strip with a strong hairline edge, 8px by 12px padding, 13px ink-1 summary led by an 11px uppercase label ("Retracted" red or "Corrected" violet).
 
 ### Brand mark
 A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), bottom row green (in), the rest unlit.
@@ -299,7 +365,9 @@ A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), 
 - **Do** lead every screen with a verdict line.
 - **Do** use the 2px key radius for hardware and perfect circles for lamps.
 - **Do** show the focus ring (2px gallery-black gap, 2px board-white ring) on every focusable element.
-- **Do** honour `prefers-reduced-motion`: all animation and transition durations collapse to 0.01ms.
+- **Do** honour `prefers-reduced-motion`: all animation and transition durations collapse to 0.01ms (Match Live also stops the verifying spinner and the provenance chevron's rotation outright).
+- **Do** keep what went out visible: strike retracted text in red, and keep amended claims struck in violet under "As published".
+- **Do** let a key's label carry its state (Starting…, Matchday running, Ready in m:ss) rather than hiding why it is disabled.
 - **Do** label replay mode, synthetic data and AI content.
 
 ### Don't:
@@ -308,7 +376,9 @@ A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), 
 - **Don't** use green, amber, red or violet for anything that is not a state; don't use blue for anything but the AI tag.
 - **Don't** colour a clock or scoreline by state.
 - **Don't** convey state by colour alone.
-- **Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms.
+- **Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners and the disclosure chevron).
+- **Don't** mark moment kinds with colour; a kind is an icon and a label.
+- **Don't** repeat a correction's state with a lamp when its strap already names it.
 - **Don't** use partner or tenant brand colours in the chrome; they belong only inside Broadcast Preview.
 
 ### Open items
