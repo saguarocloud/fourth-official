@@ -1,0 +1,286 @@
+{
+  "it-northlight-sport-in-m42-goal-HCY-s0287-a1-v1": {
+    "provenance": {
+      "algorithm": "HS256",
+      "contentHash": "c0c1580329aa2e61c838d7f777489c2339c3046c14a04bb20d6696f01a840eec",
+      "keyId": "local:fixture",
+      "record": {
+        "approval": null,
+        "attempts": [
+          {
+            "agent": "localizer",
+            "error": null,
+            "findings": [],
+            "model": "none",
+            "number": 1,
+            "outcome": "passed"
+          }
+        ],
+        "canonical": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "claims": [
+          {
+            "evidence": {
+              "eventIds": ["m42-e0286", "m42-e0287"],
+              "metricSnapshotIds": []
+            },
+            "text": "Niklas Navarro-Gil scores for Harbour City at 12': 1\u20130."
+          },
+          {
+            "evidence": {
+              "eventIds": ["m42-e0286", "m42-e0287"],
+              "metricSnapshotIds": []
+            },
+            "text": "Leon Blackwood provides the assist."
+          }
+        ],
+        "corrections": [],
+        "disclosure": {
+          "label": "AI-generated",
+          "mode": "label-unless-approved",
+          "reason": "ai_generated"
+        },
+        "feedEntry": 129,
+        "headline": "Harbour City score",
+        "insightId": "in-m42-goal-HCY-s0287-a1",
+        "issuedAt": "2026-10-11T15:00:00.000Z",
+        "issuer": "Meridian League Studios",
+        "itemId": "it-northlight-sport-in-m42-goal-HCY-s0287-a1-v1",
+        "locale": "en-GB",
+        "localized": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "matchId": "m42",
+        "state": "on_air",
+        "supersedes": null,
+        "tenantId": "northlight-sport",
+        "version": 1
+      },
+      "signature": "edFZzl1X-VhH1P_FulHejYlVMuK73mzYSdJeDyMizLw"
+    },
+    "verification": {
+      "reason": null,
+      "valid": true
+    }
+  },
+  "it-northlight-sport-in-m42-goal-HCY-s1702-a1-v1": {
+    "provenance": {
+      "algorithm": "HS256",
+      "contentHash": "a862592f3cbb2010e44ce1421c0455cd1064cb2bc6180670a5163d58e8397fd1",
+      "keyId": "local:fixture",
+      "record": {
+        "approval": null,
+        "attempts": [
+          {
+            "agent": "localizer",
+            "error": null,
+            "findings": [],
+            "model": "none",
+            "number": 1,
+            "outcome": "passed"
+          }
+        ],
+        "canonical": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "claims": [
+          {
+            "evidence": {
+              "eventIds": ["m42-e1701", "m42-e1702"],
+              "metricSnapshotIds": []
+            },
+            "text": "Nico Donnachie scores for Harbour City at 67': 2\u20130."
+          },
+          {
+            "evidence": {
+              "eventIds": ["m42-e1701", "m42-e1702"],
+              "metricSnapshotIds": []
+            },
+            "text": "Anders Yeboah provides the assist."
+          }
+        ],
+        "corrections": ["c-m42-01"],
+        "disclosure": {
+          "label": "AI-generated",
+          "mode": "label-unless-approved",
+          "reason": "ai_generated"
+        },
+        "feedEntry": 138,
+        "headline": "Harbour City score",
+        "insightId": "in-m42-goal-HCY-s1702-a1",
+        "issuedAt": "2026-10-11T15:00:00.000Z",
+        "issuer": "Meridian League Studios",
+        "itemId": "it-northlight-sport-in-m42-goal-HCY-s1702-a1-v1",
+        "locale": "en-GB",
+        "localized": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "matchId": "m42",
+        "state": "retracted",
+        "supersedes": null,
+        "tenantId": "northlight-sport",
+        "version": 1
+      },
+      "signature": "zbVYY43n_pQcORAVm9hU7ndAkuXgucRgo7NU3cUMl-w"
+    },
+    "verification": {
+      "reason": null,
+      "valid": true
+    }
+  },
+  "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v2": {
+    "provenance": {
+      "algorithm": "HS256",
+      "contentHash": "9b348b6f662f8a14ad1f07804f1492af9a96c9f92c001d09402461bf972cf2f0",
+      "keyId": "local:fixture",
+      "record": {
+        "approval": null,
+        "attempts": [
+          {
+            "agent": "template",
+            "error": null,
+            "findings": [],
+            "model": "none",
+            "number": 1,
+            "outcome": "passed"
+          }
+        ],
+        "canonical": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "claims": [
+          {
+            "evidence": {
+              "eventIds": ["m42-e2043", "m42-e2044"],
+              "metricSnapshotIds": []
+            },
+            "text": "Idris Brice\u00f1o scores for Harbour City at 89': 2\u20131."
+          },
+          {
+            "evidence": {
+              "eventIds": ["m42-e2043", "m42-e2044"],
+              "metricSnapshotIds": []
+            },
+            "text": "Leon Blackwood provides the assist."
+          }
+        ],
+        "corrections": [],
+        "disclosure": {
+          "label": "AI-generated",
+          "mode": "label-unless-approved",
+          "reason": "ai_generated"
+        },
+        "feedEntry": 163,
+        "headline": "Harbour City score",
+        "insightId": "in-m42-goal-HCY-s2044-a1",
+        "issuedAt": "2026-10-11T15:00:00.000Z",
+        "issuer": "Meridian League Studios",
+        "itemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v2",
+        "locale": "en-GB",
+        "localized": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "matchId": "m42",
+        "state": "on_air",
+        "supersedes": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v1",
+        "tenantId": "northlight-sport",
+        "version": 2
+      },
+      "signature": "huLcPsjRqhot2BfQ1BRaFEqUsqJQyqHCwUJ0sPfR-mc"
+    },
+    "verification": {
+      "reason": null,
+      "valid": true
+    }
+  },
+  "it-tribuna-austral-in-m42-goal-HCY-s0287-a1-v1": {
+    "provenance": {
+      "algorithm": "HS256",
+      "contentHash": "893746226c2e1bd0b270e53041434afde20b4752b631d47b85a87dfc8b664890",
+      "keyId": "local:fixture",
+      "record": {
+        "approval": null,
+        "attempts": [
+          {
+            "agent": "template",
+            "error": null,
+            "findings": [],
+            "model": "none",
+            "number": 1,
+            "outcome": "passed"
+          }
+        ],
+        "canonical": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "claims": [
+          {
+            "evidence": {
+              "eventIds": ["m42-e0286", "m42-e0287"],
+              "metricSnapshotIds": []
+            },
+            "text": "Niklas Navarro-Gil marca para Harbour City en el 12': 1\u20130."
+          },
+          {
+            "evidence": {
+              "eventIds": ["m42-e0286", "m42-e0287"],
+              "metricSnapshotIds": []
+            },
+            "text": "Leon Blackwood da la asistencia."
+          }
+        ],
+        "corrections": [],
+        "disclosure": {
+          "label": "Generado con IA",
+          "mode": "label-all",
+          "reason": "ai_generated"
+        },
+        "feedEntry": 131,
+        "headline": "Gol de Harbour City",
+        "insightId": "in-m42-goal-HCY-s0287-a1",
+        "issuedAt": "2026-10-11T15:00:00.000Z",
+        "issuer": "Meridian League Studios",
+        "itemId": "it-tribuna-austral-in-m42-goal-HCY-s0287-a1-v1",
+        "locale": "es-MX",
+        "localized": {
+          "agent": "template",
+          "model": "none",
+          "producedBy": "template",
+          "promptVersion": "v1.0"
+        },
+        "matchId": "m42",
+        "state": "pending_approval",
+        "supersedes": null,
+        "tenantId": "tribuna-austral",
+        "version": 1
+      },
+      "signature": "epsihMZCSnXP90VRsQYyZRPaWglEFQAkVOuDAxSCCoA"
+    },
+    "verification": {
+      "reason": null,
+      "valid": true
+    }
+  }
+}

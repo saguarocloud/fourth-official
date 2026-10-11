@@ -45,8 +45,9 @@ NO_STORE = {"Cache-Control": "no-store"}
 IDLE_SECONDS = 2.0
 # Waits between tries at signing and storing one record.
 BACKOFF = (0.2, 1.0, 3.0)
-# Reads per client per minute: a bound on a script, far above a person reading.
-READS_PER_MINUTE = 60
+# Reads per caller per minute. The web app's proxy limits each visitor (60 a minute) and reaches
+# the API as one caller, so this is a ceiling on any single caller, the web app included.
+READS_PER_MINUTE = 600
 # Verdicts kept for records read again unchanged, so a read is not a vault call each time.
 CACHED_VERDICTS = 4096
 
