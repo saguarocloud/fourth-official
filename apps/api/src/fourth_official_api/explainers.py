@@ -14,7 +14,7 @@ from fourth_official_explain.prompts import load_prompt
 from fourth_official_replay import Explainer
 from fourth_official_verifier import MatchFacts
 
-PROMPT = ("analyst", "v1.1")
+PROMPT = ("analyst", "v1.2")
 # Model aliases in the order they are tried, with each one's reasoning effort.
 MODELS: tuple[tuple[str, Literal["minimal", "low", "medium"] | None], ...] = (
     ("fast", "minimal"),
