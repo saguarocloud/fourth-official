@@ -2,6 +2,7 @@
 the match feed alone, and the same match with every partner's items.
 
 uv run python scripts/record-feed-fixture.py
+(cd apps/web && npx prettier --write src/fixtures)   # the web app's format check covers them
 """
 
 import asyncio
