@@ -89,16 +89,13 @@
   gap: var(--space-3);
 }
 
-/* On a phone the fan keeps a readable size and scrolls sideways; the boards are its text. */
 .impact__frame {
-  overflow-x: auto;
   margin-bottom: var(--space-5);
 }
 
 .impact {
   display: block;
   width: 100%;
-  min-width: 640px;
   height: auto;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-key);
@@ -288,7 +285,21 @@
   }
 }
 
+/* One layout at a time: wide beside, narrow (stacked) on a phone. A hidden one is out of the
+   accessibility tree, so the fan is announced once. */
+.impact[data-layout="narrow"] {
+  display: none;
+}
+
 @media (max-width: 720px) {
+  .impact[data-layout="wide"] {
+    display: none;
+  }
+
+  .impact[data-layout="narrow"] {
+    display: block;
+  }
+
   .change__panels,
   .incident__facts {
     grid-template-columns: minmax(0, 1fr);

@@ -30,7 +30,7 @@ function MatchCorrections({ all }: { all: readonly IncidentView[] }) {
   useEffect(() => {
     // Replayed: the cascade runs again, and focus goes to its first board (the replay is felt
     // even with reduced motion).
-    if (replay > 0) document.getElementById("first-change")?.focus();
+    if (replay > 0) document.getElementById("first-change")?.focus({ preventScroll: true });
   }, [replay]);
 
   if (incident === null) return null;

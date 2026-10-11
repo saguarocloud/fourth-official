@@ -94,13 +94,17 @@ describe("CorrectionsCenter", () => {
 
   it("draws the impact in a producer's words, and replays it", async () => {
     await played();
-    const strip = screen.getByRole("img", {
+    // Two layouts, wide and stacked for phones; CSS shows one (jsdom applies none).
+    const strips = screen.getAllByRole("img", {
       name: "Harbour City goal at 67' ruled out for offside: reached 1 insight and 3 partner items",
     });
-    expect(strip.querySelectorAll("[data-node='item']")).toHaveLength(3);
-    expect(strip).toHaveTextContent("2-0 → 1-0");
-    expect(strip).toHaveTextContent("Goal 67'");
-    expect(strip).toHaveTextContent("Northlight Sport · en-GB");
+    expect(strips.map((s) => s.getAttribute("data-layout"))).toEqual(["narrow", "wide"]);
+    for (const strip of strips) {
+      expect(strip.querySelectorAll("[data-node='item']")).toHaveLength(3);
+      expect(strip).toHaveTextContent("2-0 → 1-0");
+      expect(strip).toHaveTextContent("Goal 67'");
+      expect(strip).toHaveTextContent("Northlight Sport · en-GB");
+    }
 
     fireEvent.click(screen.getByRole("button", { name: "Replay" }));
     expect(document.querySelector(".impact[data-replay]")).not.toBeNull();
