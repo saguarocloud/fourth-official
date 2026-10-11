@@ -1,0 +1,2001 @@
+[
+  {
+    "asOfSeq": 1,
+    "clock": {
+      "minute": 0,
+      "period": 1,
+      "second": 0
+    },
+    "entrySeq": 1,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 25,
+    "clock": {
+      "minute": 1,
+      "period": 1,
+      "second": 1
+    },
+    "entrySeq": 2,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 54,
+    "clock": {
+      "minute": 2,
+      "period": 1,
+      "second": 3
+    },
+    "entrySeq": 3,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 83,
+    "clock": {
+      "minute": 3,
+      "period": 1,
+      "second": 13
+    },
+    "entrySeq": 4,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 112,
+    "clock": {
+      "minute": 4,
+      "period": 1,
+      "second": 13
+    },
+    "entrySeq": 5,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 134,
+    "clock": {
+      "minute": 5,
+      "period": 1,
+      "second": 14
+    },
+    "entrySeq": 6,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 161,
+    "clock": {
+      "minute": 6,
+      "period": 1,
+      "second": 14
+    },
+    "entrySeq": 7,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 183,
+    "clock": {
+      "minute": 7,
+      "period": 1,
+      "second": 15
+    },
+    "entrySeq": 8,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 215,
+    "clock": {
+      "minute": 8,
+      "period": 1,
+      "second": 24
+    },
+    "entrySeq": 9,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 247,
+    "clock": {
+      "minute": 9,
+      "period": 1,
+      "second": 25
+    },
+    "entrySeq": 10,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 272,
+    "clock": {
+      "minute": 10,
+      "period": 1,
+      "second": 36
+    },
+    "entrySeq": 11,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 285,
+    "clock": {
+      "minute": 12,
+      "period": 1,
+      "second": 24
+    },
+    "entrySeq": 12,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 0
+    }
+  },
+  {
+    "asOfSeq": 287,
+    "clock": {
+      "minute": 12,
+      "period": 1,
+      "second": 26
+    },
+    "entrySeq": 13,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "entrySeq": 14,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 287,
+      "clock": {
+        "minute": 12,
+        "period": 1,
+        "second": 26
+      },
+      "club": "HCY",
+      "eventIds": ["m42-e0286", "m42-e0287"],
+      "kind": "goal",
+      "matchId": "m42",
+      "metricSnapshotIds": [],
+      "momentId": "mo-m42-goal-HCY-s0287",
+      "shifts": []
+    }
+  },
+  {
+    "asOfSeq": 291,
+    "clock": {
+      "minute": 13,
+      "period": 1,
+      "second": 27
+    },
+    "entrySeq": 15,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 314,
+    "clock": {
+      "minute": 14,
+      "period": 1,
+      "second": 30
+    },
+    "entrySeq": 16,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 334,
+    "clock": {
+      "minute": 15,
+      "period": 1,
+      "second": 30
+    },
+    "entrySeq": 17,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 354,
+    "clock": {
+      "minute": 16,
+      "period": 1,
+      "second": 30
+    },
+    "entrySeq": 18,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 379,
+    "clock": {
+      "minute": 17,
+      "period": 1,
+      "second": 34
+    },
+    "entrySeq": 19,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 416,
+    "clock": {
+      "minute": 18,
+      "period": 1,
+      "second": 34
+    },
+    "entrySeq": 20,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 438,
+    "clock": {
+      "minute": 19,
+      "period": 1,
+      "second": 44
+    },
+    "entrySeq": 21,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 471,
+    "clock": {
+      "minute": 20,
+      "period": 1,
+      "second": 53
+    },
+    "entrySeq": 22,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 511,
+    "clock": {
+      "minute": 22,
+      "period": 1,
+      "second": 6
+    },
+    "entrySeq": 23,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 537,
+    "clock": {
+      "minute": 23,
+      "period": 1,
+      "second": 7
+    },
+    "entrySeq": 24,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 576,
+    "clock": {
+      "minute": 24,
+      "period": 1,
+      "second": 8
+    },
+    "entrySeq": 25,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 603,
+    "clock": {
+      "minute": 25,
+      "period": 1,
+      "second": 8
+    },
+    "entrySeq": 26,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 627,
+    "clock": {
+      "minute": 26,
+      "period": 1,
+      "second": 13
+    },
+    "entrySeq": 27,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 657,
+    "clock": {
+      "minute": 27,
+      "period": 1,
+      "second": 15
+    },
+    "entrySeq": 28,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 679,
+    "clock": {
+      "minute": 28,
+      "period": 1,
+      "second": 16
+    },
+    "entrySeq": 29,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 690,
+    "clock": {
+      "minute": 29,
+      "period": 1,
+      "second": 25
+    },
+    "entrySeq": 30,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 727,
+    "clock": {
+      "minute": 30,
+      "period": 1,
+      "second": 27
+    },
+    "entrySeq": 31,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 767,
+    "clock": {
+      "minute": 31,
+      "period": 1,
+      "second": 28
+    },
+    "entrySeq": 32,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 799,
+    "clock": {
+      "minute": 32,
+      "period": 1,
+      "second": 31
+    },
+    "entrySeq": 33,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 836,
+    "clock": {
+      "minute": 33,
+      "period": 1,
+      "second": 31
+    },
+    "entrySeq": 34,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 860,
+    "clock": {
+      "minute": 34,
+      "period": 1,
+      "second": 32
+    },
+    "entrySeq": 35,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 887,
+    "clock": {
+      "minute": 35,
+      "period": 1,
+      "second": 33
+    },
+    "entrySeq": 36,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 911,
+    "clock": {
+      "minute": 36,
+      "period": 1,
+      "second": 34
+    },
+    "entrySeq": 37,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 934,
+    "clock": {
+      "minute": 37,
+      "period": 1,
+      "second": 36
+    },
+    "entrySeq": 38,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 969,
+    "clock": {
+      "minute": 38,
+      "period": 1,
+      "second": 37
+    },
+    "entrySeq": 39,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 993,
+    "clock": {
+      "minute": 39,
+      "period": 1,
+      "second": 40
+    },
+    "entrySeq": 40,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1031,
+    "clock": {
+      "minute": 40,
+      "period": 1,
+      "second": 49
+    },
+    "entrySeq": 41,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1059,
+    "clock": {
+      "minute": 41,
+      "period": 1,
+      "second": 51
+    },
+    "entrySeq": 42,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1092,
+    "clock": {
+      "minute": 42,
+      "period": 1,
+      "second": 51
+    },
+    "entrySeq": 43,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1121,
+    "clock": {
+      "minute": 44,
+      "period": 1,
+      "second": 3
+    },
+    "entrySeq": 44,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1147,
+    "clock": {
+      "minute": 45,
+      "period": 1,
+      "second": 24
+    },
+    "entrySeq": 45,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1160,
+    "clock": {
+      "minute": 46,
+      "period": 1,
+      "second": 26
+    },
+    "entrySeq": 46,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1184,
+    "clock": {
+      "minute": 48,
+      "period": 1,
+      "second": 4
+    },
+    "entrySeq": 47,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1190,
+    "clock": {
+      "minute": 48,
+      "period": 1,
+      "second": 13
+    },
+    "entrySeq": 48,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "entrySeq": 49,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 1185,
+      "clock": {
+        "minute": 48,
+        "period": 1,
+        "second": 4
+      },
+      "club": "NGT",
+      "eventIds": ["m42-e1184", "m42-e1185"],
+      "kind": "big_chance",
+      "matchId": "m42",
+      "metricSnapshotIds": [],
+      "momentId": "mo-m42-big_chance-NGT-s1185",
+      "shifts": []
+    }
+  },
+  {
+    "asOfSeq": 1227,
+    "clock": {
+      "minute": 45,
+      "period": 2,
+      "second": 28
+    },
+    "entrySeq": 50,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1245,
+    "clock": {
+      "minute": 46,
+      "period": 2,
+      "second": 35
+    },
+    "entrySeq": 51,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1270,
+    "clock": {
+      "minute": 47,
+      "period": 2,
+      "second": 35
+    },
+    "entrySeq": 52,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1289,
+    "clock": {
+      "minute": 48,
+      "period": 2,
+      "second": 51
+    },
+    "entrySeq": 53,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1307,
+    "clock": {
+      "minute": 49,
+      "period": 2,
+      "second": 52
+    },
+    "entrySeq": 54,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1345,
+    "clock": {
+      "minute": 50,
+      "period": 2,
+      "second": 52
+    },
+    "entrySeq": 55,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1370,
+    "clock": {
+      "minute": 51,
+      "period": 2,
+      "second": 53
+    },
+    "entrySeq": 56,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1384,
+    "clock": {
+      "minute": 52,
+      "period": 2,
+      "second": 56
+    },
+    "entrySeq": 57,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1404,
+    "clock": {
+      "minute": 53,
+      "period": 2,
+      "second": 58
+    },
+    "entrySeq": 58,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1439,
+    "clock": {
+      "minute": 54,
+      "period": 2,
+      "second": 58
+    },
+    "entrySeq": 59,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1472,
+    "clock": {
+      "minute": 56,
+      "period": 2,
+      "second": 0
+    },
+    "entrySeq": 60,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1496,
+    "clock": {
+      "minute": 57,
+      "period": 2,
+      "second": 0
+    },
+    "entrySeq": 61,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1514,
+    "clock": {
+      "minute": 58,
+      "period": 2,
+      "second": 16
+    },
+    "entrySeq": 62,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1552,
+    "clock": {
+      "minute": 59,
+      "period": 2,
+      "second": 16
+    },
+    "entrySeq": 63,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1577,
+    "clock": {
+      "minute": 60,
+      "period": 2,
+      "second": 17
+    },
+    "entrySeq": 64,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1601,
+    "clock": {
+      "minute": 61,
+      "period": 2,
+      "second": 26
+    },
+    "entrySeq": 65,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1627,
+    "clock": {
+      "minute": 62,
+      "period": 2,
+      "second": 44
+    },
+    "entrySeq": 66,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1654,
+    "clock": {
+      "minute": 63,
+      "period": 2,
+      "second": 57
+    },
+    "entrySeq": 67,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1677,
+    "clock": {
+      "minute": 65,
+      "period": 2,
+      "second": 9
+    },
+    "entrySeq": 68,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1698,
+    "clock": {
+      "minute": 67,
+      "period": 2,
+      "second": 5
+    },
+    "entrySeq": 69,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1702,
+    "clock": {
+      "minute": 67,
+      "period": 2,
+      "second": 12
+    },
+    "entrySeq": 70,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 2
+    }
+  },
+  {
+    "entrySeq": 71,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 1702,
+      "clock": {
+        "minute": 67,
+        "period": 2,
+        "second": 12
+      },
+      "club": "HCY",
+      "eventIds": ["m42-e1701", "m42-e1702"],
+      "kind": "goal",
+      "matchId": "m42",
+      "metricSnapshotIds": [],
+      "momentId": "mo-m42-goal-HCY-s1702",
+      "shifts": []
+    }
+  },
+  {
+    "correction": {
+      "correctionId": "c-m42-01",
+      "issuedAt": "2026-10-24T15:27:20.000Z",
+      "kind": "EVENT_VOIDED",
+      "matchId": "m42",
+      "newVersion": 2,
+      "reason": "VAR_OFFSIDE",
+      "targetEventId": "m42-e1702"
+    },
+    "entrySeq": 72,
+    "inText": "1-0",
+    "kind": "correction",
+    "matchId": "m42",
+    "outText": "2-0",
+    "summary": "Harbour City goal at 67' ruled out for offside"
+  },
+  {
+    "asOfSeq": 1704,
+    "clock": {
+      "minute": 68,
+      "period": 2,
+      "second": 20
+    },
+    "entrySeq": 73,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1710,
+    "clock": {
+      "minute": 68,
+      "period": 2,
+      "second": 24
+    },
+    "entrySeq": 74,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "entrySeq": 75,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 1704,
+      "clock": {
+        "minute": 68,
+        "period": 2,
+        "second": 20
+      },
+      "club": "HCY",
+      "eventIds": ["m42-e1702", "m42-e1703", "m42-e1704"],
+      "kind": "var_overturn",
+      "matchId": "m42",
+      "metricSnapshotIds": [],
+      "momentId": "mo-m42-var_overturn-HCY-s1704",
+      "shifts": []
+    }
+  },
+  {
+    "asOfSeq": 1720,
+    "clock": {
+      "minute": 69,
+      "period": 2,
+      "second": 22
+    },
+    "entrySeq": 76,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "entrySeq": 77,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 1719,
+      "clock": {
+        "minute": 69,
+        "period": 2,
+        "second": 22
+      },
+      "club": "NGT",
+      "eventIds": [],
+      "kind": "pressing_collapse",
+      "matchId": "m42",
+      "metricSnapshotIds": [
+        "ms-m42-pressing_intensity-NGT-15m-s1662-v1",
+        "ms-m42-pressing_intensity-NGT-5m-s1719-v1"
+      ],
+      "momentId": "mo-m42-pressing_collapse-NGT-s1719",
+      "shifts": [
+        {
+          "after": 0.0,
+          "afterSnapshotId": "ms-m42-pressing_intensity-NGT-5m-s1719-v1",
+          "before": 0.4792,
+          "beforeSnapshotId": "ms-m42-pressing_intensity-NGT-15m-s1662-v1",
+          "metric": "pressing_intensity"
+        }
+      ]
+    }
+  },
+  {
+    "asOfSeq": 1732,
+    "clock": {
+      "minute": 70,
+      "period": 2,
+      "second": 25
+    },
+    "entrySeq": 78,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1762,
+    "clock": {
+      "minute": 71,
+      "period": 2,
+      "second": 27
+    },
+    "entrySeq": 79,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1787,
+    "clock": {
+      "minute": 72,
+      "period": 2,
+      "second": 29
+    },
+    "entrySeq": 80,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1811,
+    "clock": {
+      "minute": 73,
+      "period": 2,
+      "second": 31
+    },
+    "entrySeq": 81,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1827,
+    "clock": {
+      "minute": 74,
+      "period": 2,
+      "second": 33
+    },
+    "entrySeq": 82,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1844,
+    "clock": {
+      "minute": 75,
+      "period": 2,
+      "second": 33
+    },
+    "entrySeq": 83,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1868,
+    "clock": {
+      "minute": 76,
+      "period": 2,
+      "second": 33
+    },
+    "entrySeq": 84,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1878,
+    "clock": {
+      "minute": 78,
+      "period": 2,
+      "second": 5
+    },
+    "entrySeq": 85,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 0,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1882,
+    "clock": {
+      "minute": 78,
+      "period": 2,
+      "second": 14
+    },
+    "entrySeq": 86,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "entrySeq": 87,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 1882,
+      "clock": {
+        "minute": 78,
+        "period": 2,
+        "second": 14
+      },
+      "club": "NGT",
+      "eventIds": ["m42-e1881", "m42-e1882"],
+      "kind": "goal",
+      "matchId": "m42",
+      "metricSnapshotIds": [],
+      "momentId": "mo-m42-goal-NGT-s1882",
+      "shifts": []
+    }
+  },
+  {
+    "asOfSeq": 1883,
+    "clock": {
+      "minute": 79,
+      "period": 2,
+      "second": 22
+    },
+    "entrySeq": 88,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1903,
+    "clock": {
+      "minute": 80,
+      "period": 2,
+      "second": 38
+    },
+    "entrySeq": 89,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1934,
+    "clock": {
+      "minute": 81,
+      "period": 2,
+      "second": 40
+    },
+    "entrySeq": 90,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1955,
+    "clock": {
+      "minute": 82,
+      "period": 2,
+      "second": 41
+    },
+    "entrySeq": 91,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1961,
+    "clock": {
+      "minute": 84,
+      "period": 2,
+      "second": 4
+    },
+    "entrySeq": 92,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 1990,
+    "clock": {
+      "minute": 85,
+      "period": 2,
+      "second": 6
+    },
+    "entrySeq": 93,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 2007,
+    "clock": {
+      "minute": 86,
+      "period": 2,
+      "second": 20
+    },
+    "entrySeq": 94,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 2022,
+    "clock": {
+      "minute": 87,
+      "period": 2,
+      "second": 22
+    },
+    "entrySeq": 95,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 2042,
+    "clock": {
+      "minute": 89,
+      "period": 2,
+      "second": 22
+    },
+    "entrySeq": 96,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 1
+    }
+  },
+  {
+    "asOfSeq": 2044,
+    "clock": {
+      "minute": 89,
+      "period": 2,
+      "second": 25
+    },
+    "entrySeq": 97,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 2
+    }
+  },
+  {
+    "entrySeq": 98,
+    "kind": "moment",
+    "matchId": "m42",
+    "moment": {
+      "asOfSeq": 2044,
+      "clock": {
+        "minute": 89,
+        "period": 2,
+        "second": 25
+      },
+      "club": "HCY",
+      "eventIds": ["m42-e2043", "m42-e2044"],
+      "kind": "goal",
+      "matchId": "m42",
+      "metricSnapshotIds": [],
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "shifts": []
+    }
+  },
+  {
+    "asOfSeq": 2048,
+    "clock": {
+      "minute": 90,
+      "period": 2,
+      "second": 28
+    },
+    "entrySeq": 99,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 2
+    }
+  },
+  {
+    "asOfSeq": 2076,
+    "clock": {
+      "minute": 91,
+      "period": 2,
+      "second": 30
+    },
+    "entrySeq": 100,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 2
+    }
+  },
+  {
+    "asOfSeq": 2096,
+    "clock": {
+      "minute": 92,
+      "period": 2,
+      "second": 32
+    },
+    "entrySeq": 101,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 2
+    }
+  },
+  {
+    "asOfSeq": 2108,
+    "clock": {
+      "minute": 93,
+      "period": 2,
+      "second": 0
+    },
+    "entrySeq": 102,
+    "kind": "clock",
+    "matchId": "m42",
+    "score": {
+      "away": 1,
+      "home": 2
+    }
+  },
+  {
+    "correction": {
+      "changes": {
+        "scorerId": "HCY-22"
+      },
+      "correctionId": "c-m42-02",
+      "issuedAt": "2026-10-24T16:17:00.000Z",
+      "kind": "EVENT_AMENDED",
+      "matchId": "m42",
+      "newVersion": 2,
+      "reason": "ACCREDITATION_PANEL",
+      "targetEventId": "m42-e2044"
+    },
+    "entrySeq": 103,
+    "inText": "HCY 22",
+    "kind": "correction",
+    "matchId": "m42",
+    "outText": "HCY 19",
+    "summary": "Harbour City goal at 89' credited to Idris Brice\u00f1o"
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 104,
+    "insight": {
+      "asOfSeq": 287,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e0286", "m42-e0287"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-19}} scores for {{club:HCY}} at {{minute:12}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e0286", "m42-e0287"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:HCY}} score",
+      "insightId": "in-m42-goal-HCY-s0287-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s0287",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": [
+        "Niklas Navarro-Gil scores for Harbour City at 12': 1\u20130.",
+        "Leon Blackwood provides the assist."
+      ],
+      "headline": "Harbour City score"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-goal-HCY-s0287-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 105,
+    "insight": {
+      "asOfSeq": 1185,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1184", "m42-e1185"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:NGT-18}} misses a penalty for {{club:NGT}} at {{minute:48}}.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:NGT}} go close",
+      "insightId": "in-m42-big_chance-NGT-s1185-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-big_chance-NGT-s1185",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": ["Simon Mel\u00e9ndez misses a penalty for Northgate FC at 45+3'."],
+      "headline": "Northgate FC go close"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-big_chance-NGT-s1185-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 106,
+    "insight": {
+      "asOfSeq": 1702,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-07}} scores for {{club:HCY}} at {{minute:67}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-17}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:HCY}} score",
+      "insightId": "in-m42-goal-HCY-s1702-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s1702",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": [
+        "Nico Donnachie scores for Harbour City at 67': 2\u20130.",
+        "Anders Yeboah provides the assist."
+      ],
+      "headline": "Harbour City score"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-goal-HCY-s1702-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 107,
+    "insight": {
+      "asOfSeq": 1704,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1702", "m42-e1703", "m42-e1704"],
+            "metricSnapshotIds": []
+          },
+          "text": "VAR rules out the {{club:HCY}} goal from {{minute:67}} for offside.",
+          "type": "milestone"
+        }
+      ],
+      "headline": "VAR rules out a {{club:HCY}} goal",
+      "insightId": "in-m42-var_overturn-HCY-s1704-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-var_overturn-HCY-s1704",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": ["VAR rules out the Harbour City goal from 67' for offside."],
+      "headline": "VAR rules out a Harbour City goal"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-var_overturn-HCY-s1704-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 108,
+    "insight": {
+      "asOfSeq": 1719,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": [],
+            "metricSnapshotIds": [
+              "ms-m42-pressing_intensity-NGT-15m-s1662-v1",
+              "ms-m42-pressing_intensity-NGT-5m-s1719-v1"
+            ]
+          },
+          "text": "{{club:NGT}}'s pressing rate falls to {{value:ms-m42-pressing_intensity-NGT-5m-s1719-v1}} per opponent touch, from {{value:ms-m42-pressing_intensity-NGT-15m-s1662-v1}}.",
+          "type": "comparison"
+        }
+      ],
+      "headline": "{{club:NGT}} ease off the press",
+      "insightId": "in-m42-pressing_collapse-NGT-s1719-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-pressing_collapse-NGT-s1719",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": ["Northgate FC's pressing rate falls to 0.00 per opponent touch, from 0.48."],
+      "headline": "Northgate FC ease off the press"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-pressing_collapse-NGT-s1719-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 109,
+    "insight": {
+      "asOfSeq": 1882,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1881", "m42-e1882"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:NGT-07}} scores for {{club:NGT}} at {{minute:78}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e1881", "m42-e1882"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:NGT-05}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:NGT}} score",
+      "insightId": "in-m42-goal-NGT-s1882-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-NGT-s1882",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": [
+        "Wilfried Ashdown scores for Northgate FC at 78': 1\u20131.",
+        "Musa Tavares provides the assist."
+      ],
+      "headline": "Northgate FC score"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-goal-NGT-s1882-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 110,
+    "insight": {
+      "asOfSeq": 2044,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-19}} scores for {{club:HCY}} at {{minute:89}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:HCY}} score",
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "locale": "en",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      }
+    },
+    "kind": "insight",
+    "matchId": "m42",
+    "rendered": {
+      "claims": [
+        "Niklas Navarro-Gil scores for Harbour City at 89': 2\u20131.",
+        "Leon Blackwood provides the assist."
+      ],
+      "headline": "Harbour City score"
+    },
+    "verdict": {
+      "findings": [],
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "matchId": "m42",
+      "passed": true
+    }
+  }
+]

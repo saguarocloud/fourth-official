@@ -2,7 +2,9 @@
 
 import asyncio
 import importlib
+import json
 from functools import cache
+from pathlib import Path
 
 import anyio
 import pytest
@@ -316,3 +318,10 @@ def test_boards_for_unusual_corrections_still_light() -> None:
 
     assert correction_board(record, unknown_void) == ("EVENT", "VOID")
     assert correction_board(record, assist_removed) == ("AS PUBLISHED", "AMENDED")
+
+
+def test_the_web_app_fixture_is_this_replay() -> None:
+    """apps/web tests against a recorded m42 feed; `scripts/record-feed-fixture.py` rewrites it."""
+    fixture = Path(__file__).parents[3] / "apps/web/src/fixtures/feed-m42.json"
+
+    assert json.loads(fixture.read_text(encoding="utf-8")) == [e.to_wire() for e in featured()]

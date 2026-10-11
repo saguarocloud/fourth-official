@@ -6,7 +6,8 @@ import type { MatchdaySummary } from "@/domain/matchday";
 
 interface AppShellProps {
   readonly current: string;
-  readonly summary: MatchdaySummary;
+  /** The matchday readouts in the top bar; screens without them omit it. */
+  readonly summary?: MatchdaySummary;
   readonly studio: string;
   readonly replay: boolean;
   readonly rail?: ReactNode;

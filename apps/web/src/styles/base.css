@@ -12,7 +12,7 @@ body {
 }
 
 /* The transparent outline is what forced-colours mode (Windows High Contrast) paints. */
-:where(a, button, [tabindex]:not(main)):focus-visible {
+:where(a, button, summary, [tabindex]:not(main)):focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
   box-shadow: var(--focus-ring);

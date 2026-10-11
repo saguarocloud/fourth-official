@@ -6,7 +6,7 @@ import type { MatchdaySummary } from "@/domain/matchday";
 import { formatCost, formatLatency } from "@/lib/format";
 
 interface TopBarProps {
-  readonly summary: MatchdaySummary;
+  readonly summary?: MatchdaySummary;
   readonly studio: string;
   /** True while the screen shows a replayed synthetic matchday rather than live data. */
   readonly replay: boolean;
@@ -30,40 +30,42 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
         </div>
       </div>
 
-      <dl className="top-bar__readouts">
-        <div data-breach={!summary.withinSlo || undefined}>
-          <dt>Event to air, p95</dt>
-          <dd>
-            {summary.withinSlo ? (
-              <CircleCheck aria-hidden="true" strokeWidth={1.75} />
-            ) : (
-              <CircleAlert aria-hidden="true" strokeWidth={1.75} />
-            )}
-            <span>
-              {summary.p95LatencyMs === null
-                ? "No live matches"
-                : formatLatency(summary.p95LatencyMs, locale)}
-            </span>
-            {summary.p95LatencyMs !== null && (
-              <span className="top-bar__slo">
-                {summary.withinSlo ? "Within SLO" : "Outside SLO"}
+      {summary && (
+        <dl className="top-bar__readouts">
+          <div data-breach={!summary.withinSlo || undefined}>
+            <dt>Event to air, p95</dt>
+            <dd>
+              {summary.withinSlo ? (
+                <CircleCheck aria-hidden="true" strokeWidth={1.75} />
+              ) : (
+                <CircleAlert aria-hidden="true" strokeWidth={1.75} />
+              )}
+              <span>
+                {summary.p95LatencyMs === null
+                  ? "No live matches"
+                  : formatLatency(summary.p95LatencyMs, locale)}
               </span>
-            )}
-          </dd>
-        </div>
-        <div data-attention={summary.pendingApprovals > 0 || undefined}>
-          <dt>Pending approvals</dt>
-          <dd>{summary.pendingApprovals}</dd>
-        </div>
-        <div data-attention={summary.corrections > 0 || undefined}>
-          <dt>Corrections</dt>
-          <dd>{summary.corrections}</dd>
-        </div>
-        <div>
-          <dt>Cost so far</dt>
-          <dd>{formatCost(summary.costCents, locale)}</dd>
-        </div>
-      </dl>
+              {summary.p95LatencyMs !== null && (
+                <span className="top-bar__slo">
+                  {summary.withinSlo ? "Within SLO" : "Outside SLO"}
+                </span>
+              )}
+            </dd>
+          </div>
+          <div data-attention={summary.pendingApprovals > 0 || undefined}>
+            <dt>Pending approvals</dt>
+            <dd>{summary.pendingApprovals}</dd>
+          </div>
+          <div data-attention={summary.corrections > 0 || undefined}>
+            <dt>Corrections</dt>
+            <dd>{summary.corrections}</dd>
+          </div>
+          <div>
+            <dt>Cost so far</dt>
+            <dd>{formatCost(summary.costCents, locale)}</dd>
+          </div>
+        </dl>
+      )}
 
       <LiveClock />
     </header>

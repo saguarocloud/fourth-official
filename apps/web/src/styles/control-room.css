@@ -238,18 +238,24 @@
 
 .sub-board__panels {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-2);
 }
 
 .sub-board__panel {
   display: grid;
   justify-items: start;
+  min-width: 0;
   gap: var(--space-2);
   padding: var(--space-3);
   background: var(--panel-0);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-key);
+}
+
+.sub-board__panel svg {
+  max-width: 100%;
+  height: auto;
 }
 
 .sub-board__label {
