@@ -97,12 +97,15 @@ def _shift(moment: Moment, facts: MatchFacts) -> tuple[str, list[Line]]:
         return f"{club} ease off the press", [
             (
                 "comparison",
-                f"{club} now press {after} times per opponent touch, down from {before}.",
+                f"{club}'s pressing rate falls to {after} per opponent touch, from {before}.",
             )
         ]
     if moment.kind == "pressing_surge":
         return f"{club} step up the press", [
-            ("comparison", f"{club} now press {after} times per opponent touch, up from {before}.")
+            (
+                "comparison",
+                f"{club}'s pressing rate rises to {after} per opponent touch, from {before}.",
+            )
         ]
     return f"{club} change their game", [
         (

@@ -117,7 +117,7 @@ def test_an_unassisted_goal_has_a_single_claim() -> None:
 
 @pytest.mark.parametrize(
     ("kind", "words"),
-    [("pressing_surge", "up from"), ("momentum_swing", "momentum")],
+    [("pressing_surge", "rises to"), ("momentum_swing", "momentum")],
 )
 def test_other_shifts_have_templates_too(kind: str, words: str) -> None:
     facts, moments = demo()[0]
