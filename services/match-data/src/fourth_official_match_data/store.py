@@ -6,7 +6,14 @@ from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import Protocol
 
-from fourth_official_contracts import CLUB_NAMES, Correction, EventVoided, MatchEvent, Moment
+from fourth_official_contracts import (
+    CLUB_NAMES,
+    Correction,
+    EventVoided,
+    MatchEvent,
+    Moment,
+    VarDecisionEvent,
+)
 from fourth_official_moments.detector import detect
 from fourth_official_simulator.demo import demo_matchday
 from fourth_official_simulator.engine import play
@@ -16,7 +23,7 @@ from fourth_official_stats.prepare import PreparedMatch, prepare
 
 
 class MatchDataError(ValueError):
-    """A request the store cannot answer. The message is safe to show to the caller."""
+    """A request the store cannot answer. The message is fixed text, never the caller's input."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,7 +33,7 @@ class MatchRecord:
     players: Mapping[str, Player]
     moments: tuple[Moment, ...]
     corrections: tuple[Correction, ...]
-    # The last event published so far: nothing after it is ever returned.
+    # The last event published so far (0 before kick-off): nothing after it is ever returned.
     live_seq: int
 
     def resolve(self, as_of_seq: int | None) -> MatchEvent:
@@ -40,13 +47,35 @@ class MatchRecord:
             raise MatchDataError("no event has been published at that point")
         return published[-1]
 
+    def void_seqs(self) -> dict[str, int]:
+        """Voided events, each with the seq from which the void is in force: the VAR decision
+        that overturned it, or else the first event after the correction was issued."""
+        found: dict[str, int] = {}
+        for correction in self.corrections:
+            if not isinstance(correction, EventVoided):
+                continue
+            target = correction.target_event_id
+            decision = next(
+                (
+                    e.seq
+                    for e in self.match.events
+                    if isinstance(e, VarDecisionEvent)
+                    and e.target_event_id == target
+                    and e.decision == "overturned"
+                ),
+                None,
+            )
+            after = next(
+                (e.seq for e in self.match.events if e.wall_clock > correction.issued_at), None
+            )
+            effective = decision if decision is not None else after
+            if effective is not None:
+                found[target] = effective
+        return found
+
     def voided_at(self, event: MatchEvent) -> frozenset[str]:
-        """Events voided by corrections issued by the time of `event`."""
-        return frozenset(
-            c.target_event_id
-            for c in self.corrections
-            if isinstance(c, EventVoided) and c.issued_at <= event.wall_clock
-        )
+        """Events voided by corrections in force at `event`."""
+        return frozenset(t for t, seq in self.void_seqs().items() if seq <= event.seq)
 
 
 class MatchStore(Protocol):
@@ -69,8 +98,11 @@ class InMemoryStore:
         return found
 
     def with_live_seq(self, match_id: str, live_seq: int) -> "InMemoryStore":
-        """The same store with one match replayed only up to `live_seq`."""
-        updated = replace(self.record(match_id), live_seq=live_seq)
+        """The same store with one match replayed only up to `live_seq` (0: not started)."""
+        record = self.record(match_id)
+        if not 0 <= live_seq <= record.match.events[-1].seq:
+            raise MatchDataError("the live position must be within the match")
+        updated = replace(record, live_seq=live_seq)
         return InMemoryStore(MappingProxyType({**self.records, match_id: updated}))
 
 

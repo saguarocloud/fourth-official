@@ -12,7 +12,12 @@ Agents read the match through an MCP server (`services/match-data`), never direc
 | `get_player` | A player's name, club, shirt and position |
 | `list_moments` | Moments found so far, each with its evidence |
 
-- **Validation:** arguments are checked against their schemas (patterns, ranges, enumerations) before a tool runs. Refusals are tool errors that name the problem without echoing the input.
+- **Validation:** arguments are checked strictly against their schemas (patterns, ranges, enumerations, no type coercion, unknown arguments refused) before a tool runs. Errors may name the argument at fault, but never repeat a value the caller sent. Store refusals are fixed messages.
+- **Output schemas:** every tool returns a typed contract model and publishes its output schema.
+- **Pages:** `get_events` returns at most 100 events and the seq to continue from.
+- **Voids:** a voided goal leaves the score from the VAR decision that overturned it, never earlier. Scorer amendments issued after the final whistle are corrections for the correction cascade; the event stream keeps events as first published.
+- **HTTP:** the server binds loopback by default. In a container it binds all interfaces and accepts only loopback and its listed public host names, which guards against DNS rebinding. Authentication is enforced at the ingress in front of it.
+- **Tested promise:** a test checks that under any live position, every snapshot and moment served equals what the published events alone give.
 - **Numbers:** all numbers come from the stats engine. An agent quotes them by snapshot ID in claim markup (ADR-006) and never recomputes them.
 - **Store:** the demo store replays the fixed matchday in memory. A store backed by Cosmos DB will implement the same `MatchStore` interface.
 
