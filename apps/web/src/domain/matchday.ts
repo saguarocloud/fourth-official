@@ -93,7 +93,8 @@ export interface MatchdaySummary {
   readonly itemsPerMinute: number;
   readonly pendingApprovals: number;
   readonly corrections: number;
-  readonly p95LatencyMs: number;
+  /** Worst p95 event-to-air latency across live matches; null when nothing is live. */
+  readonly p95LatencyMs: number | null;
   readonly sloMs: number;
   readonly withinSlo: boolean;
   readonly costCents: number;
@@ -103,28 +104,33 @@ export function clubByCode(code: ClubCode): Club {
   return CLUBS[code];
 }
 
-/** Matchday headline numbers, always derived from the matches themselves. */
+/**
+ * Matchday headline numbers, always derived from the matches themselves. Throughput and latency
+ * describe live matches; approvals and corrections stay counted after full time, because the
+ * work is still open.
+ */
 export function summarise(
   matches: readonly Match[],
   { sloMs, costCents }: { readonly sloMs: number; readonly costCents: number },
 ): MatchdaySummary {
   const live = matches.filter((m) => m.status !== "full_time");
-  const sum = (pick: (m: Match) => number) => live.reduce((total, m) => total + pick(m), 0);
-  const p95LatencyMs = live.reduce((worst, m) => Math.max(worst, m.p95LatencyMs), 0);
+  const total = (from: readonly Match[], pick: (m: Match) => number) =>
+    from.reduce((sum, m) => sum + pick(m), 0);
+  const p95LatencyMs = live.length === 0 ? null : Math.max(...live.map((m) => m.p95LatencyMs));
   return {
     liveMatches: live.length,
-    itemsPerMinute: sum((m) => m.itemsPerMinute),
-    pendingApprovals: sum((m) => m.pendingApprovals),
-    corrections: sum((m) => m.corrections),
+    itemsPerMinute: total(live, (m) => m.itemsPerMinute),
+    pendingApprovals: total(matches, (m) => m.pendingApprovals),
+    corrections: total(matches, (m) => m.corrections),
     p95LatencyMs,
     sloMs,
-    withinSlo: p95LatencyMs <= sloMs,
+    withinSlo: p95LatencyMs === null || p95LatencyMs <= sloMs,
     costCents,
   };
 }
 
 export interface Verdict {
-  readonly tone: "green" | "amber" | "red";
+  readonly tone: "green" | "amber" | "red" | "neutral";
   readonly text: string;
 }
 
@@ -136,7 +142,12 @@ export function matchdayVerdict(summary: MatchdaySummary): Verdict {
       text: "Event-to-air latency is outside the SLO. Investigate before more items publish.",
     };
   }
-  const matches = `All ${summary.liveMatches} matches under control.`;
+  const matches =
+    summary.liveMatches === 0
+      ? "No matches live."
+      : summary.liveMatches === 1
+        ? "The live match is under control."
+        : `All ${summary.liveMatches} matches under control.`;
   if (summary.pendingApprovals > 0) {
     const items =
       summary.pendingApprovals === 1
@@ -144,5 +155,8 @@ export function matchdayVerdict(summary: MatchdaySummary): Verdict {
         : `${summary.pendingApprovals} items await approval.`;
     return { tone: "amber", text: `${matches} ${items}` };
   }
-  return { tone: "green", text: `${matches} Every item on air is verified.` };
+  return {
+    tone: summary.liveMatches === 0 ? "neutral" : "green",
+    text: `${matches} Nothing awaits approval.`,
+  };
 }

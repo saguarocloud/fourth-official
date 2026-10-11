@@ -29,7 +29,13 @@ export function formatMatchClock(minute: number, second: number): string {
   return `${pad2(minute)}:${pad2(second)}`;
 }
 
-/** Broadcast minute notation: `61'`, or `90+3'` in added time. */
+/** Elapsed clock to the minute broadcasters show: 68:41 elapsed is the 69th minute. */
+export function footballMinute(elapsedMinute: number): number {
+  requireNonNegativeInteger(elapsedMinute, "minute");
+  return elapsedMinute + 1;
+}
+
+/** Broadcast minute notation from a football minute: `61'`, or `90+3'` in added time. */
 export function formatMatchMinute(minute: number, period: 1 | 2): string {
   requireNonNegativeInteger(minute, "minute");
   if (minute < PERIOD_START[period]) {
@@ -44,13 +50,14 @@ export function formatLatency(milliseconds: number, locale: string): string {
   if (!Number.isFinite(milliseconds) || milliseconds < 0) {
     throw new RangeError(`latency must be a non-negative number, got ${milliseconds}`);
   }
-  if (milliseconds < MILLISECONDS_PER_SECOND) {
-    return `${Math.round(milliseconds).toLocaleString(locale)}${NBSP}ms`;
+  const rounded = Math.round(milliseconds);
+  if (rounded < MILLISECONDS_PER_SECOND) {
+    return `${rounded.toLocaleString(locale)}${NBSP}ms`;
   }
   const seconds = new Intl.NumberFormat(locale, {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-  }).format(milliseconds / MILLISECONDS_PER_SECOND);
+  }).format(rounded / MILLISECONDS_PER_SECOND);
   return `${seconds}${NBSP}s`;
 }
 

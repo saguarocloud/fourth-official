@@ -185,7 +185,7 @@ A neutral black chrome with six signal lights; the lights are the only chroma on
 
 **Display font:** none; the LED readout takes the display role.
 **Body font:** Geist (with system-ui, sans-serif)
-**Label/mono font:** Geist Mono (with ui-monospace), only for key-cap shortcuts.
+**Mono font:** Geist Mono (with ui-monospace), reserved for code, IDs and measurement; not used as a costume.
 
 **Character:** Geist is neutral and engineered, so the dot-matrix readouts carry all the personality. Every number uses tabular figures (`time`, `dd`, `.tabular`, stat values, table numerics) so live values never shift the layout.
 
@@ -242,7 +242,7 @@ A square-cut hardware key, as on a vision mixer; the primary key is the lit one.
 - **Primary:** led-white face, panel-0 text; hover goes pure white.
 - **Danger:** red text on a red-tinted edge. **Quiet:** transparent, ink-2.
 - **Hover / Active:** hover moves to panel-3; press translates 1px down and drops the bevel (160ms, ease-out).
-- **Shortcut cap:** optional single-key cap in Geist Mono 11px with a 1px currentColor border (approvals use A, R, E); announced via `aria-keyshortcuts`.
+- **Shortcuts:** not yet implemented. When the Approvals screen adds A, R and E, the key gains a visible cap and `aria-keyshortcuts` together with the handler, never one without the other.
 - **Loading / Disabled:** spinner and `aria-busy`; disabled at 50% opacity.
 
 ### Chips (AI tag)
@@ -265,7 +265,7 @@ The state vocabulary in one component: 16px Lucide icon in the state colour plus
 Broadcast tally per partner: a 10px round lamp plus "On air" (red, lit) or "Off" (ink-3, unlit lamp at 12% white). Announced as "Partner: on air/off air".
 
 ### LED readout (signature)
-The fourth official's dot matrix, drawn as SVG circles.
+The fourth official's dot matrix, drawn as SVG: all unlit dots in one path and all lit dots in another (two nodes per readout, whatever its length).
 - **Glyphs:** 5x7, digits, A to Z and match marks (`: . , + - ' % / $`); unknown characters fall back to `?`.
 - **Spacing:** 1-dot gap between dots and one blank column between characters; every character has the same width, so a ticking clock never changes size.
 - **Dot size:** whole CSS pixels only (2 to 6) so dots stay on the pixel grid. Clocks use 3px; the OUT/IN board 4px; scorelines 6px.

@@ -14,10 +14,19 @@ function renderBoard(match: Match = featured) {
 
 describe("MatchBoard", () => {
   it("summarises the fixture, score and minute in one accessible heading", () => {
-    renderBoard({ ...featured, home: "HCY", away: "NGT", homeScore: 1, awayScore: 0, minute: 68 });
+    renderBoard({
+      ...featured,
+      home: "HCY",
+      away: "NGT",
+      homeScore: 1,
+      awayScore: 0,
+      minute: 68,
+      second: 41,
+    });
 
+    // 68:41 elapsed is the 69th minute, as broadcasters count it.
     expect(
-      screen.getByRole("heading", { name: "Harbour City 1, Northgate FC 0, 68'" }),
+      screen.getByRole("heading", { name: "Harbour City 1, Northgate FC 0, 69'" }),
     ).toBeInTheDocument();
   });
 
@@ -27,8 +36,8 @@ describe("MatchBoard", () => {
       onAir: { northlight: true, "tribuna-austral": false, rheinblick: false },
     });
 
-    expect(screen.getByRole("status", { name: "Northlight Sport: on air" })).toBeInTheDocument();
-    expect(screen.getByRole("status", { name: "Rheinblick Sport: off air" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Northlight Sport: on air" })).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "Rheinblick Sport: off air" })).toBeInTheDocument();
   });
 
   it("lists the match's publishing activity", () => {

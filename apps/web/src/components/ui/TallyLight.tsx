@@ -3,11 +3,14 @@ interface TallyLightProps {
   readonly partner: string;
 }
 
-/** Broadcast tally: lit red while a partner has one of our graphics on air. */
+/**
+ * Broadcast tally: lit red while a partner has one of our graphics on air. Deliberately not a
+ * live region: a wall of tallies must not narrate every change; the activity log announces.
+ */
 export function TallyLight({ live, partner }: TallyLightProps) {
   return (
     <span
-      role="status"
+      role="img"
       aria-label={`${partner}: ${live ? "on air" : "off air"}`}
       data-live={live}
       className="tally"

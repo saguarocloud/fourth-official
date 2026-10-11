@@ -265,7 +265,7 @@
 }
 
 /* The one authored moment: the IN panel lights a beat after OUT, like the board being raised. */
-.sub-board__panel[data-side="in"] circle[data-lit="true"] {
+.sub-board__panel[data-side="in"] path[data-lit="true"] {
   animation: led-light-up 420ms var(--ease-out) 260ms both;
 }
 
@@ -394,8 +394,9 @@
     padding: var(--space-4);
   }
 
+  .match-board[data-featured="true"] .match-board__stats,
   .match-board__stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .match-board__stats li:nth-child(3) {

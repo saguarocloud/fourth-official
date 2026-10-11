@@ -26,3 +26,11 @@ describe("NavRail", () => {
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
   });
 });
+
+describe("NavRail unavailable screens", () => {
+  it("tells every user a screen is not available yet", () => {
+    render(<NavRail current="/" />);
+
+    expect(screen.getAllByText("(not yet available)").length).toBeGreaterThan(0);
+  });
+});

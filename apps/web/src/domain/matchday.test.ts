@@ -104,7 +104,20 @@ describe("matchdayVerdict", () => {
   it("says everything is under control when nothing needs a person", () => {
     expect(matchdayVerdict(healthy)).toEqual({
       tone: "green",
-      text: "All 3 matches under control. Every item on air is verified.",
+      text: "All 3 matches under control. Nothing awaits approval.",
+    });
+  });
+
+  it("speaks of a single live match in the singular", () => {
+    expect(matchdayVerdict({ ...healthy, liveMatches: 1 }).text).toBe(
+      "The live match is under control. Nothing awaits approval.",
+    );
+  });
+
+  it("is neutral when no match is live", () => {
+    expect(matchdayVerdict({ ...healthy, liveMatches: 0, p95LatencyMs: null })).toEqual({
+      tone: "neutral",
+      text: "No matches live. Nothing awaits approval.",
     });
   });
 

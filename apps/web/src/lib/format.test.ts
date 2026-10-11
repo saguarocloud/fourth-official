@@ -54,6 +54,10 @@ describe("formatLatency", () => {
     expect(formatLatency(4120, "de-DE")).toBe(`4,1${NBSP}s`);
   });
 
+  it("rounds before choosing the unit", () => {
+    expect(formatLatency(999.6, "en-GB")).toBe(`1.0${NBSP}s`);
+  });
+
   it("shows sub-second latency in milliseconds", () => {
     expect(formatLatency(480, "en-GB")).toBe(`480${NBSP}ms`);
   });

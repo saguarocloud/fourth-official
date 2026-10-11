@@ -52,9 +52,14 @@ export function NavRail({ current }: NavRailProps) {
                 <span>{label}</span>
               </Link>
             ) : (
-              <span className="nav-rail__item" data-unavailable>
+              <span
+                className="nav-rail__item"
+                data-unavailable
+                title={`${label}: not yet available`}
+              >
                 <Icon aria-hidden="true" strokeWidth={1.75} />
                 <span>{label}</span>
+                <span className="sr-only">(not yet available)</span>
               </span>
             )}
           </li>

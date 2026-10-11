@@ -30,3 +30,17 @@ describe("LiveClock", () => {
     expect(screen.getByRole("img", { name: "Studio time 15:07:10" })).toBeInTheDocument();
   });
 });
+
+describe("LiveClock lifecycle", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("stops ticking when unmounted", () => {
+    vi.useFakeTimers();
+    const { unmount } = render(<LiveClock />);
+    unmount();
+
+    expect(vi.getTimerCount()).toBe(0);
+  });
+});

@@ -58,3 +58,20 @@ describe("ActivityFeed labels", () => {
     expect(screen.queryByText("AI")).toBeNull();
   });
 });
+
+describe("ActivityFeed order", () => {
+  it("lists the newest entry first whatever order it arrives in", () => {
+    const [newest, older] = DEMO_MATCHDAY.activity;
+    render(<ActivityFeed entries={[older!, newest!]} partners={DEMO_MATCHDAY.partners} />);
+
+    const items = screen.getAllByRole("listitem");
+    expect(items[0]).toHaveTextContent(newest!.text);
+  });
+
+  it("falls back to the partner id when the partner is unknown", () => {
+    const entry = { ...DEMO_MATCHDAY.activity[0]!, partnerId: "northlight" as const };
+    render(<ActivityFeed entries={[entry]} partners={[]} />);
+
+    expect(screen.getByText("northlight")).toBeInTheDocument();
+  });
+});

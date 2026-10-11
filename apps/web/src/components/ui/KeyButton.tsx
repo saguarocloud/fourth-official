@@ -7,8 +7,6 @@ interface KeyButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, "
   readonly children: ReactNode;
   readonly intent?: Intent;
   readonly size?: "sm" | "md";
-  /** Single-key shortcut shown on the key cap and announced to assistive technology. */
-  readonly shortcut?: string;
   readonly loading?: boolean;
 }
 
@@ -17,7 +15,6 @@ export function KeyButton({
   children,
   intent = "default",
   size = "md",
-  shortcut,
   loading = false,
   disabled,
   type = "button",
@@ -30,18 +27,12 @@ export function KeyButton({
       type={type}
       disabled={disabled || loading}
       aria-busy={loading || undefined}
-      aria-keyshortcuts={shortcut}
       data-intent={intent}
       data-size={size}
       className={["key", className].filter(Boolean).join(" ")}
     >
       {loading && <LoaderCircle aria-hidden="true" className="key__spinner" />}
       <span>{children}</span>
-      {shortcut && (
-        <kbd aria-hidden="true" className="key__cap">
-          {shortcut}
-        </kbd>
-      )}
     </button>
   );
 }

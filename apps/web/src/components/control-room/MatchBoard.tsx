@@ -1,7 +1,7 @@
 import { LedReadout } from "@/components/led/LedReadout";
 import { TallyLight } from "@/components/ui/TallyLight";
 import { clubByCode, type Match, type Partner } from "@/domain/matchday";
-import { formatLatency, formatMatchClock, formatMatchMinute } from "@/lib/format";
+import { footballMinute, formatLatency, formatMatchClock, formatMatchMinute } from "@/lib/format";
 
 interface MatchBoardProps {
   readonly match: Match;
@@ -14,7 +14,7 @@ interface MatchBoardProps {
 export function MatchBoard({ match, partners, sloMs, locale = "en-GB" }: MatchBoardProps) {
   const home = clubByCode(match.home);
   const away = clubByCode(match.away);
-  const minute = formatMatchMinute(match.minute, match.period);
+  const minute = formatMatchMinute(footballMinute(match.minute), match.period);
   const withinSlo = match.p95LatencyMs <= sloMs;
   const headingId = `match-${match.id}`;
 

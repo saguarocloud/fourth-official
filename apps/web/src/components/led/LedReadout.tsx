@@ -1,4 +1,6 @@
-import { layoutText } from "@/lib/led/glyphs";
+import { memo } from "react";
+
+import { layoutText, type Dot } from "@/lib/led/glyphs";
 
 export type LedTone = "green" | "red" | "amber" | "blue" | "violet" | "white";
 
@@ -15,22 +17,30 @@ interface LedReadoutProps {
   readonly className?: string;
 }
 
+/** One circle per dot as a single path: two arcs drawn from the dot's left edge. */
+function dotsPath(dots: readonly Dot[], pitch: number, radius: number): string {
+  return dots
+    .map((dot) => {
+      const cx = dot.x * pitch + radius;
+      const cy = dot.y * pitch + radius;
+      return `M${cx - radius} ${cy}a${radius} ${radius} 0 1 0 ${radius * 2} 0a${radius} ${radius} 0 1 0 ${-radius * 2} 0`;
+    })
+    .join("");
+}
+
 /**
  * A dot-matrix readout in the manner of the fourth official's LED board. Unlit dots stay faintly
- * visible, as on the physical board, so the readout keeps its shape when values change.
+ * visible, as on the physical board, so the readout keeps its shape when values change. All dots
+ * are drawn as two paths (lit and unlit) to keep the DOM small.
  */
-export function LedReadout({
-  text,
-  label,
-  tone = "white",
-  dotSize = 3,
-  className,
-}: LedReadoutProps) {
+function LedReadoutImpl({ text, label, tone = "white", dotSize = 3, className }: LedReadoutProps) {
   const matrix = layoutText(text);
   const pitch = dotSize + DOT_GAP;
   const radius = dotSize / 2;
   const width = Math.max(matrix.columns * pitch - DOT_GAP, 0);
   const height = matrix.rows * pitch - DOT_GAP;
+  const lit = matrix.dots.filter((dot) => dot.lit);
+  const unlit = matrix.dots.filter((dot) => !dot.lit);
 
   return (
     <svg
@@ -42,15 +52,10 @@ export function LedReadout({
       data-tone={tone}
       className={["led", className].filter(Boolean).join(" ")}
     >
-      {matrix.dots.map((dot) => (
-        <circle
-          key={`${dot.x}-${dot.y}`}
-          cx={dot.x * pitch + radius}
-          cy={dot.y * pitch + radius}
-          r={radius}
-          data-lit={dot.lit}
-        />
-      ))}
+      <path d={dotsPath(unlit, pitch, radius)} data-lit="false" />
+      <path d={dotsPath(lit, pitch, radius)} data-lit="true" />
     </svg>
   );
 }
+
+export const LedReadout = memo(LedReadoutImpl);

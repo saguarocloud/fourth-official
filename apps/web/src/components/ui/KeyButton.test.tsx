@@ -14,14 +14,6 @@ describe("KeyButton", () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  it("shows and announces its keyboard shortcut", () => {
-    render(<KeyButton shortcut="A">Approve</KeyButton>);
-
-    const button = screen.getByRole("button", { name: "Approve" });
-    expect(button).toHaveAttribute("aria-keyshortcuts", "A");
-    expect(screen.getByText("A", { selector: "kbd" })).toBeInTheDocument();
-  });
-
   it("is busy and inert while loading", async () => {
     const onClick = vi.fn();
     render(

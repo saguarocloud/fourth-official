@@ -39,7 +39,11 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
             ) : (
               <CircleAlert aria-hidden="true" strokeWidth={1.75} />
             )}
-            <span>{formatLatency(summary.p95LatencyMs, locale)}</span>
+            <span>
+              {summary.p95LatencyMs === null
+                ? "No live matches"
+                : formatLatency(summary.p95LatencyMs, locale)}
+            </span>
             <span className="top-bar__slo">{summary.withinSlo ? "Within SLO" : "Outside SLO"}</span>
           </dd>
         </div>

@@ -299,15 +299,11 @@ a.nav-rail__item:hover {
 
   .top-bar__readouts {
     order: 3;
-    width: 100%;
-    margin-left: 0;
-    flex-wrap: wrap;
-    row-gap: var(--space-2);
-  }
-
-  .top-bar__readouts {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: var(--space-2);
+    width: 100%;
+    margin-left: 0;
   }
 
   .top-bar__readouts > div {

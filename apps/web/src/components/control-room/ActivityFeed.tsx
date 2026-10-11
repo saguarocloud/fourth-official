@@ -10,7 +10,8 @@ interface ActivityFeedProps {
 
 /** Newest first. New entries are announced politely so a screen reader user is not interrupted. */
 export function ActivityFeed({ entries, partners }: ActivityFeedProps) {
-  const partnerName = new Map(partners.map((p) => [p.id, p.name]));
+  const partnerName = new Map<string, string>(partners.map((p) => [p.id, p.name]));
+  const newestFirst = [...entries].sort((a, b) => b.sequence - a.sequence);
 
   return (
     <div role="log" aria-live="polite" aria-label="Live activity" className="activity">
@@ -20,7 +21,7 @@ export function ActivityFeed({ entries, partners }: ActivityFeedProps) {
         </p>
       ) : (
         <ol className="activity__list">
-          {entries.map((entry) => (
+          {newestFirst.map((entry) => (
             <li key={entry.id} className="activity__item" data-state={entry.state}>
               <time className="activity__time">
                 {formatMatchMinute(entry.minute, entry.period)}
@@ -29,7 +30,11 @@ export function ActivityFeed({ entries, partners }: ActivityFeedProps) {
               <p className="activity__meta">
                 <StatusLamp state={entry.state} />
                 {entry.aiGenerated && <AiTag />}
-                <span>{entry.partnerId ? partnerName.get(entry.partnerId) : "All partners"}</span>
+                <span>
+                  {entry.partnerId
+                    ? (partnerName.get(entry.partnerId) ?? entry.partnerId)
+                    : "All partners"}
+                </span>
               </p>
             </li>
           ))}

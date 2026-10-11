@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import axe from "axe-core";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
@@ -47,5 +48,16 @@ describe("Control Room", () => {
     render(<Home />);
 
     expect(screen.getByRole("link", { name: "Skip to content" })).toHaveAttribute("href", "#main");
+  });
+});
+
+describe("Control Room accessibility", () => {
+  it("has no axe violations", async () => {
+    const { container } = render(<Home />);
+
+    // jsdom cannot compute colour contrast; contrast is checked against the token values instead.
+    const results = await axe.run(container, { rules: { "color-contrast": { enabled: false } } });
+
+    expect(results.violations.map((v) => `${v.id}: ${v.help}`)).toEqual([]);
   });
 });
