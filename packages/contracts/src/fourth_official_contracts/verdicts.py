@@ -13,6 +13,8 @@ from fourth_official_contracts.primitives import MatchId, WireModel
 FindingCode = Literal[
     # The insight is not about the moment it claims to explain.
     "MOMENT_MISMATCH",
+    # The draft could not be built into a valid insight (malformed markup, missing evidence...).
+    "MALFORMED_INSIGHT",
     # A number or a name written as text instead of rendered from evidence.
     "UNSUPPORTED_CHARACTER",
     "BARE_NUMBER",

@@ -42,6 +42,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Moment Detector: momentum swing and tactical shift rules
 - [x] Verifier, deterministic layer: claim markup, rendering, adversarial checks (ADR-006, docs/verifier.md)
 - [ ] Verifier, LLM judge layer (Foundry evaluation)
+- [x] Analyst agent (Agent Framework on Foundry, Match Data MCP) with verification loop and fallbacks (docs/explain.md)
+- [ ] Explain worker: Container App consuming moments, writing insights and provenance
 - [x] Match Data MCP server: read-only, time-bounded tools (docs/match-data.md)
 - [ ] Match Data MCP server: Container App, Entra-authenticated ingress, Cosmos-backed store
 

@@ -183,3 +183,29 @@ def test_findings_stop_at_the_contract_limit() -> None:
     verdict = verify(insight(claim("{{club:HCY}} strike.", events=missing)), GOAL_MOMENT, FACTS)
 
     assert len(verdict.findings) == 64
+
+
+def test_references_may_take_a_possessive() -> None:
+    text = "{{club:HCY}}'s lead comes from {{player:HCY-09}}'s strike in the {{minute:12}}."
+
+    assert codes(insight(claim(text, events=GOAL))) == []
+
+
+def test_headlines_may_open_with_a_football_noun() -> None:
+    assert verify(insight(headline="Goal for {{club:HCY}}"), GOAL_MOMENT, FACTS).passed
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "{{club:HCY}} work the ball into the final third before the goal.",
+        "{{club:HCY}} strike before the second half begins.",
+        "{{club:HCY}} score with a right\u2011foot shot.",
+    ],
+)
+def test_football_phrases_and_typographic_hyphens_pass(text: str) -> None:
+    assert codes(insight(claim(text, events=GOAL))) == []
+
+
+def test_club_codes_written_out_must_be_references() -> None:
+    assert "RAW_NAME" in codes(insight(claim("HCY take the lead.", events=GOAL)))

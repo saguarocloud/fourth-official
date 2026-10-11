@@ -97,6 +97,44 @@ quietly rapidly rarely readily really recently relentlessly roughly safely sharp
 slightly slowly smartly smoothly softly solidly steadily strongly suddenly superbly surely
 swiftly tidily tightly truly unluckily urgently usually wildly widely
 
+# --- More football and everyday English --------------------------------------------------------
+accurate action actual add advantage aerial ago alarm allow alternative amount angle anticipate
+approach area arrival assume attempted attention aware award awareness base basis battle bit
+blunt bounce breakaway bridge buildup burst calibre capable career carelessness central
+challenge champion character charge cheer circle clash classic climb clinch collective column
+combination combine command commit compact compare complete concentrate concern conclude
+condition confidence conservative consistent contain contrast convince corner counterattack
+counter-press crack cram craft crash credit crisis critical crossfield cue cushion curl cut-back
+daring dash debate decline defend delay deliberate demand depth describe design detect detector
+develop dip discipline disrupt distance distribution dive dribbler drill duel dull dynamic eager
+effort element emerge emphasis encourage energy engage engine enjoy ensure entry environment
+escape establish evaluate event eventful exchange expose express extend fatigue favour feature
+feed fierce figure final fix flair flow focus follow-up force frame framework frustrate fuel
+function fundamental gamble gather gear glance grip grit guard habit halt handle harass
+harmless heat heavy hesitate hint hope hunger idle impose impress improve incident indicate
+influence initiative injury insist instinct intent interplay invite involve isolate jolt jump
+labour lapse lash latch launch layer lean leap lift linkup link-up loft lofted longer-term
+loop lull maintain margin match-up measure method midway mind mobile momentum-shift motive
+narrow natural neutral notable note numbers-up objective obstacle occasion offer opening operate
+option orbit order origin outlet overlap overload pair-up panic paralyse parity pass-and-move
+passing patient pattern peak penetrate persist pin plan pocket poise portion power precision
+pressured prime probe produce profile progress progression project prompt proof prowl punish
+purpose pursue quality range rapidly rate react rearguard recover recovery recycle reflect
+regroup reinforce relief rely remain repeat resist resolve resource respond rest result resume
+retreat reverse reward rhythm ride risk rotate rotation route rush sag scrappy seal secure
+select sequence serve setup shield shift shooting siege signal situation sizable skill slice
+slick slip snap solidity space spark speed spine spirit split spot spring squeeze stall stamina
+stance stifle stretch stride strike structure struggle style subdue substance succeed success
+suffocate summary support surface surge sustain swarm swap tactical tackle tally target task
+technique tension territory test thrust tidy tilt timing tireless toil tone track trade trap
+trend trick trigger triumph trouble turn twist type ultimate underline unlock unsettle upset
+urgency utility vary venture verdict vigour vision volley vulnerable wane wave weakness weave
+weight win-back withstand worry yield
+last latest previous recent compared detected detector fallen dropped
+awarded lofted flagged credited decision decisive video review reviewed original on-field
+advanced set-piece piece set result resulting sequence spell coincide spot-kick spot dive parry deny thwart
+period halfway restart break interval
+
 # --- Irregular forms ---------------------------------------------------------------------------
 beaten bent began begun bore blew blown broke broken brought built caught chose chosen came drew
 drawn drove driven ate fell felt fought found flew forgot forgotten froze gave given got gotten

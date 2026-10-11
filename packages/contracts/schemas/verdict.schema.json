@@ -18,6 +18,7 @@
         "code": {
           "enum": [
             "MOMENT_MISMATCH",
+            "MALFORMED_INSIGHT",
             "UNSUPPORTED_CHARACTER",
             "BARE_NUMBER",
             "RAW_NAME",
