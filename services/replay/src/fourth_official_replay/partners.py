@@ -30,6 +30,8 @@ from fourth_official_contracts import (
     AttemptRecord,
     ClubCode,
     Correction,
+    CorrectionAction,
+    FeedEntry,
     Insight,
     ItemKind,
     MatchClock,
@@ -40,10 +42,12 @@ from fourth_official_contracts import (
     TenantId,
     TenantItemEntry,
     TenantPolicy,
+    item_id_for,
 )
 from fourth_official_explain import Attempt
 from fourth_official_explain.localize import Localizer, localize
 from fourth_official_policy import approval_required, disclose
+from fourth_official_replay.corrections import moments_of, regenerated, restated, touched
 from fourth_official_replay.errors import DecisionError, NoRoomOnAirError, NotAwaitingError
 from fourth_official_verifier import BlockedTopics, MatchFacts, render_insight
 
@@ -217,8 +221,13 @@ class Partners:
             if disclosure is None:  # pragma: no cover - narrative is always disclosed
                 raise ValueError("an insight is always disclosed")
             rendered = item.rendered
+            # An approved amendment still says which version it replaces.
             overlay = lower_third(
-                item.localized, (rendered.headline, rendered.claims), disclosure, timing
+                item.localized,
+                (rendered.headline, rendered.claims),
+                disclosure,
+                timing,
+                supersedes=item.overlay.supersedes,
             )
         state: Literal["on_air", "rejected"] = "on_air" if decision == "approved" else "rejected"
         # Built through the contract, not copied, so the decided item is checked like any other.
@@ -236,6 +245,72 @@ class Partners:
             attempts=item.attempts,
             approval=approval,
         )
+
+    async def correct(
+        self,
+        correction: Correction,
+        entries: Sequence[FeedEntry],
+        facts: MatchFacts,
+        at: MatchClock,
+        *,
+        only: frozenset[str] | None = None,
+        skip: frozenset[str] = frozenset(),
+    ) -> tuple[list[EntryBuilder], list[CorrectionAction]]:
+        """What each partner's items resting on a corrected event become, by its policy.
+
+        - Held for an editor: pulled; it can never air.
+        - On air, after a void: pulled everywhere; the fact no longer exists.
+        - On air, after an amendment: `auto-amend` airs a new version from the corrected facts;
+          `escalate` holds a new version for an editor; `retract-and-notify` pulls it. A new
+          version that cannot be made (or does not verify) is pulled instead.
+        `facts` are the corrected facts (`corrections.corrected_facts`); `only` limits the work
+        to those canonical insights, and items in `skip` (already dealt with) are left alone."""
+        _, found = touched(entries, correction, only=only)
+        items = [i for i in found if i.overlay.item_id not in skip]
+        moments = moments_of(entries)
+        builders: list[EntryBuilder] = []
+        actions: list[CorrectionAction] = []
+        for item in items:
+            policy = self._policies.get(item.tenant_id)
+            if policy is None or item.localized is None:
+                continue
+            behaviour = policy.correction_behaviour
+            was: Literal["on_air", "pending_approval"] = (
+                "pending_approval" if item.state == "pending_approval" else "on_air"
+            )
+            moment = moments.get(item.localized.moment_id)
+            new = None
+            amendable = was == "on_air" and correction.kind == "EVENT_AMENDED"
+            if amendable and moment is not None and behaviour != "retract-and-notify":
+                try:
+                    new = regenerated(
+                        item, moment, facts, policy, at=at, held=behaviour == "escalate"
+                    )
+                except Exception:
+                    # A version that cannot be made is pulled rather than left on air.
+                    logger.exception("could not regenerate %s", item.overlay.item_id)
+            if new is None:
+                builders.append(restated(item, "retracted"))
+                action: Literal["retracted", "amended", "escalated"] = "retracted"
+                new_id = None
+            else:
+                builders += [restated(item, "amended"), new]
+                action = "escalated" if behaviour == "escalate" else "amended"
+                new_id = item_id_for(
+                    item.tenant_id, item.localized.insight_id, version=item.localized.version + 1
+                )
+            actions.append(
+                CorrectionAction(
+                    tenant_id=item.tenant_id,
+                    locale=policy.locale,
+                    insight_id=item.localized.insight_id,
+                    item_id=item.overlay.item_id,
+                    was=was,
+                    action=action,
+                    new_item_id=new_id,
+                )
+            )
+        return builders, actions
 
     async def correction(
         self, correction: Correction, facts: MatchFacts, at: MatchClock

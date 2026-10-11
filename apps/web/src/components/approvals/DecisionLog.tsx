@@ -1,14 +1,7 @@
-import { type ItemState, StatusLamp } from "@/components/ui/StatusLamp";
+import { PHASE_STATES } from "@/components/ui/phaseState";
+import { StatusLamp } from "@/components/ui/StatusLamp";
 import type { DecidedItem } from "@/domain/approvals";
-import { PARTNERS, type Phase, phaseAt } from "@/domain/broadcast";
-
-const NOW: Record<Phase, ItemState> = {
-  queued: "queued",
-  airing: "on_air",
-  aired: "published",
-  held: "pending_approval",
-  rejected: "dropped",
-};
+import { PARTNERS, phaseAt } from "@/domain/broadcast";
 
 // The studio's clock: the time in the top bar, so the log and the clock agree.
 const STUDIO_TIME = new Intl.DateTimeFormat("en-GB", {
@@ -70,7 +63,7 @@ export function DecisionLog({ items, now }: DecisionLogProps) {
                     {approval.decision === "approved" ? "Approved" : "Rejected"}
                   </td>
                   <td role="cell" data-label="Now">
-                    <StatusLamp state={NOW[phaseAt(item, now)]} />
+                    <StatusLamp state={PHASE_STATES[phaseAt(item, now)]} />
                   </td>
                   <td role="cell" data-label="Editor">
                     <span>

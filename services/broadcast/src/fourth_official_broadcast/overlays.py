@@ -76,8 +76,11 @@ def lower_third(
     rendered: tuple[str, tuple[str, ...]],
     disclosure: Disclosure,
     timing: Timing,
+    *,
+    supersedes: str | None = None,
 ) -> OverlaySpec:
-    """A partner's insight on air: its headline, and its first claim under it."""
+    """A partner's insight on air: its headline, and its first claim under it. A new version
+    names the item it `supersedes`."""
     headline, claims = rendered
     if not claims:
         raise ValueError("a lower third shows the insight's first claim; there is none")
@@ -92,7 +95,7 @@ def lower_third(
         disclosure=disclosure,
         provenance_url=None,
         version=localized.version,
-        supersedes=None,
+        supersedes=supersedes,
     )
 
 

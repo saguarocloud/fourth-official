@@ -68,9 +68,13 @@ def test_every_partner_gets_the_insights_in_its_language() -> None:
 def test_a_partner_that_requires_an_editor_holds_its_narrative_off_air() -> None:
     held = of("tribuna-austral", "insight")
 
-    assert {i.state for i in held} == {"pending_approval"}
+    # Held until an editor decides; those a correction touched are retracted by the desk.
+    assert {i.state for i in held} <= {"pending_approval", "retracted"}
+    assert "pending_approval" in {i.state for i in held}
     assert all(i.approval_required for i in held)
-    assert {i.state for i in of("rheinblick-sport", "insight")} == {"on_air"}
+    aired = {i.state for i in of("rheinblick-sport", "insight")}
+    assert aired <= {"on_air", "retracted", "amended"}
+    assert "pending_approval" not in aired
 
 
 def test_narrative_is_labelled_as_each_policy_requires() -> None:

@@ -1,3 +1,4 @@
+import { latestVersions } from "@/domain/approvals";
 import { type BroadcastState, PARTNERS } from "@/domain/broadcast";
 import type { RunState } from "@/domain/live";
 
@@ -23,7 +24,8 @@ export function verdictFor(state: BroadcastState, failed: boolean, run: RunState
     return { tone: "red", text: "The match service is unavailable. Retrying every few seconds." };
   }
   if (run === null) return { tone: "neutral", text: "Loading the matchday." };
-  const narrative = state.items.filter((i) => i.itemKind === "insight");
+  // Each partner's item as it stands now: a decision or a correction is its latest version.
+  const narrative = latestVersions(state).filter((i) => i.itemKind === "insight");
   if (narrative.length === 0) {
     return run === "running"
       ? {
@@ -35,16 +37,18 @@ export function verdictFor(state: BroadcastState, failed: boolean, run: RunState
   const moments = new Set(narrative.map((i) => i.localized?.insightId)).size;
   const held = narrative.filter((i) => i.state === "pending_approval");
   const aired = narrative.filter((i) => i.state === "on_air").length;
+  const pulled = narrative.filter((i) => i.state === "retracted").length;
+  const corrected = pulled > 0 ? `; ${pulled} pulled by corrections` : "";
   const voices = `${moments} ${moments === 1 ? "moment" : "moments"} in ${VOICES[PARTNERS.length] ?? PARTNERS.length} voices`;
   if (held.length === 0) {
     return {
       tone: "green",
-      text: `${voices}: ${aired} graphics cleared for air; nothing waits for an editor.`,
+      text: `${voices}: ${aired} graphics cleared for air; nothing waits for an editor${corrected}.`,
     };
   }
   const waiting = holders(new Set(held.map((i) => i.tenantId)));
   return {
     tone: "amber",
-    text: `${voices}: ${aired} graphics cleared for air, ${held.length} pending approval${waiting}.`,
+    text: `${voices}: ${aired} graphics cleared for air, ${held.length} pending approval${waiting}${corrected}.`,
   };
 }

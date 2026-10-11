@@ -1742,13 +1742,24 @@
     "tenantId": "tribuna-austral"
   },
   {
+    "actions": [],
+    "correctionId": "c-m42-01",
+    "elapsedMs": 4,
+    "entrySeq": 88,
+    "insightIds": ["in-m42-goal-HCY-s1702-a1"],
+    "kind": "correction_report",
+    "matchId": "m42",
+    "startedAt": "2026-10-11T15:00:00.000Z",
+    "targetEventId": "m42-e1702"
+  },
+  {
     "asOfSeq": 1704,
     "clock": {
       "minute": 68,
       "period": 2,
       "second": 20
     },
-    "entrySeq": 88,
+    "entrySeq": 89,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -1760,7 +1771,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 89,
+    "entrySeq": 90,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -1800,7 +1811,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 90,
+    "entrySeq": 91,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -1840,7 +1851,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 91,
+    "entrySeq": 92,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -1883,7 +1894,7 @@
       "period": 2,
       "second": 24
     },
-    "entrySeq": 92,
+    "entrySeq": 93,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -1892,7 +1903,7 @@
     }
   },
   {
-    "entrySeq": 93,
+    "entrySeq": 94,
     "kind": "moment",
     "matchId": "m42",
     "moment": {
@@ -1918,7 +1929,7 @@
       "period": 2,
       "second": 22
     },
-    "entrySeq": 94,
+    "entrySeq": 95,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -1927,7 +1938,7 @@
     }
   },
   {
-    "entrySeq": 95,
+    "entrySeq": 96,
     "kind": "moment",
     "matchId": "m42",
     "moment": {
@@ -1964,7 +1975,7 @@
       "period": 2,
       "second": 25
     },
-    "entrySeq": 96,
+    "entrySeq": 97,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -1979,7 +1990,7 @@
       "period": 2,
       "second": 27
     },
-    "entrySeq": 97,
+    "entrySeq": 98,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -1994,7 +2005,7 @@
       "period": 2,
       "second": 29
     },
-    "entrySeq": 98,
+    "entrySeq": 99,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2009,7 +2020,7 @@
       "period": 2,
       "second": 31
     },
-    "entrySeq": 99,
+    "entrySeq": 100,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2024,7 +2035,7 @@
       "period": 2,
       "second": 33
     },
-    "entrySeq": 100,
+    "entrySeq": 101,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2039,7 +2050,7 @@
       "period": 2,
       "second": 33
     },
-    "entrySeq": 101,
+    "entrySeq": 102,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2054,7 +2065,7 @@
       "period": 2,
       "second": 33
     },
-    "entrySeq": 102,
+    "entrySeq": 103,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2069,7 +2080,7 @@
       "period": 2,
       "second": 5
     },
-    "entrySeq": 103,
+    "entrySeq": 104,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2084,7 +2095,7 @@
       "period": 2,
       "second": 14
     },
-    "entrySeq": 104,
+    "entrySeq": 105,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2096,7 +2107,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 105,
+    "entrySeq": 106,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -2136,7 +2147,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 106,
+    "entrySeq": 107,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -2176,7 +2187,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 107,
+    "entrySeq": 108,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -2213,7 +2224,7 @@
     "tenantId": "tribuna-austral"
   },
   {
-    "entrySeq": 108,
+    "entrySeq": 109,
     "kind": "moment",
     "matchId": "m42",
     "moment": {
@@ -2239,7 +2250,7 @@
       "period": 2,
       "second": 22
     },
-    "entrySeq": 109,
+    "entrySeq": 110,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2254,7 +2265,7 @@
       "period": 2,
       "second": 38
     },
-    "entrySeq": 110,
+    "entrySeq": 111,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2269,7 +2280,7 @@
       "period": 2,
       "second": 40
     },
-    "entrySeq": 111,
+    "entrySeq": 112,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2284,7 +2295,7 @@
       "period": 2,
       "second": 41
     },
-    "entrySeq": 112,
+    "entrySeq": 113,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2299,7 +2310,7 @@
       "period": 2,
       "second": 4
     },
-    "entrySeq": 113,
+    "entrySeq": 114,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2314,7 +2325,7 @@
       "period": 2,
       "second": 6
     },
-    "entrySeq": 114,
+    "entrySeq": 115,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2329,7 +2340,7 @@
       "period": 2,
       "second": 20
     },
-    "entrySeq": 115,
+    "entrySeq": 116,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2344,7 +2355,7 @@
       "period": 2,
       "second": 22
     },
-    "entrySeq": 116,
+    "entrySeq": 117,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2359,7 +2370,7 @@
       "period": 2,
       "second": 22
     },
-    "entrySeq": 117,
+    "entrySeq": 118,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2374,7 +2385,7 @@
       "period": 2,
       "second": 25
     },
-    "entrySeq": 118,
+    "entrySeq": 119,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2386,7 +2397,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 119,
+    "entrySeq": 120,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -2426,7 +2437,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 120,
+    "entrySeq": 121,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -2466,7 +2477,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 121,
+    "entrySeq": 122,
     "itemKind": "score",
     "kind": "tenant_item",
     "localized": null,
@@ -2503,7 +2514,7 @@
     "tenantId": "tribuna-austral"
   },
   {
-    "entrySeq": 122,
+    "entrySeq": 123,
     "kind": "moment",
     "matchId": "m42",
     "moment": {
@@ -2529,7 +2540,7 @@
       "period": 2,
       "second": 28
     },
-    "entrySeq": 123,
+    "entrySeq": 124,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2544,7 +2555,7 @@
       "period": 2,
       "second": 30
     },
-    "entrySeq": 124,
+    "entrySeq": 125,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2559,7 +2570,7 @@
       "period": 2,
       "second": 32
     },
-    "entrySeq": 125,
+    "entrySeq": 126,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2574,7 +2585,7 @@
       "period": 2,
       "second": 0
     },
-    "entrySeq": 126,
+    "entrySeq": 127,
     "kind": "clock",
     "matchId": "m42",
     "score": {
@@ -2595,7 +2606,7 @@
       "reason": "ACCREDITATION_PANEL",
       "targetEventId": "m42-e2044"
     },
-    "entrySeq": 127,
+    "entrySeq": 128,
     "inText": "HCY 22",
     "kind": "correction",
     "matchId": "m42",
@@ -2615,7 +2626,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 128,
+    "entrySeq": 129,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -2709,7 +2720,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 129,
+    "entrySeq": 130,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -2803,7 +2814,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 130,
+    "entrySeq": 131,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -2897,7 +2908,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 131,
+    "entrySeq": 132,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -2979,7 +2990,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 132,
+    "entrySeq": 133,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3063,7 +3074,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 133,
+    "entrySeq": 134,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3145,7 +3156,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 134,
+    "entrySeq": 135,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3239,7 +3250,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 135,
+    "entrySeq": 136,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3333,7 +3344,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 136,
+    "entrySeq": 137,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3415,6 +3426,102 @@
     "tenantId": "tribuna-austral"
   },
   {
+    "approval": null,
+    "approvalRequired": false,
+    "attempts": [
+      {
+        "agent": "localizer",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 138,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 1702,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-07}} scores for {{club:HCY}} at {{minute:67}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-17}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:HCY}} score",
+      "insightId": "in-m42-goal-HCY-s1702-a1",
+      "itemId": "it-northlight-sport-in-m42-goal-HCY-s1702-a1-v1",
+      "locale": "en-GB",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s1702",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "northlight-sport",
+      "version": 1
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Harbour City score",
+        "line": "Nico Donnachie scores for Harbour City at 67': 2\u20130.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "AI-generated",
+        "mode": "label-unless-approved",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 68,
+        "period": 2,
+        "second": 44
+      },
+      "itemId": "it-northlight-sport-in-m42-goal-HCY-s1702-a1-v1",
+      "locale": "en-GB",
+      "outAt": {
+        "minute": 68,
+        "period": 2,
+        "second": 56
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": null,
+      "tenantId": "northlight-sport",
+      "version": 1
+    },
+    "rendered": {
+      "claims": [
+        "Nico Donnachie scores for Harbour City at 67': 2\u20130.",
+        "Anders Yeboah provides the assist."
+      ],
+      "headline": "Harbour City score"
+    },
+    "state": "retracted",
+    "tenantId": "northlight-sport"
+  },
+  {
+    "approval": null,
+    "approvalRequired": false,
     "attempts": [
       {
         "agent": "template",
@@ -3425,7 +3532,232 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 137,
+    "entrySeq": 139,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 1702,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-07}} trifft in Minute {{minute:67}} f\u00fcr {{club:HCY}} zum {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-17}} bereitet das Tor vor.",
+          "type": "stat"
+        }
+      ],
+      "headline": "Tor f\u00fcr {{club:HCY}}",
+      "insightId": "in-m42-goal-HCY-s1702-a1",
+      "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s1702-a1-v1",
+      "locale": "de-DE",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s1702",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "rheinblick-sport",
+      "version": 1
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Tor f\u00fcr Harbour City",
+        "line": "Nico Donnachie trifft in Minute 67' f\u00fcr Harbour City zum 2:0.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "KI-generiert",
+        "mode": "eu-strict",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 68,
+        "period": 2,
+        "second": 44
+      },
+      "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s1702-a1-v1",
+      "locale": "de-DE",
+      "outAt": {
+        "minute": 68,
+        "period": 2,
+        "second": 56
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": null,
+      "tenantId": "rheinblick-sport",
+      "version": 1
+    },
+    "rendered": {
+      "claims": [
+        "Nico Donnachie trifft in Minute 67' f\u00fcr Harbour City zum 2:0.",
+        "Anders Yeboah bereitet das Tor vor."
+      ],
+      "headline": "Tor f\u00fcr Harbour City"
+    },
+    "state": "retracted",
+    "tenantId": "rheinblick-sport"
+  },
+  {
+    "approval": null,
+    "approvalRequired": true,
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 140,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 1702,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-07}} marca para {{club:HCY}} en el {{minute:67}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e1701", "m42-e1702"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-17}} da la asistencia.",
+          "type": "stat"
+        }
+      ],
+      "headline": "Gol de {{club:HCY}}",
+      "insightId": "in-m42-goal-HCY-s1702-a1",
+      "itemId": "it-tribuna-austral-in-m42-goal-HCY-s1702-a1-v1",
+      "locale": "es-MX",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s1702",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "tribuna-austral",
+      "version": 1
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Gol de Harbour City",
+        "line": "Nico Donnachie marca para Harbour City en el 67': 2\u20130.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "Generado con IA",
+        "mode": "label-all",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 68,
+        "period": 2,
+        "second": 20
+      },
+      "itemId": "it-tribuna-austral-in-m42-goal-HCY-s1702-a1-v1",
+      "locale": "es-MX",
+      "outAt": {
+        "minute": 68,
+        "period": 2,
+        "second": 32
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": null,
+      "tenantId": "tribuna-austral",
+      "version": 1
+    },
+    "rendered": {
+      "claims": [
+        "Nico Donnachie marca para Harbour City en el 67': 2\u20130.",
+        "Anders Yeboah da la asistencia."
+      ],
+      "headline": "Gol de Harbour City"
+    },
+    "state": "retracted",
+    "tenantId": "tribuna-austral"
+  },
+  {
+    "actions": [
+      {
+        "action": "retracted",
+        "insightId": "in-m42-goal-HCY-s1702-a1",
+        "itemId": "it-northlight-sport-in-m42-goal-HCY-s1702-a1-v1",
+        "locale": "en-GB",
+        "newItemId": null,
+        "tenantId": "northlight-sport",
+        "was": "on_air"
+      },
+      {
+        "action": "retracted",
+        "insightId": "in-m42-goal-HCY-s1702-a1",
+        "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s1702-a1-v1",
+        "locale": "de-DE",
+        "newItemId": null,
+        "tenantId": "rheinblick-sport",
+        "was": "on_air"
+      },
+      {
+        "action": "retracted",
+        "insightId": "in-m42-goal-HCY-s1702-a1",
+        "itemId": "it-tribuna-austral-in-m42-goal-HCY-s1702-a1-v1",
+        "locale": "es-MX",
+        "newItemId": null,
+        "tenantId": "tribuna-austral",
+        "was": "pending_approval"
+      }
+    ],
+    "correctionId": "c-m42-01",
+    "elapsedMs": 4,
+    "entrySeq": 141,
+    "insightIds": ["in-m42-goal-HCY-s1702-a1"],
+    "kind": "correction_report",
+    "matchId": "m42",
+    "startedAt": "2026-10-11T15:00:00.000Z",
+    "targetEventId": "m42-e1702"
+  },
+  {
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 142,
     "insight": {
       "asOfSeq": 1704,
       "claims": [
@@ -3475,7 +3807,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 138,
+    "entrySeq": 143,
     "insight": {
       "asOfSeq": 1719,
       "claims": [
@@ -3528,7 +3860,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 139,
+    "entrySeq": 144,
     "insight": {
       "asOfSeq": 1882,
       "claims": [
@@ -3590,7 +3922,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 140,
+    "entrySeq": 145,
     "insight": {
       "asOfSeq": 2044,
       "claims": [
@@ -3645,7 +3977,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 141,
+    "entrySeq": 146,
     "itemKind": "correction",
     "kind": "tenant_item",
     "localized": null,
@@ -3682,7 +4014,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 142,
+    "entrySeq": 147,
     "itemKind": "correction",
     "kind": "tenant_item",
     "localized": null,
@@ -3719,7 +4051,7 @@
     "approval": null,
     "approvalRequired": false,
     "attempts": [],
-    "entrySeq": 143,
+    "entrySeq": 148,
     "itemKind": "correction",
     "kind": "tenant_item",
     "localized": null,
@@ -3753,6 +4085,17 @@
     "tenantId": "tribuna-austral"
   },
   {
+    "actions": [],
+    "correctionId": "c-m42-02",
+    "elapsedMs": 3,
+    "entrySeq": 149,
+    "insightIds": ["in-m42-goal-HCY-s2044-a1"],
+    "kind": "correction_report",
+    "matchId": "m42",
+    "startedAt": "2026-10-11T15:00:00.000Z",
+    "targetEventId": "m42-e2044"
+  },
+  {
     "approval": null,
     "approvalRequired": false,
     "attempts": [
@@ -3765,7 +4108,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 144,
+    "entrySeq": 150,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3847,7 +4190,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 145,
+    "entrySeq": 151,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -3931,7 +4274,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 146,
+    "entrySeq": 152,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4013,7 +4356,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 147,
+    "entrySeq": 153,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4098,7 +4441,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 148,
+    "entrySeq": 154,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4185,7 +4528,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 149,
+    "entrySeq": 155,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4270,7 +4613,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 150,
+    "entrySeq": 156,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4364,7 +4707,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 151,
+    "entrySeq": 157,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4458,7 +4801,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 152,
+    "entrySeq": 158,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4552,7 +4895,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 153,
+    "entrySeq": 159,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4646,7 +4989,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 154,
+    "entrySeq": 160,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4740,7 +5083,7 @@
         "outcome": "passed"
       }
     ],
-    "entrySeq": 155,
+    "entrySeq": 161,
     "itemKind": "insight",
     "kind": "tenant_item",
     "localized": {
@@ -4820,5 +5163,514 @@
     },
     "state": "pending_approval",
     "tenantId": "tribuna-austral"
+  },
+  {
+    "approval": null,
+    "approvalRequired": false,
+    "attempts": [
+      {
+        "agent": "localizer",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 162,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 2044,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-19}} scores for {{club:HCY}} at {{minute:89}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:HCY}} score",
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "itemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v1",
+      "locale": "en-GB",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "northlight-sport",
+      "version": 1
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Harbour City score",
+        "line": "Niklas Navarro-Gil scores for Harbour City at 89': 2\u20131.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "AI-generated",
+        "mode": "label-unless-approved",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 36
+      },
+      "itemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v1",
+      "locale": "en-GB",
+      "outAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 48
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": null,
+      "tenantId": "northlight-sport",
+      "version": 1
+    },
+    "rendered": {
+      "claims": [
+        "Niklas Navarro-Gil scores for Harbour City at 89': 2\u20131.",
+        "Leon Blackwood provides the assist."
+      ],
+      "headline": "Harbour City score"
+    },
+    "state": "amended",
+    "tenantId": "northlight-sport"
+  },
+  {
+    "approval": null,
+    "approvalRequired": false,
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 163,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 2044,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-22}} scores for {{club:HCY}} at {{minute:89}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} provides the assist.",
+          "type": "stat"
+        }
+      ],
+      "headline": "{{club:HCY}} score",
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "itemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v2",
+      "locale": "en-GB",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "northlight-sport",
+      "version": 2
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Harbour City score",
+        "line": "Idris Brice\u00f1o scores for Harbour City at 89': 2\u20131.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "AI-generated",
+        "mode": "label-unless-approved",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 0
+      },
+      "itemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v2",
+      "locale": "en-GB",
+      "outAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 12
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v1",
+      "tenantId": "northlight-sport",
+      "version": 2
+    },
+    "rendered": {
+      "claims": [
+        "Idris Brice\u00f1o scores for Harbour City at 89': 2\u20131.",
+        "Leon Blackwood provides the assist."
+      ],
+      "headline": "Harbour City score"
+    },
+    "state": "on_air",
+    "tenantId": "northlight-sport"
+  },
+  {
+    "approval": null,
+    "approvalRequired": false,
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 164,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 2044,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-19}} trifft in Minute {{minute:89}} f\u00fcr {{club:HCY}} zum {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} bereitet das Tor vor.",
+          "type": "stat"
+        }
+      ],
+      "headline": "Tor f\u00fcr {{club:HCY}}",
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v1",
+      "locale": "de-DE",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "rheinblick-sport",
+      "version": 1
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Tor f\u00fcr Harbour City",
+        "line": "Niklas Navarro-Gil trifft in Minute 89' f\u00fcr Harbour City zum 2:1.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "KI-generiert",
+        "mode": "eu-strict",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 36
+      },
+      "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v1",
+      "locale": "de-DE",
+      "outAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 48
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": null,
+      "tenantId": "rheinblick-sport",
+      "version": 1
+    },
+    "rendered": {
+      "claims": [
+        "Niklas Navarro-Gil trifft in Minute 89' f\u00fcr Harbour City zum 2:1.",
+        "Leon Blackwood bereitet das Tor vor."
+      ],
+      "headline": "Tor f\u00fcr Harbour City"
+    },
+    "state": "amended",
+    "tenantId": "rheinblick-sport"
+  },
+  {
+    "approval": null,
+    "approvalRequired": false,
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 165,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 2044,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-22}} trifft in Minute {{minute:89}} f\u00fcr {{club:HCY}} zum {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} bereitet das Tor vor.",
+          "type": "stat"
+        }
+      ],
+      "headline": "Tor f\u00fcr {{club:HCY}}",
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v2",
+      "locale": "de-DE",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "rheinblick-sport",
+      "version": 2
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Tor f\u00fcr Harbour City",
+        "line": "Idris Brice\u00f1o trifft in Minute 89' f\u00fcr Harbour City zum 2:1.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "KI-generiert",
+        "mode": "eu-strict",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 0
+      },
+      "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v2",
+      "locale": "de-DE",
+      "outAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 12
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v1",
+      "tenantId": "rheinblick-sport",
+      "version": 2
+    },
+    "rendered": {
+      "claims": [
+        "Idris Brice\u00f1o trifft in Minute 89' f\u00fcr Harbour City zum 2:1.",
+        "Leon Blackwood bereitet das Tor vor."
+      ],
+      "headline": "Tor f\u00fcr Harbour City"
+    },
+    "state": "on_air",
+    "tenantId": "rheinblick-sport"
+  },
+  {
+    "approval": null,
+    "approvalRequired": true,
+    "attempts": [
+      {
+        "agent": "template",
+        "error": null,
+        "findings": [],
+        "model": "none",
+        "number": 1,
+        "outcome": "passed"
+      }
+    ],
+    "entrySeq": 166,
+    "itemKind": "insight",
+    "kind": "tenant_item",
+    "localized": {
+      "asOfSeq": 2044,
+      "claims": [
+        {
+          "claimId": "cl-1",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-19}} marca para {{club:HCY}} en el {{minute:89}}: {{score}}.",
+          "type": "stat"
+        },
+        {
+          "claimId": "cl-2",
+          "evidence": {
+            "eventIds": ["m42-e2043", "m42-e2044"],
+            "metricSnapshotIds": []
+          },
+          "text": "{{player:HCY-11}} da la asistencia.",
+          "type": "stat"
+        }
+      ],
+      "headline": "Gol de {{club:HCY}}",
+      "insightId": "in-m42-goal-HCY-s2044-a1",
+      "itemId": "it-tribuna-austral-in-m42-goal-HCY-s2044-a1-v1",
+      "locale": "es-MX",
+      "matchId": "m42",
+      "momentId": "mo-m42-goal-HCY-s2044",
+      "policyVersion": 1,
+      "provenance": {
+        "agent": "template",
+        "model": "none",
+        "producedBy": "template",
+        "promptVersion": "v1.0"
+      },
+      "tenantId": "tribuna-austral",
+      "version": 1
+    },
+    "matchId": "m42",
+    "overlay": {
+      "content": {
+        "headline": "Gol de Harbour City",
+        "line": "Niklas Navarro-Gil marca para Harbour City en el 89': 2\u20131.",
+        "template": "lower_third"
+      },
+      "disclosure": {
+        "label": "Generado con IA",
+        "mode": "label-all",
+        "reason": "ai_generated"
+      },
+      "inAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 0
+      },
+      "itemId": "it-tribuna-austral-in-m42-goal-HCY-s2044-a1-v1",
+      "locale": "es-MX",
+      "outAt": {
+        "minute": 93,
+        "period": 2,
+        "second": 12
+      },
+      "priority": 2,
+      "provenanceUrl": null,
+      "supersedes": null,
+      "tenantId": "tribuna-austral",
+      "version": 1
+    },
+    "rendered": {
+      "claims": [
+        "Niklas Navarro-Gil marca para Harbour City en el 89': 2\u20131.",
+        "Leon Blackwood da la asistencia."
+      ],
+      "headline": "Gol de Harbour City"
+    },
+    "state": "retracted",
+    "tenantId": "tribuna-austral"
+  },
+  {
+    "actions": [
+      {
+        "action": "amended",
+        "insightId": "in-m42-goal-HCY-s2044-a1",
+        "itemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v1",
+        "locale": "en-GB",
+        "newItemId": "it-northlight-sport-in-m42-goal-HCY-s2044-a1-v2",
+        "tenantId": "northlight-sport",
+        "was": "on_air"
+      },
+      {
+        "action": "amended",
+        "insightId": "in-m42-goal-HCY-s2044-a1",
+        "itemId": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v1",
+        "locale": "de-DE",
+        "newItemId": "it-rheinblick-sport-in-m42-goal-HCY-s2044-a1-v2",
+        "tenantId": "rheinblick-sport",
+        "was": "on_air"
+      },
+      {
+        "action": "retracted",
+        "insightId": "in-m42-goal-HCY-s2044-a1",
+        "itemId": "it-tribuna-austral-in-m42-goal-HCY-s2044-a1-v1",
+        "locale": "es-MX",
+        "newItemId": null,
+        "tenantId": "tribuna-austral",
+        "was": "pending_approval"
+      }
+    ],
+    "correctionId": "c-m42-02",
+    "elapsedMs": 3,
+    "entrySeq": 167,
+    "insightIds": ["in-m42-goal-HCY-s2044-a1"],
+    "kind": "correction_report",
+    "matchId": "m42",
+    "startedAt": "2026-10-11T15:00:00.000Z",
+    "targetEventId": "m42-e2044"
   }
 ]

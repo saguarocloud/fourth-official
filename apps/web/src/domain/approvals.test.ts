@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FeedEntry, TenantItemEntry } from "@/contracts/feed";
+import { BEFORE_DESK } from "@/components/broadcast/testing";
 import feedM42 from "@/fixtures/feed-m42-partners.json";
 
 import { foldBroadcast } from "./broadcast";
@@ -10,7 +11,8 @@ const FEED = feedM42 as unknown as FeedEntry[];
 const DONE = foldBroadcast(FEED);
 const NEXT = Math.max(...FEED.map((e) => e.entrySeq)) + 1;
 
-const held = () => DONE.items.filter((i) => i.state === "pending_approval");
+// Items whose latest version is held: a correction may have pulled some since.
+const held = () => waiting(DONE);
 
 function decided(item: TenantItemEntry, seq: number, decision: "approved" | "rejected") {
   return {
@@ -34,7 +36,7 @@ describe("latestVersions", () => {
 
     const mine = versions.filter((v) => v.overlay.itemId === first!.overlay.itemId);
     expect(mine).toEqual([later]);
-    expect(versions).toHaveLength(DONE.items.length);
+    expect(versions).toHaveLength(new Set(DONE.items.map((i) => i.overlay.itemId)).size);
     expect(versions.indexOf(later)).toBe(DONE.items.indexOf(first!));
   });
 });
@@ -43,7 +45,7 @@ describe("waiting", () => {
   it("lists the items held for an editor, oldest first", () => {
     const queue = waiting(DONE);
 
-    expect(queue).toHaveLength(7);
+    expect(queue).toHaveLength(5);
     expect(queue.every((i) => i.state === "pending_approval")).toBe(true);
     expect(queue.map((i) => i.entrySeq)).toEqual(
       [...queue.map((i) => i.entrySeq)].sort((a, b) => a - b),
@@ -58,7 +60,7 @@ describe("waiting", () => {
       decided(second!, NEXT + 1, "rejected"),
     ]);
 
-    expect(waiting(state)).toHaveLength(5);
+    expect(waiting(state)).toHaveLength(3);
   });
 });
 
@@ -101,12 +103,26 @@ describe("englishVersion", () => {
 
 describe("correctedSince", () => {
   it("marks a held item whose evidence a correction targets, and only that", () => {
-    const targets = new Set(DONE.corrections.map((c) => c.correction.targetEventId));
-    const touched = held().filter((i) =>
-      i.localized?.claims.some((c) => c.evidence.eventIds.some((id) => targets.has(id))),
+    // Before the desk pulls them, held items may rest on a corrected fact.
+    const before = foldBroadcast(BEFORE_DESK);
+    const targets = new Set(before.corrections.map((c) => c.correction.targetEventId));
+    // The VAR moment explains the void: the voided goal is part of its story, not its claim.
+    const touched = waiting(before).filter(
+      (i) =>
+        before.moments[i.localized!.momentId]?.kind !== "var_overturn" &&
+        i.localized?.claims.some((c) => c.evidence.eventIds.some((id) => targets.has(id))),
     );
 
     expect(touched.length).toBeGreaterThan(0);
-    expect(held().filter((i) => correctedSince(DONE, i))).toEqual(touched);
+    expect(waiting(before).filter((i) => correctedSince(before, i))).toEqual(touched);
+  });
+});
+
+describe("correctedSince, for a version the desk remade", () => {
+  it("does not count the correction it was made from", () => {
+    const remade = DONE.items.find((i) => i.overlay.supersedes !== null)!;
+    const held = { ...remade, state: "pending_approval" as const, approvalRequired: true };
+
+    expect(correctedSince({ ...DONE, items: [...DONE.items, held] }, held)).toBe(false);
   });
 });

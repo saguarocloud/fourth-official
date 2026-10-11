@@ -96,7 +96,8 @@ export function applyEntry(live: LiveMatch, entry: FeedEntry): LiveMatch {
       };
     }
     case "tenant_item":
-      // A partner's graphic: shown by the Broadcast Preview, not here.
+    case "correction_report":
+      // A partner's graphic, or what a correction did to them: shown on other screens.
       return next;
   }
 }
@@ -105,7 +106,14 @@ export function foldFeed(entries: readonly FeedEntry[], generation = 1): LiveMat
   return entries.reduce(applyEntry, emptyLive(generation));
 }
 
-const KINDS = new Set(["clock", "moment", "insight", "correction", "tenant_item"]);
+const KINDS = new Set([
+  "clock",
+  "moment",
+  "insight",
+  "correction",
+  "tenant_item",
+  "correction_report",
+]);
 
 /** A feed entry from the stream, or null if it is not one for this match. The server is ours and
  * validates everything it sends; this guards the shape the reducer relies on. */
@@ -132,6 +140,34 @@ function isTenantItem(entry: Record<string, unknown>): boolean {
   );
 }
 
+const WAS = new Set(["on_air", "pending_approval"]);
+const ACTIONS = new Set(["retracted", "amended", "escalated"]);
+
+function isAction(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    WAS.has(String(value.was)) &&
+    ACTIONS.has(String(value.action)) &&
+    ["tenantId", "locale", "insightId", "itemId", "was", "action"].every(
+      (k) => typeof value[k] === "string",
+    ) &&
+    (value.newItemId === null || typeof value.newItemId === "string")
+  );
+}
+
+/** A correction report carries what the Corrections Center reads before it renders. */
+function isCorrectionReport(entry: Record<string, unknown>): boolean {
+  return (
+    typeof entry.correctionId === "string" &&
+    typeof entry.targetEventId === "string" &&
+    typeof entry.elapsedMs === "number" &&
+    Array.isArray(entry.insightIds) &&
+    entry.insightIds.every((id) => typeof id === "string") &&
+    Array.isArray(entry.actions) &&
+    entry.actions.every(isAction)
+  );
+}
+
 export function parseEntry(raw: string, matchId: string): FeedEntry | null {
   let value: unknown;
   try {
@@ -144,6 +180,7 @@ export function parseEntry(raw: string, matchId: string): FeedEntry | null {
   if (entry.matchId !== matchId || !KINDS.has(String(entry.kind))) return null;
   if (typeof entry.entrySeq !== "number" || !Number.isInteger(entry.entrySeq)) return null;
   if (entry.kind === "tenant_item" && !isTenantItem(entry)) return null;
+  if (entry.kind === "correction_report" && !isCorrectionReport(entry)) return null;
   return value as FeedEntry;
 }
 

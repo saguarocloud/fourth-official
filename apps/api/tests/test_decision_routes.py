@@ -29,9 +29,11 @@ def paused() -> Iterator[tuple[TestClient, Paused]]:
     with TestClient(create_app(Settings(version="test"), matchday=held.day)) as client:
         assert client.post("/api/matchday", headers=STUDIO).status_code == 202
         assert client.portal is not None
-        client.portal.call(held.until_held)
-        yield client, held
-        client.portal.call(held.released.set)
+        try:
+            client.portal.call(held.until_held)
+            yield client, held
+        finally:
+            client.portal.call(held.released.set)
         client.portal.call(held.day.wait)
 
 

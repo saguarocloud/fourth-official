@@ -142,3 +142,48 @@ describe("partner items", () => {
     expect(next.corrections).toBe(live.corrections);
   });
 });
+
+describe("parseEntry, for a correction report", () => {
+  const report = {
+    kind: "correction_report",
+    entrySeq: 200,
+    matchId: "m42",
+    correctionId: "c-m42-01",
+    targetEventId: "m42-e0287",
+    startedAt: "2026-10-11T15:00:00.000Z",
+    elapsedMs: 10,
+    insightIds: ["in-m42-goal-HCY-s0287-a1"],
+    actions: [],
+  };
+
+  it("accepts a well-formed one", () => {
+    expect(parseEntry(JSON.stringify(report), "m42")).toEqual(report);
+  });
+
+  it.each([
+    ["no correction", { ...report, correctionId: 1 }],
+    ["no actions", { ...report, actions: null }],
+    ["no insights", { ...report, insightIds: "x" }],
+    ["no time taken", { ...report, elapsedMs: "10" }],
+    ["a malformed action", { ...report, actions: [{ tenantId: "x" }] }],
+    [
+      "an unknown action",
+      {
+        ...report,
+        actions: [
+          {
+            tenantId: "tribuna-austral",
+            locale: "es-MX",
+            insightId: "in-x",
+            itemId: "it-x",
+            was: "on_air",
+            action: "deleted",
+            newItemId: null,
+          },
+        ],
+      },
+    ],
+  ])("refuses one with %s", (_, entry) => {
+    expect(parseEntry(JSON.stringify(entry), "m42")).toBeNull();
+  });
+});

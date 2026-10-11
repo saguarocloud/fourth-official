@@ -8,6 +8,7 @@
 import type {
   ClockEntry,
   CorrectionEntry,
+  CorrectionReportEntry,
   FeedEntry,
   MatchClock,
   Moment,
@@ -65,10 +66,20 @@ export interface BroadcastState {
   readonly items: readonly TenantItemEntry[];
   readonly moments: Readonly<Record<string, Moment>>;
   readonly corrections: readonly CorrectionEntry[];
+  /** What each correction did to what was published, in the order they arrived. */
+  readonly reports: readonly CorrectionReportEntry[];
 }
 
 export function emptyBroadcast(generation: number): BroadcastState {
-  return { generation, lastSeq: 0, clock: null, items: [], moments: {}, corrections: [] };
+  return {
+    generation,
+    lastSeq: 0,
+    clock: null,
+    items: [],
+    moments: {},
+    corrections: [],
+    reports: [],
+  };
 }
 
 /** Apply one entry. Entries at or before the last one applied are ignored, so replays are safe. */
@@ -84,6 +95,8 @@ export function applyBroadcast(state: BroadcastState, entry: FeedEntry): Broadca
       return { ...next, corrections: [...state.corrections, entry] };
     case "tenant_item":
       return { ...next, items: [...state.items, entry] };
+    case "correction_report":
+      return { ...next, reports: [...state.reports, entry] };
     case "insight":
       return next;
   }
@@ -186,11 +199,13 @@ function latest(
 
 /** Where a graphic stands at a match instant: waiting to come in, on air, or aired; an item held
  * for approval or rejected never airs. Without a clock, a graphic cleared for air is on air. */
-export type Phase = "queued" | "airing" | "aired" | "held" | "rejected";
+export type Phase = "queued" | "airing" | "aired" | "held" | "rejected" | "retracted" | "amended";
 
 export function phaseAt(item: TenantItemEntry, now: number | null): Phase {
   if (item.state === "pending_approval") return "held";
   if (item.state === "rejected") return "rejected";
+  if (item.state === "retracted") return "retracted";
+  if (item.state === "amended") return "amended";
   if (now === null) return "airing";
   if (instant(item.overlay.inAt) > now) return "queued";
   return instant(item.overlay.outAt) < now ? "aired" : "airing";

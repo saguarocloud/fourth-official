@@ -11,10 +11,18 @@ from fourth_official_replay.matchday import (
     StartLedger,
 )
 from fourth_official_replay.partners import Decision, Partner, Partners
-from fourth_official_replay.replay import Explainer, ReplayConfig, facts_for, replay
+from fourth_official_replay.replay import (
+    Clocks,
+    Explainer,
+    ReplayConfig,
+    facts_for,
+    fixed_clocks,
+    replay,
+)
 
 __all__ = [
     "Availability",
+    "Clocks",
     "Decision",
     "DecisionError",
     "Explainer",
@@ -29,5 +37,6 @@ __all__ = [
     "StartLedger",
     "UnknownItemError",
     "facts_for",
+    "fixed_clocks",
     "replay",
 ]
