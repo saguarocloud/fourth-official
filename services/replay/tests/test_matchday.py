@@ -84,3 +84,20 @@ def test_a_restart_begins_a_fresh_feed() -> None:
 def test_an_unknown_match_has_no_feed() -> None:
     with pytest.raises(KeyError):
         matchday().feed("m99")
+
+
+def test_stopping_cancels_a_run_under_way() -> None:
+    async def slow(seconds: float) -> None:
+        await anyio.sleep(1)
+
+    day = Matchday(demo_store(), template_only, sleep=slow)
+
+    async def run() -> None:
+        await day.start(now=0.0)
+        await anyio.sleep(0.05)
+        await day.stop()
+
+    anyio.run(run)
+
+    assert not day.running
+    assert all(day.feed(m.match_id).finished for m in day.status())

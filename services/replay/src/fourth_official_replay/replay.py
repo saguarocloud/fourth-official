@@ -17,6 +17,7 @@ from fourth_official_contracts import (
     ClockEntry,
     Correction,
     CorrectionEntry,
+    EventVoided,
     GoalEvent,
     InsightEntry,
     MatchEvent,
@@ -65,9 +66,38 @@ def facts_for(record: MatchRecord) -> MatchFacts:
     )
 
 
-def _correction_entry(match_id: str, correction: Correction, entry_seq: int) -> CorrectionEntry:
+_VOID_REASONS = {
+    "VAR_OFFSIDE": "for offside",
+    "VAR_FOUL": "for a foul",
+    "VAR_HANDBALL": "for handball",
+    "ACCREDITATION_PANEL": "by the accreditation panel",
+    "PROVIDER_RESTATEMENT": "by the data provider",
+}
+
+
+def correction_summary(record: MatchRecord, correction: Correction) -> str:
+    """What a correction changed, in words, rendered from the match and the squad lists."""
+    target = next(e for e in record.match.events if e.event_id == correction.target_event_id)
+    club = getattr(target, "team_id", None)
+    what = f"{record.club_names[club]} goal" if isinstance(target, GoalEvent) and club else "Event"
+    when = f"at {target.clock.minute}'"
+    if isinstance(correction, EventVoided):
+        return f"{what} {when} ruled out {_VOID_REASONS[correction.reason]}"
+    new_scorer = correction.changes.scorer_id
+    if new_scorer is not None and new_scorer in record.players:
+        return f"{what} {when} credited to {record.players[new_scorer].name}"
+    return f"{what} {when} amended {_VOID_REASONS[correction.reason]}"
+
+
+def _correction_entry(
+    record: MatchRecord, match_id: str, correction: Correction, entry_seq: int
+) -> CorrectionEntry:
     return CorrectionEntry(
-        kind="correction", entry_seq=entry_seq, match_id=match_id, correction=correction
+        kind="correction",
+        entry_seq=entry_seq,
+        match_id=match_id,
+        correction=correction,
+        summary=correction_summary(record, correction),
     )
 
 
@@ -103,7 +133,9 @@ class _Replay:
             event is None or self.corrections[0].issued_at <= event.wall_clock
         ):
             correction = self.corrections.pop(0)
-            await self.log.publish(partial(_correction_entry, self.log.match_id, correction))
+            await self.log.publish(
+                partial(_correction_entry, self.record, self.log.match_id, correction)
+            )
             published = True
         return published
 

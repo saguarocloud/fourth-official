@@ -5,8 +5,10 @@ from functools import cache
 import anyio
 
 from fourth_official_contracts import (
+    Amendment,
     ClockEntry,
     CorrectionEntry,
+    EventAmended,
     FeedEntry,
     GoalEvent,
     InsightEntry,
@@ -17,6 +19,7 @@ from fourth_official_contracts import (
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
 from fourth_official_replay import FeedLog, ReplayConfig, replay
+from fourth_official_replay.replay import correction_summary
 from fourth_official_verifier import MatchFacts
 
 pauses: list[float] = []
@@ -139,3 +142,31 @@ def test_detecting_every_few_events_finds_the_same_moments_as_detecting_on_every
         return [e.moment for e in entries if isinstance(e, MomentEntry)]
 
     assert moments(every.entries) == moments(featured())
+
+
+def test_corrections_say_what_changed_in_words() -> None:
+    void, amendment = of(CorrectionEntry)
+    record = demo_store().record("m42")
+    new_scorer = record.players[amendment.correction.changes.scorer_id or ""].name  # type: ignore[union-attr]
+
+    assert void.summary == "Harbour City goal at 67' ruled out for offside"
+    assert amendment.summary == f"Harbour City goal at 89' credited to {new_scorer}"
+
+
+def test_a_correction_without_a_new_scorer_is_described_generically() -> None:
+    record = demo_store().record("m42")
+    goal = next(e for e in record.match.events if isinstance(e, GoalEvent))
+    assist_removed = EventAmended(
+        correction_id="c-m42-09",
+        match_id="m42",
+        reason="PROVIDER_RESTATEMENT",
+        issued_at=goal.wall_clock,
+        target_event_id=goal.event_id,
+        new_version=2,
+        kind="EVENT_AMENDED",
+        changes=Amendment(assist_id=None),
+    )
+
+    assert correction_summary(record, assist_removed) == (
+        f"Harbour City goal at {goal.clock.minute}' amended by the data provider"
+    )

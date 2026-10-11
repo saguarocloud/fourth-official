@@ -90,6 +90,8 @@ class InsightEntry(FeedEntryBase):
 class CorrectionEntry(FeedEntryBase):
     kind: Literal["correction"]
     correction: Correction
+    # What changed, in words, rendered by code from the correction and the squad lists.
+    summary: Annotated[str, StringConstraints(min_length=1, max_length=200)]
 
     @model_validator(mode="after")
     def _same_match(self) -> "CorrectionEntry":

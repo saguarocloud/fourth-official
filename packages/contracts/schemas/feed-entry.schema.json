@@ -273,13 +273,20 @@
           "pattern": "^m[0-9]{1,12}$",
           "title": "Matchid",
           "type": "string"
+        },
+        "summary": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
         }
       },
       "required": [
         "entrySeq",
         "matchId",
         "kind",
-        "correction"
+        "correction",
+        "summary"
       ],
       "title": "CorrectionEntry",
       "type": "object"

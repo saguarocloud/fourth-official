@@ -61,6 +61,7 @@ ENTRIES: list[dict[str, Any]] = [
             "issuedAt": "2026-10-24T15:27:39.000Z",
             "newVersion": 2,
         },
+        "summary": "Harbour City goal at 67' ruled out for offside",
     },
 ]
 
