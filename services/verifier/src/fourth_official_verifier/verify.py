@@ -7,10 +7,12 @@ the cited evidence exists, is not from after the moment, and had not been voided
 then. Finding details never repeat the claim text beyond single ASCII words.
 """
 
+import re
 from collections.abc import Iterable, Iterator
 
 from fourth_official_contracts import (
     MAX_FINDINGS,
+    CardEvent,
     Finding,
     FindingCode,
     Insight,
@@ -21,7 +23,7 @@ from fourth_official_contracts import (
     club_of,
 )
 from fourth_official_verifier.facts import MatchFacts
-from fourth_official_verifier.text import TextProblems, check_text
+from fourth_official_verifier.text import SECOND_YELLOW, TextProblems, check_text
 
 MAX_DETAIL = 200
 MAX_EXAMPLES = 3
@@ -63,6 +65,16 @@ def _word_findings(claim_id: str | None, problems: TextProblems) -> Iterator[Fin
     for found, code, why in checks:
         if found:
             yield _finding(claim_id, code, f"{why}: {_examples(found)}")
+
+
+def _evidenced(text: str, events: Iterable[MatchEvent]) -> list[re.Pattern[str]]:
+    """Count phrases the cited events state: a second yellow, for the player the text names (if
+    it names one)."""
+    named = {argument for kind, argument in claim_references(text) if kind == "player"}
+    cards = [e for e in events if isinstance(e, CardEvent) and e.card == "second_yellow"]
+    if any(not named or card.player_id in named for card in cards):
+        return [SECOND_YELLOW]
+    return []
 
 
 def _participants(events: Iterable[MatchEvent]) -> set[str]:
@@ -146,11 +158,15 @@ def _findings(insight: Insight, moment: Moment, facts: MatchFacts) -> Iterator[F
         return [events[e] for e in event_ids if e in events]
 
     every = cited(e for c in insight.claims for e in c.evidence.event_ids)
-    yield from _word_findings(None, check_text(insight.headline, players))
+    yield from _word_findings(
+        None, check_text(insight.headline, players, evidenced=_evidenced(insight.headline, every))
+    )
     yield from _reference_findings(None, insight.headline, every, moment, facts)
     for claim in insight.claims:
-        yield from _word_findings(claim.claim_id, check_text(claim.text, players))
         own = cited(claim.evidence.event_ids)
+        yield from _word_findings(
+            claim.claim_id, check_text(claim.text, players, evidenced=_evidenced(claim.text, own))
+        )
         yield from _reference_findings(claim.claim_id, claim.text, own, moment, facts)
     yield from _evidence_findings(insight, moment, facts)
 
