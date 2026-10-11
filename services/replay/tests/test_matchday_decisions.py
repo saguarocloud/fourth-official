@@ -28,7 +28,7 @@ from fourth_official_replay.errors import (
     UnknownItemError,
 )
 from fourth_official_replay.partners import EntryBuilder, Partner
-from paused import Paused
+from paused import WAIT, Paused
 from test_partners import no_wait, partners, template_only
 
 NOW = datetime(2026, 10, 11, 15, 0, tzinfo=UTC)
@@ -342,9 +342,9 @@ def escalating() -> Partners:
 def test_an_escalated_version_can_be_approved() -> None:
     async def check(paused: Paused) -> None:
         # The desk escalates when the corrected goal's items arrive: wait for its report.
-        with anyio.fail_after(10):
+        with anyio.fail_after(WAIT):
             while not [i for i in paused.held() if i.overlay.supersedes is not None]:
-                await anyio.sleep(0)
+                await anyio.sleep(0.01)
         escalated = [i for i in paused.held() if i.overlay.supersedes is not None]
         entry = await decide(paused, escalated[0])
         assert entry.state == "on_air"

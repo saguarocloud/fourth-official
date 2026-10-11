@@ -20,14 +20,13 @@ import {
   rundown,
 } from "@/domain/broadcast";
 import type { RunState } from "@/domain/live";
-import { isMatchId } from "@/lib/matchId";
+import { FEATURED_MATCH, isMatchId } from "@/lib/matchId";
 
 import { PartnerKeys } from "./PartnerKeys";
 import { ProgramMonitor } from "./ProgramMonitor";
 import { Rundown } from "./Rundown";
 import { verdictFor } from "./verdict";
 
-const FEATURED = "m42";
 const BROADCAST: Folding<BroadcastState> = { empty: emptyBroadcast, apply: applyBroadcast };
 
 function isTyping(target: EventTarget | null): boolean {
@@ -41,9 +40,9 @@ export function BroadcastPreview() {
   const params = useSearchParams();
   const { matches, failed } = useMatches({ availability: false });
   const param = params.get("match");
-  const asked = param !== null && isMatchId(param) ? param : FEATURED;
+  const asked = param !== null && isMatchId(param) ? param : FEATURED_MATCH;
   const current =
-    matches?.find((m) => m.matchId === asked) ?? matches?.find((m) => m.matchId === FEATURED);
+    matches?.find((m) => m.matchId === asked) ?? matches?.find((m) => m.matchId === FEATURED_MATCH);
   const matchId = current?.matchId ?? asked;
   const run: RunState | null = matches === null ? null : (current?.state ?? "idle");
   const runKey = useRunKey(matchId, current?.state ?? null);

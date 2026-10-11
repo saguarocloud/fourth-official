@@ -25,7 +25,7 @@ const SCREENS: readonly Screen[] = [
   { label: "Match Live", href: "/match", icon: Activity, available: true },
   { label: "Broadcast Preview", href: "/preview", icon: MonitorPlay, available: true },
   { label: "Approvals", href: "/approvals", icon: ClipboardCheck, available: true },
-  { label: "Corrections", href: "/corrections", icon: Undo2, available: false },
+  { label: "Corrections", href: "/corrections", icon: Undo2, available: true },
   { label: "Provenance", href: "/provenance", icon: FileBadge, available: false },
   { label: "Policy Studio", href: "/policy", icon: ScrollText, available: false },
   { label: "Proving Ground", href: "/proving-ground", icon: FlaskConical, available: false },
