@@ -1,4 +1,5 @@
-"""Canonical wire contracts for Fourth Official: match events and corrections."""
+"""Canonical wire contracts for Fourth Official: match events, corrections, metric snapshots and
+ground truth."""
 
 from fourth_official_contracts.corrections import (
     CORRECTION_ADAPTER,
@@ -42,6 +43,14 @@ from fourth_official_contracts.events import (
     parse_match_event,
     parse_match_event_json,
 )
+from fourth_official_contracts.ground_truth import (
+    GROUND_TRUTH_ADAPTER,
+    GroundTruth,
+    StorylineKind,
+    StorylineTruth,
+    parse_ground_truth,
+    parse_ground_truth_json,
+)
 from fourth_official_contracts.metrics import (
     METRIC_SNAPSHOT_ADAPTER,
     MetricName,
@@ -72,6 +81,7 @@ from fourth_official_contracts.primitives import (
 __all__ = [
     "CORRECTION_ADAPTER",
     "FIRST_HALF_MINUTES",
+    "GROUND_TRUTH_ADAPTER",
     "MATCH_EVENT_ADAPTER",
     "MATCH_EVENT_TYPES",
     "MAX_BALL_SPEED_KMH",
@@ -96,6 +106,7 @@ __all__ = [
     "EventVoided",
     "FoulEvent",
     "GoalEvent",
+    "GroundTruth",
     "InterceptionEvent",
     "MatchClock",
     "MatchEvent",
@@ -116,6 +127,8 @@ __all__ = [
     "Score",
     "SetPieceEvent",
     "ShotEvent",
+    "StorylineKind",
+    "StorylineTruth",
     "SubstitutionEvent",
     "TackleEvent",
     "UtcTimestamp",
@@ -126,6 +139,8 @@ __all__ = [
     "match_of",
     "parse_correction",
     "parse_correction_json",
+    "parse_ground_truth",
+    "parse_ground_truth_json",
     "parse_match_event",
     "parse_match_event_json",
     "parse_metric_snapshot",

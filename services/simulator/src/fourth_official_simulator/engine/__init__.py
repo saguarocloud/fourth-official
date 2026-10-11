@@ -5,9 +5,12 @@ The match advances one *phase* at a time. The player on the ball may be pressed 
 distance, pressure and team style. Dead balls (throw-ins, goal kicks, corners, free kicks,
 kick-offs) are where substitutions happen. Every transition is a pure function of a frozen
 `MatchState` and a seeded random generator, so a setup always produces exactly the same match.
+
+A storyline (see `storylines`) lays scripted moments over the match: style shifts, goals on cue,
+VAR overturns, red cards, and the corrections issued after them.
 """
 
-from fourth_official_simulator.engine.match import simulate
+from fourth_official_simulator.engine.match import SimulatedMatch, play, simulate
 from fourth_official_simulator.engine.state import MatchSetup, TeamSetup
 
-__all__ = ["MatchSetup", "TeamSetup", "simulate"]
+__all__ = ["MatchSetup", "SimulatedMatch", "TeamSetup", "play", "simulate"]

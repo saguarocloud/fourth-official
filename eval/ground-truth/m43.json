@@ -1,0 +1,78 @@
+{
+  "away": "ASV",
+  "finalScore": {
+    "away": 1,
+    "home": 2
+  },
+  "home": "KBA",
+  "matchId": "m43",
+  "seed": 1311,
+  "storyline": "Down to ten, a switch to direct play, a late comeback",
+  "storylines": [
+    {
+      "club": "KBA",
+      "correctionIds": [],
+      "eventIds": [
+        "m43-e0814",
+        "m43-e0815"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "red_card",
+      "label": "KBA down to ten",
+      "minute": 38
+    },
+    {
+      "club": "KBA",
+      "correctionIds": [],
+      "eventIds": [],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "tactical_shift",
+      "label": "KBA go direct with ten men",
+      "minute": 40
+    },
+    {
+      "club": "ASV",
+      "correctionIds": [],
+      "eventIds": [
+        "m43-e1196",
+        "m43-e1197",
+        "m43-e1198"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "ASV goal by ASV-11",
+      "minute": 52
+    },
+    {
+      "club": "KBA",
+      "correctionIds": [],
+      "eventIds": [
+        "m43-e1774",
+        "m43-e1775",
+        "m43-e1776"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "KBA goal by KBA-11",
+      "minute": 81
+    },
+    {
+      "club": "KBA",
+      "correctionIds": [],
+      "eventIds": [
+        "m43-e1921",
+        "m43-e1922",
+        "m43-e1923"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "KBA goal by KBA-11",
+      "minute": 88
+    }
+  ]
+}
