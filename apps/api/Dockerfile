@@ -20,6 +20,9 @@ COPY services/verifier/pyproject.toml services/verifier/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package fourth-official-api --no-install-workspace
 COPY apps/api apps/api
+# The API runs the replay pipeline, so it needs the source of every workspace package.
+COPY packages packages
+COPY services services
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package fourth-official-api --no-editable
 
