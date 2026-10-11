@@ -30,8 +30,11 @@ ClockText = Annotated[str, _text(8), AfterValidator(_line)]
 StatValue = Annotated[str, _text(16), AfterValidator(_line)]
 StatLabel = Annotated[str, _text(24), AfterValidator(_line)]
 CardTitle = Annotated[str, _text(40), AfterValidator(_line)]
-HeadlineLine = Annotated[str, _text(120), AfterValidator(_line)]
-BodyLine = Annotated[str, _text(200), AfterValidator(_line)]
+# A lower third's headline and its line under it: the longest text a partner's graphic shows.
+MAX_HEADLINE_CHARS = 120
+MAX_LINE_CHARS = 200
+HeadlineLine = Annotated[str, _text(MAX_HEADLINE_CHARS), AfterValidator(_line)]
+BodyLine = Annotated[str, _text(MAX_LINE_CHARS), AfterValidator(_line)]
 
 
 class LowerThird(WireModel):

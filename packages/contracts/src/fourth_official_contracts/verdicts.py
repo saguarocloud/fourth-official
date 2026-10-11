@@ -36,6 +36,12 @@ FindingCode = Literal[
     "FUTURE_MINUTE",
     "VOIDED_EVIDENCE",
     "SUPERSEDED_EVIDENCE",
+    # A partner's version of an insight: it may change words only, never claims or facts.
+    "CLAIMS_CHANGED",
+    "REFERENCES_CHANGED",
+    # A partner's version touches a topic the partner never covers, or will not fit on screen.
+    "BLOCKED_TOPIC",
+    "TOO_LONG",
 ]
 MAX_FINDINGS = 64
 

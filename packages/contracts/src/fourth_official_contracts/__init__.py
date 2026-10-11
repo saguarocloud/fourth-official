@@ -104,6 +104,8 @@ from fourth_official_contracts.moments import (
     parse_moment_json,
 )
 from fourth_official_contracts.overlays import (
+    MAX_HEADLINE_CHARS,
+    MAX_LINE_CHARS,
     OVERLAY_SPEC_ADAPTER,
     CorrectionStrap,
     LowerThird,
@@ -167,6 +169,8 @@ __all__ = [
     "MATCH_EVENT_TYPES",
     "MAX_BALL_SPEED_KMH",
     "MAX_FINDINGS",
+    "MAX_HEADLINE_CHARS",
+    "MAX_LINE_CHARS",
     "METRIC_SNAPSHOT_ADAPTER",
     "MOMENT_ADAPTER",
     "NARRATIVE_KINDS",

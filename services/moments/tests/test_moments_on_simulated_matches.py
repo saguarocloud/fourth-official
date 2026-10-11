@@ -64,7 +64,9 @@ def test_shift_moments_are_rare_in_ordinary_matches() -> None:
 
 def test_a_whole_match_is_detected_quickly() -> None:
     whole = match(7001)
-    start = time.perf_counter()
+    # CPU time of this process, not wall time: CI runs tests in parallel on shared machines, and
+    # waiting for a core is not the detector being slow.
+    start = time.process_time()
     detect(whole)
 
-    assert time.perf_counter() - start < 2.0
+    assert time.process_time() - start < 2.0
