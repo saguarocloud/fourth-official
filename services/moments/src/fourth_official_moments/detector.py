@@ -35,10 +35,13 @@ _NO_COUNTS: MappingProxyType[tuple[str, str], int] = MappingProxyType({})
 
 @dataclass(frozen=True, slots=True)
 class DetectorState:
-    """Where detection got to: the last event read, the last minute checked, how long each shift
-    has held, and until when each kind of shift is quiet for each club."""
+    """Where detection got to in one match: the events read (each once, as first published), the
+    last minute checked, how long each shift has held, and until when each kind of shift is quiet
+    for each club."""
 
+    match_id: str | None = None
     last_seq: int = 0
+    seen: frozenset[str] = frozenset()
     checked_minute: int = 0
     streaks: MappingProxyType[tuple[str, str], int] = field(default=_NO_COUNTS)
     quiet_until: MappingProxyType[tuple[str, str], int] = field(default=_NO_COUNTS)
@@ -79,7 +82,8 @@ def _event_moment(match: PreparedMatch, event: MatchEvent) -> Moment | None:
     evidence: tuple[MatchEvent, ...]
     if isinstance(event, GoalEvent):
         shot = _by_id(match, event.shot_event_id)
-        evidence = (event,) if shot is None else (shot, event)
+        award = _by_id(match, match.penalty_awards.get(shot.event_id)) if shot else None
+        evidence = tuple(e for e in (award, shot, event) if e is not None)
         return _moment(match, event, "goal", event.team_id, evidence=evidence)
     if isinstance(event, ShotEvent) and event.outcome != "goal":
         award_id = match.penalty_awards.get(event.event_id)
@@ -103,12 +107,21 @@ def _overturn(match: PreparedMatch, decision: VarDecisionEvent) -> Moment | None
     club = getattr(target, "team_id", None)
     if target is None or club is None:
         return None
+    # Only the review that ended in this decision: checks after any earlier decision on the target.
+    earlier = [
+        e.seq
+        for e in match.events
+        if isinstance(e, VarDecisionEvent)
+        and e.target_event_id == target.event_id
+        and e.seq < decision.seq
+    ]
+    opened = max(earlier, default=0)
     checks = tuple(
         e
         for e in match.events
         if isinstance(e, VarCheckEvent)
         and e.target_event_id == target.event_id
-        and e.seq < decision.seq
+        and opened < e.seq < decision.seq
     )
     return _moment(match, decision, "var_overturn", club, evidence=(target, *checks, decision))
 
@@ -151,11 +164,8 @@ def _press_shift(
         and after.value <= rules.PRESS_COLLAPSE_RATIO * before.value
     ):
         kind = "pressing_collapse"
-    elif (
-        after.value >= rules.PRESS_FLOOR
-        and before.value > 0
-        and after.value >= rules.PRESS_SURGE_RATIO * before.value
-    ):
+    elif after.value >= rules.PRESS_FLOOR and after.value >= rules.PRESS_SURGE_RATIO * before.value:
+        # A press from nothing (a zero baseline) is a surge as soon as it is a press at all.
         kind = "pressing_surge"
     if kind is None:
         return None
@@ -180,12 +190,15 @@ def _check_shifts(
     match = timeline.match
     streaks, quiet = dict(state.streaks), dict(state.quiet_until)
     found: list[Moment] = []
+    # A shift holds over consecutive minutes; a minute without events breaks the run.
+    consecutive = minute == state.checked_minute + 1
     for club in (match.context.home, match.context.away):
         result = _press_shift(timeline, now, club)
         for kind in SHIFT_KINDS:
             key = (kind, club)
             held = result is not None and result[0] == kind
-            streaks[key] = streaks.get(key, 0) + 1 if held else 0
+            run = streaks.get(key, 0) if consecutive else 0
+            streaks[key] = run + 1 if held else 0
             if result is None or not held or streaks[key] < rules.PERSIST_CHECKS:
                 continue
             if minute < quiet.get(key, 0):
@@ -210,14 +223,25 @@ def _check_shifts(
 def detect(
     match: PreparedMatch, state: DetectorState | None = None
 ) -> tuple[DetectorState, tuple[Moment, ...]]:
-    """Moments among the events after `state.last_seq`, in the order they were found, and the
-    state to resume from. Detecting a whole match at once gives the same moments as detecting it
-    piece by piece."""
-    state = state or DetectorState()
+    """Moments among the events not read yet, in the order they were found, and the state to
+    resume from.
+
+    Each event is read once, as first published: a later version of an event already read (a
+    correction) is not re-detected. Corrections reach published work through the correction
+    cascade, which finds moments by their evidence. For the same published events, detecting a
+    match in pieces gives exactly the moments that detecting it at once does.
+    """
+    state = state or DetectorState(match_id=match.context.match_id)
+    if state.match_id not in {None, match.context.match_id}:
+        raise ValueError(
+            f"detector state belongs to match {state.match_id}, not {match.context.match_id}"
+        )
+    state = replace(state, match_id=match.context.match_id)
     timeline = _Timeline.of(match)
     found: list[Moment] = []
+    seen = set(state.seen)
     for event in match.events:
-        if event.seq <= state.last_seq:
+        if event.seq <= state.last_seq or event.event_id in seen:
             continue
         minute = match.seconds(event) // 60
         if minute > state.checked_minute and minute >= rules.FIRST_CHECK_MINUTE:
@@ -226,5 +250,6 @@ def detect(
         moment = _event_moment(match, event)
         if moment is not None:
             found.append(moment)
+        seen.add(event.event_id)
         state = replace(state, last_seq=event.seq)
-    return state, tuple(found)
+    return replace(state, seen=frozenset(seen)), tuple(found)

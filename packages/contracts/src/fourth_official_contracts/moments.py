@@ -54,8 +54,8 @@ def moment_id_for(match_id: str, *, kind: str, club: str, as_of_seq: int) -> str
     return f"mo-{match_id}-{kind}-{club}-s{as_of_seq:04d}"
 
 
-def _event_number(event_id: str) -> int:
-    return int(event_id.rsplit("-e", 1)[1])
+# A pressing story is told by pressing_intensity, moving the way its name says.
+_PRESSING_DIRECTION = {"pressing_collapse": "down", "pressing_surge": "up"}
 
 
 class MetricShift(WireModel):
@@ -71,9 +71,18 @@ class MetricShift(WireModel):
     def _snapshots_measure_the_metric(self) -> "MetricShift":
         if self.before_snapshot_id == self.after_snapshot_id:
             raise ValueError("before and after snapshots must differ")
-        for snapshot_id in (self.before_snapshot_id, self.after_snapshot_id):
-            if snapshot_id_parts(snapshot_id).metric != self.metric:
+        before = snapshot_id_parts(self.before_snapshot_id)
+        after = snapshot_id_parts(self.after_snapshot_id)
+        for parts, snapshot_id in (
+            (before, self.before_snapshot_id),
+            (after, self.after_snapshot_id),
+        ):
+            if parts.metric != self.metric:
                 raise ValueError(f"snapshot {snapshot_id} measures another metric")
+        if (before.match_id, before.scope) != (after.match_id, after.scope):
+            raise ValueError("before and after snapshots must be about the same match and scope")
+        if before.as_of_seq >= after.as_of_seq:
+            raise ValueError("the before snapshot must be taken before the after snapshot")
         return self
 
 
@@ -107,26 +116,38 @@ class Moment(WireModel):
     def _check_events(self) -> None:
         if self.kind in EVENT_MOMENTS and not self.event_ids:
             raise ValueError(f"a {self.kind} moment needs the events that show it")
+        if self.kind in SHIFT_MOMENTS and self.event_ids:
+            raise ValueError(f"a {self.kind} moment is shown by metrics; it cites no events")
         if any(match_of(e) != self.match_id for e in self.event_ids):
             raise ValueError("an event cited belongs to another match")
-        numbers = [_event_number(e) for e in self.event_ids]
-        if numbers != sorted(set(numbers)):
-            raise ValueError("events must be cited once each, in match order")
+        if len(set(self.event_ids)) != len(self.event_ids):
+            raise ValueError("events must be cited once each")
 
     def _check_snapshots(self) -> None:
         if self.kind in SHIFT_MOMENTS and not self.shifts:
             raise ValueError(f"a {self.kind} moment needs the metric shift that shows it")
+        if self.kind in EVENT_MOMENTS and self.shifts:
+            raise ValueError(f"a {self.kind} moment is shown by events; it carries no metric shift")
         if len(set(self.metric_snapshot_ids)) != len(self.metric_snapshot_ids):
             raise ValueError("snapshots must be cited once each (unique)")
-        if any(snapshot_id_parts(s).match_id != self.match_id for s in self.metric_snapshot_ids):
-            raise ValueError("a snapshot cited belongs to another match")
-        cited = set(self.metric_snapshot_ids)
-        for shift in self.shifts:
-            if not {shift.before_snapshot_id, shift.after_snapshot_id} <= cited:
-                raise ValueError("a shift's snapshots must be cited by the moment")
-            for snapshot_id in (shift.before_snapshot_id, shift.after_snapshot_id):
-                if snapshot_id_parts(snapshot_id).scope not in {self.club, "match"}:
-                    raise ValueError(f"snapshot {snapshot_id} is not about {self.club}")
+        in_shifts = [i for s in self.shifts for i in (s.before_snapshot_id, s.after_snapshot_id)]
+        if sorted(in_shifts) != sorted(self.metric_snapshot_ids):
+            raise ValueError("a moment cites exactly the snapshots of its shifts")
+        for snapshot_id in self.metric_snapshot_ids:
+            parts = snapshot_id_parts(snapshot_id)
+            if parts.match_id != self.match_id:
+                raise ValueError("a snapshot cited belongs to another match")
+            if parts.scope not in {self.club, "match"}:
+                raise ValueError(f"snapshot {snapshot_id} is not about {self.club}")
+            if parts.as_of_seq > self.as_of_seq:
+                raise ValueError(f"snapshot {snapshot_id} is after the moment")
+        direction = _PRESSING_DIRECTION.get(self.kind)
+        for shift in self.shifts if direction else ():
+            if shift.metric != "pressing_intensity":
+                raise ValueError(f"a {self.kind} is shown by pressing_intensity")
+            moved = "down" if shift.after < shift.before else "up"
+            if moved != direction or shift.after == shift.before:
+                raise ValueError(f"in a {self.kind}, pressing_intensity must go {direction}")
 
 
 # The model's own config already hides input in validation errors.

@@ -72,18 +72,80 @@ def test_the_id_names_the_match_kind_club_and_moment() -> None:
     [
         (COLLAPSE | {"momentId": "mo-m42-pressing_collapse-NGT-s1691"}, "does not name"),
         (GOAL | {"eventIds": []}, "needs the events"),
-        (GOAL | {"eventIds": ["m42-e0287", "m42-e0286"]}, "match order"),
-        (GOAL | {"eventIds": ["m42-e0286", "m42-e0286"]}, "match order"),
+        (GOAL | {"eventIds": ["m42-e0286", "m42-e0286"]}, "once each"),
         (GOAL | {"eventIds": ["m7-e0286"]}, "another match"),
         (COLLAPSE | {"shifts": []}, "needs the metric shift"),
-        (COLLAPSE | {"metricSnapshotIds": [BEFORE]}, "cited"),
+        (COLLAPSE | {"metricSnapshotIds": [BEFORE]}, "exactly"),
+        (COLLAPSE | {"metricSnapshotIds": [BEFORE, AFTER, "ms-m42-xg-NGT-5m-s1690-v1"]}, "exactly"),
+        (GOAL | {"metricSnapshotIds": [BEFORE, AFTER], "shifts": COLLAPSE["shifts"]}, "no metric"),
+        (COLLAPSE | {"eventIds": ["m42-e1690"]}, "cites no events"),
+        (shifted(after=3.9), "go down"),
+        (
+            COLLAPSE | {"kind": "pressing_surge", "momentId": "mo-m42-pressing_surge-NGT-s1690"},
+            "go up",
+        ),
+        (
+            COLLAPSE
+            | {
+                "momentId": "mo-m42-pressing_collapse-NGT-s1600",
+                "asOfSeq": 1600,
+            },
+            "after the moment",
+        ),
         (COLLAPSE | {"metricSnapshotIds": [BEFORE, AFTER, BEFORE]}, "unique"),
         (
             COLLAPSE | {"metricSnapshotIds": [BEFORE, "ms-m7-xg-NGT-5m-s0001-v1", AFTER]},
-            "another match",
+            "exactly",
         ),
         (shifted(afterSnapshotId=BEFORE), "differ"),
+        (
+            COLLAPSE | {"club": "HCY", "momentId": "mo-m42-pressing_collapse-HCY-s1690"},
+            "is not about HCY",
+        ),
+        (
+            COLLAPSE
+            | {
+                "metricSnapshotIds": [
+                    "ms-m7-pressing_intensity-NGT-15m-s1500-v1",
+                    "ms-m7-pressing_intensity-NGT-5m-s1690-v1",
+                ],
+                "shifts": [
+                    COLLAPSE["shifts"][0]
+                    | {
+                        "beforeSnapshotId": "ms-m7-pressing_intensity-NGT-15m-s1500-v1",
+                        "afterSnapshotId": "ms-m7-pressing_intensity-NGT-5m-s1690-v1",
+                    }
+                ],
+            },
+            "another match",
+        ),
+        (
+            COLLAPSE
+            | {
+                "metricSnapshotIds": [AFTER, "ms-m42-pressing_intensity-NGT-15m-s1700-v1"],
+                "shifts": [
+                    COLLAPSE["shifts"][0]
+                    | {"beforeSnapshotId": "ms-m42-pressing_intensity-NGT-15m-s1700-v1"}
+                ],
+            },
+            "before",
+        ),
         (shifted(metric="xg"), "measures"),
+        (
+            COLLAPSE
+            | {
+                "metricSnapshotIds": ["ms-m42-xg-NGT-15m-s1500-v1", "ms-m42-xg-NGT-5m-s1690-v1"],
+                "shifts": [
+                    COLLAPSE["shifts"][0]
+                    | {
+                        "metric": "xg",
+                        "beforeSnapshotId": "ms-m42-xg-NGT-15m-s1500-v1",
+                        "afterSnapshotId": "ms-m42-xg-NGT-5m-s1690-v1",
+                    }
+                ],
+            },
+            "pressing_intensity",
+        ),
         (shifted(after=float("nan")), "finite"),
         (
             COLLAPSE
@@ -116,3 +178,8 @@ def test_snapshot_ids_read_back_into_their_parts() -> None:
     )
     with pytest.raises(ValueError, match="not a snapshot ID"):
         snapshot_id_parts("ms-m42-xg")
+
+
+def test_events_may_be_cited_in_any_order_the_detector_finds_them() -> None:
+    # Event numbers are not contractually tied to seq, so the contract checks only uniqueness.
+    assert parse_moment(GOAL | {"eventIds": ["m42-e0287", "m42-e0286"]}).event_ids[0] == "m42-e0287"

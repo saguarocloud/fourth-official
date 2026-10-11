@@ -8,10 +8,10 @@ These are read off single events as they arrive.
 
 | Kind | Rule | Club | Evidence |
 |---|---|---|---|
-| `goal` | A `GOAL` event | The credited side | The shot and the goal |
+| `goal` | A `GOAL` event | The credited side | The penalty award (if any), the shot and the goal |
 | `big_chance` | A shot that didn't go in, worth at least 0.35 xG (stats-engine model; a penalty is 0.76) | The shooting side | The shot (and the penalty award) |
 | `red_card` | A red or second yellow card | The side that lost a player | The foul (if recorded) and the card |
-| `var_overturn` | An overturned `VAR_DECISION` | The side whose event was overturned | The overturned event, the VAR checks and the decision |
+| `var_overturn` | An overturned `VAR_DECISION` | The side whose event was overturned | The overturned event, the checks of the review that ended in this decision, and the decision |
 
 ## Shift moments
 
@@ -20,9 +20,9 @@ These come from a metric moving. They are checked once per minute of monotone ma
 | Kind | Rule |
 |---|---|
 | `pressing_collapse` | Over the last 5 minutes, `pressing_intensity` is at most 0.4× its value over the 15 minutes before that. The baseline must be at least 0.15 pressures per opponent touch: a press too light to matter can't collapse. |
-| `pressing_surge` | The 5-minute value is at least 2.5× the baseline, and at least 0.15. |
+| `pressing_surge` | The 5-minute value is at least 2.5× the baseline, and at least 0.15. A press from nothing (a zero baseline) is a surge as soon as it reaches 0.15. |
 
-- A shift must hold at three consecutive minute checks before it is reported.
+- A shift must hold for three consecutive minutes before it is reported. A minute without events breaks the run.
 - The same kind of shift for the same club then stays quiet for 15 minutes.
 - The moment cites both snapshots and carries the `before` and `after` values. The Analyst therefore quotes numbers the stats engine computed, never its own arithmetic.
 
@@ -44,7 +44,10 @@ The detector finds every planted goal, sending-off and VAR overturn by its event
 
 ## Incremental detection
 
-`detect(match, state)` reads only the events after `state.last_seq` and returns the moments it found plus the state to resume from. A live worker calls it as events arrive. A test shows that detecting a match in pieces finds exactly the moments that detecting it at once does.
+`detect(match, state)` reads only the events it has not read yet. It returns the moments it found and the state to resume from, so a live worker calls it as events arrive.
+- **One match per state.** The state belongs to one match, and using it with another is refused.
+- **Each event is read once, as first published.** A later version of an event already read (a correction) is not re-detected and never duplicates a moment. Corrections reach published work through the correction cascade, which finds moments, insights and items by their evidence.
+- **Pieces equal the whole.** For the same published events, detecting a match in pieces, even one event at a time, finds exactly the moments that detecting it at once does. Tests check random cuts on several seeds and an event-by-event feed.
 
 ## Not yet detected
 
