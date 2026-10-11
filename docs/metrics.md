@@ -45,7 +45,7 @@ Logistic regression, independent of the simulator's own model (the pipeline meas
 
 `logit = -1.0 - 0.105 × distance_m + 2.0 × angle_rad - 0.85 × header - 1.1 × pressure`
 
-Here distance is measured to the centre of the goal being attacked; angle is the angle subtended by the 7.32 m goal mouth; header is 1 for headed shots; pressure (0–1) is recorded on the shot. A central shot from 11 m is worth 0.2952. **Penalties** (a shot straight after a penalty was awarded to the same team) are worth 0.76, the typical conversion rate, not their open-play geometry.
+Here distance is measured to the centre of the goal being attacked; angle is the angle subtended by the 7.32 m goal mouth; header is 1 for headed shots; pressure (0–1) is recorded on the shot. A central shot from 11 m is worth 0.2952. **Penalties** (a shot straight after a penalty was awarded to the same team) are worth 0.76, the typical conversion rate, not their open-play geometry. The award decides the value, so it is listed in the evidence straight before its shot, and snapshots use the awards known over the whole match: a window that starts between an award and a delayed kick still values the kick as a penalty.
 
 ### Pass difficulty (0–100)
 

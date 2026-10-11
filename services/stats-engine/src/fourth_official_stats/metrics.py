@@ -3,7 +3,6 @@
 Formulas, coefficients and sources are documented in docs/metrics.md. All functions are pure.
 """
 
-import itertools
 import math
 from collections import Counter
 from collections.abc import Iterable, Mapping, Sequence
@@ -18,12 +17,11 @@ from fourth_official_contracts import (
     PassEvent,
     PossessionChangeEvent,
     PressureEvent,
-    SetPieceEvent,
     ShotEvent,
     TackleEvent,
 )
 from fourth_official_stats.context import MatchContext
-from fourth_official_stats.xg import PENALTY_XG, shot_xg
+from fourth_official_stats.xg import PENALTY_XG, penalty_awards, shot_xg
 
 # The last third of the pitch, from the attacking team's point of view.
 FINAL_THIRD_FROM = 2 / 3
@@ -130,40 +128,55 @@ def shots_on_target(events: Sequence[MatchEvent], context: MatchContext, team: s
     return MetricValue(float(sum(s.outcome in {"goal", "saved"} for s in own)), _ids(own))
 
 
-def _penalty_shots(events: Sequence[MatchEvent]) -> frozenset[str]:
-    """Shots taken straight after a penalty was awarded to the same team."""
-    ordered = sorted(events, key=lambda e: e.seq)
-    return frozenset(
-        shot.event_id
-        for before, shot in itertools.pairwise(ordered)
-        if isinstance(shot, ShotEvent)
-        and isinstance(before, SetPieceEvent)
-        and before.kind == "penalty"
-        and before.team_id == shot.team_id
-    )
-
-
-def _shot_values(events: Sequence[MatchEvent], context: MatchContext) -> dict[str, float]:
-    penalties = _penalty_shots(events)
+def _shot_values(
+    shots_: Sequence[ShotEvent], context: MatchContext, penalties: Mapping[str, str]
+) -> dict[str, float]:
     return {
-        s.event_id: PENALTY_XG if s.event_id in penalties else shot_xg(s, context)
-        for s in _shots(events)
+        s.event_id: PENALTY_XG if s.event_id in penalties else shot_xg(s, context) for s in shots_
     }
 
 
-def xg(events: Sequence[MatchEvent], context: MatchContext, team: str) -> MetricValue:
+def _shot_evidence(shots_: Sequence[ShotEvent], penalties: Mapping[str, str]) -> tuple[str, ...]:
+    """The shots, each preceded by the penalty award that decided its value, if any. An award is
+    always the event straight before its shot, so this is match order."""
+    evidence: list[str] = []
+    for shot in sorted(shots_, key=lambda s: s.seq):
+        if shot.event_id in penalties:
+            evidence.append(penalties[shot.event_id])
+        evidence.append(shot.event_id)
+    return tuple(evidence)
+
+
+def xg(
+    events: Sequence[MatchEvent],
+    context: MatchContext,
+    team: str,
+    *,
+    penalties: Mapping[str, str] | None = None,
+) -> MetricValue:
+    """Expected goals. `penalties` maps penalty shots to their awards; by default it is worked out
+    from `events`, but a snapshot passes the whole match's so a window never cuts a penalty off
+    from its award."""
+    known = penalty_awards(events) if penalties is None else penalties
     own = _shots(events, team)
-    values = _shot_values(events, context)
-    return MetricValue(sum((values[s.event_id] for s in own), 0.0), _ids(own))
+    values = _shot_values(own, context, known)
+    return MetricValue(sum((values[s.event_id] for s in own), 0.0), _shot_evidence(own, known))
 
 
-def momentum(events: Sequence[MatchEvent], context: MatchContext, team: str) -> MetricValue:
+def momentum(
+    events: Sequence[MatchEvent],
+    context: MatchContext,
+    team: str,
+    *,
+    penalties: Mapping[str, str] | None = None,
+) -> MetricValue:
     """Expected-goals difference over the window, from the team's side."""
     context.opponent(team)  # refuses a club that is not playing
+    known = penalty_awards(events) if penalties is None else penalties
     every = _shots(events)
-    values = _shot_values(events, context)
+    values = _shot_values(every, context, known)
     balance = sum((values[s.event_id] * (1 if s.team_id == team else -1) for s in every), 0.0)
-    return MetricValue(balance, _ids(every))
+    return MetricValue(balance, _shot_evidence(every, known))
 
 
 # --- Pressing --------------------------------------------------------------------------------

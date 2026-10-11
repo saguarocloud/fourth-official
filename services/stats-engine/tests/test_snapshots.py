@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from events import pass_, period_end, pressure, shot
+from events import pass_, penalty_awarded, period_end, pressure, shot
 from fourth_official_contracts import MetricSnapshot, parse_metric_snapshot
 from fourth_official_stats.context import MatchContext
 from fourth_official_stats.prepare import prepare
@@ -94,6 +94,29 @@ def test_evidence_never_reaches_beyond_the_moment_or_the_window() -> None:
     for result in snapshots_at(EVENTS, as_of_seq=6):
         allowed = {e.event_id for e in window_events(EVENTS, as_of_seq=6, window=result.window)}
         assert set(result.inputs) <= allowed
+
+
+def test_a_penalty_shot_keeps_its_value_when_the_window_cuts_between_award_and_kick() -> None:
+    # Awarded at 10:00, taken after a long VAR check at 15:00: the award is outside the 5-minute
+    # window but still decides the shot's value, so it is the one event allowed from before it.
+    match = prepare(CTX, (penalty_awarded(1, 10, "HCY"), shot(2, 15, "HCY", outcome="goal")))
+
+    result = snapshot(match, as_of_seq=2, key=SnapshotKey("xg", "HCY", "5m"))
+
+    assert result.value == 0.76
+    assert result.inputs == (match.events[0].event_id, match.events[1].event_id)
+
+
+def test_the_whole_match_knows_which_shots_were_penalties() -> None:
+    match = prepare(CTX, (penalty_awarded(1, 10, "HCY"), shot(2, 10, "HCY"), shot(3, 12, "NGT")))
+
+    assert dict(match.penalty_awards) == {match.events[1].event_id: match.events[0].event_id}
+
+
+@pytest.mark.parametrize("metric", ["possession", "passes", "xg", "ppda", "pressing_intensity"])
+def test_a_club_not_in_the_match_is_refused(metric: str) -> None:
+    with pytest.raises(ValueError, match="SLT"):
+        snapshot(EVENTS, as_of_seq=6, key=SnapshotKey(metric, "SLT", "5m"))  # type: ignore[arg-type]
 
 
 def test_the_window_start_is_exclusive() -> None:

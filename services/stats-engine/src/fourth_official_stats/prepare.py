@@ -7,6 +7,7 @@ from types import MappingProxyType
 
 from fourth_official_contracts import MatchEvent, PeriodEndEvent
 from fourth_official_stats.context import MatchContext
+from fourth_official_stats.xg import penalty_awards
 
 # Real matches have roughly 2,500-3,000 events; anything far beyond is refused, not processed.
 MAX_EVENTS = 5_000
@@ -20,6 +21,8 @@ class PreparedMatch:
     by_seq: Mapping[int, MatchEvent]
     # When the first half ended on the match clock, added time included.
     first_half_end: int
+    # Penalty shots over the whole match and the awards that made them penalties.
+    penalty_awards: Mapping[str, str]
 
     def seconds(self, event: MatchEvent) -> int:
         """Monotone match time: second-half time continues from the end of the first half, so
@@ -78,4 +81,5 @@ def prepare(context: MatchContext, events: Iterable[MatchEvent]) -> PreparedMatc
         events=tuple(ordered),
         by_seq=MappingProxyType(by_seq),
         first_half_end=_first_half_end(ordered),
+        penalty_awards=MappingProxyType(penalty_awards(ordered)),
     )

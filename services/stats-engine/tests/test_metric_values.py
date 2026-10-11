@@ -239,7 +239,30 @@ def test_a_shot_at_the_wrong_end_is_almost_worthless() -> None:
 def test_penalties_use_the_penalty_conversion_rate_not_open_play_geometry() -> None:
     events = (penalty_awarded(1, 20, "HCY"), shot(2, 20, "HCY", at=(94.0, 34.0), outcome="goal"))
 
-    assert xg(events, CTX, "HCY").value == pytest.approx(0.76)
+    result = xg(events, CTX, "HCY")
+
+    assert result.value == pytest.approx(0.76)
+    # The award decides the value, so it is part of the evidence.
+    assert result.inputs == (events[0].event_id, events[1].event_id)
+
+
+def test_momentum_lists_the_penalty_award_in_its_evidence() -> None:
+    events = (penalty_awarded(1, 20, "HCY"), shot(2, 20, "HCY", at=(94.0, 34.0), outcome="goal"))
+
+    result = momentum(events, CTX, "NGT")
+
+    assert result.value == pytest.approx(-0.76)
+    assert result.inputs == (events[0].event_id, events[1].event_id)
+
+
+def test_a_penalty_award_known_from_the_whole_match_counts_even_outside_the_window() -> None:
+    award = penalty_awarded(1, 20, "HCY")
+    taken = shot(2, 20, "HCY", at=(94.0, 34.0), outcome="goal")
+
+    result = xg((taken,), CTX, "HCY", penalties={taken.event_id: award.event_id})
+
+    assert result.value == pytest.approx(0.76)
+    assert result.inputs == (award.event_id, taken.event_id)
 
 
 def test_momentum_is_positive_for_the_side_creating_more() -> None:

@@ -5,9 +5,17 @@ they were generated. Logistic regression on distance and angle to the goal being
 penalties for headers and pressure. Coefficients are documented in docs/metrics.md.
 """
 
+import itertools
 import math
+from collections.abc import Iterable
 
-from fourth_official_contracts import PITCH_LENGTH_M, PITCH_WIDTH_M, ShotEvent
+from fourth_official_contracts import (
+    PITCH_LENGTH_M,
+    PITCH_WIDTH_M,
+    MatchEvent,
+    SetPieceEvent,
+    ShotEvent,
+)
 from fourth_official_stats.context import MatchContext
 
 GOAL_WIDTH_M = 7.32
@@ -41,3 +49,17 @@ def shot_xg(shot: ShotEvent, context: MatchContext) -> float:
         + PRESSURE * shot.pressure
     )
     return 1.0 / (1.0 + math.exp(-logit))
+
+
+def penalty_awards(events: Iterable[MatchEvent]) -> dict[str, str]:
+    """Penalty shots and the awards that made them penalties: shot event ID -> set-piece event ID.
+    A penalty is a shot taken straight after a penalty was awarded to the same team."""
+    ordered = sorted(events, key=lambda e: e.seq)
+    return {
+        shot.event_id: award.event_id
+        for award, shot in itertools.pairwise(ordered)
+        if isinstance(shot, ShotEvent)
+        and isinstance(award, SetPieceEvent)
+        and award.kind == "penalty"
+        and award.team_id == shot.team_id
+    }

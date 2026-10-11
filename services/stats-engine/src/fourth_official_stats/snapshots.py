@@ -1,8 +1,8 @@
 """Freeze metrics into snapshots: one metric, one scope, one window, at one moment of the match."""
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
-from typing import get_args
+from typing import Protocol, get_args
 
 from fourth_official_contracts import (
     MatchEvent,
@@ -21,6 +21,19 @@ VALUE_DECIMALS = 4
 MATCH_SCOPE = "match"
 
 TeamMetric = Callable[[Sequence[MatchEvent], MatchContext, str], MetricValue]
+
+
+class ShotValueMetric(Protocol):
+    def __call__(
+        self,
+        events: Sequence[MatchEvent],
+        context: MatchContext,
+        team: str,
+        *,
+        penalties: Mapping[str, str] | None = None,
+    ) -> MetricValue: ...
+
+
 TEAM_METRICS: dict[MetricName, TeamMetric] = {
     "possession": metrics.possession,
     "field_tilt": metrics.field_tilt,
@@ -28,8 +41,12 @@ TEAM_METRICS: dict[MetricName, TeamMetric] = {
     "pass_completion": metrics.pass_completion,
     "shots": metrics.shots,
     "shots_on_target": metrics.shots_on_target,
-    "xg": metrics.xg,
     "ppda": metrics.ppda,
+}
+# Shot-value metrics take the whole match's penalty awards, so a window never cuts a penalty off
+# from the award that decides its value.
+SHOT_VALUE_METRICS: dict[MetricName, ShotValueMetric] = {
+    "xg": metrics.xg,
     "momentum": metrics.momentum,
 }
 MATCH_METRICS: frozenset[MetricName] = frozenset({"control_chaos"})
@@ -84,15 +101,21 @@ def _window(match: PreparedMatch, as_of_seq: int, window: MetricWindow) -> _Wind
     return _Window(window_events(match, as_of_seq=as_of_seq, window=window), max(covered, 60) / 60)
 
 
-def _compute(context: MatchContext, key: SnapshotKey, window: _Window) -> MetricValue:
+def _compute(match: PreparedMatch, key: SnapshotKey, window: _Window) -> MetricValue:
+    context = match.context
     if key.metric in MATCH_METRICS:
         if key.scope != MATCH_SCOPE:
             raise ValueError(f"{key.metric} is a match-wide metric; use scope {MATCH_SCOPE!r}")
         return metrics.control_chaos(window.events, context, minutes=window.minutes)
     if key.scope == MATCH_SCOPE:
         raise ValueError(f"{key.metric} is measured per club; scope must be a club code")
+    context.opponent(key.scope)  # refuses a club that is not playing
     if key.metric == "pressing_intensity":
         return metrics.pressing_intensity(window.events, context, key.scope, minutes=window.minutes)
+    if key.metric in SHOT_VALUE_METRICS:
+        return SHOT_VALUE_METRICS[key.metric](
+            window.events, context, key.scope, penalties=match.penalty_awards
+        )
     return TEAM_METRICS[key.metric](window.events, context, key.scope)
 
 
@@ -100,7 +123,7 @@ def _freeze(
     match: PreparedMatch, as_of_seq: int, key: SnapshotKey, window: _Window
 ) -> MetricSnapshot:
     moment = _moment(match, as_of_seq)
-    result = _compute(match.context, key, window)
+    result = _compute(match, key, window)
     return MetricSnapshot(
         snapshot_id=snapshot_id_for(
             match.context.match_id,
