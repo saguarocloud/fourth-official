@@ -71,3 +71,28 @@ The gain came from the following:
 - **"Second yellow":** a count phrase, accepted only in a claim that cites a card event that was a second yellow. Anywhere else it is still a bare number.
 
 None of this loosened the rules on numbers, names or the future. The remaining refusals are mostly an unknown word or a club code written as text, and they are fixed on the next attempt. The `fast` model occasionally times out (20 s); the `fallback` model then writes the insight.
+
+## The Localizer
+
+The Localizer rewrites a verified canonical insight for one partner, in the partner's language and voice (`localize.py`, `localizer.py`, prompt `localizer/v1.0`). It runs on the `fast` model with minimal reasoning. It has no tools, because everything it may say is in the insight it is given.
+
+- **It writes words only.** Its structured output is a headline and each claim's text, by claim id. Code copies each claim's type and evidence from the canonical insight, so a draft cannot cite anything new.
+- **The Verifier decides.** `verify_localized` checks four things:
+  - every fact survives in its role;
+  - the words pass the language's rules;
+  - the partner's blocked topics are avoided;
+  - the text fits the lower third.
+- **One retry, then the template.** A refused draft is retried once with itself and the findings, then the partner's template stands in. A timeout is retried too. Any other model error goes straight to the template, and a bug in our own code always surfaces.
+- **English partners need no model.** Northlight Sport airs the canonical words, checked against its own policy. They keep the canonical provenance, because they are the Analyst's words. The check is recorded as an attempt by the localizer with no model. If the words break the partner's policy, that failed check is recorded and the template stands in.
+- **If even the template breaks the partner's policy, nothing airs for that moment.** The failed attempts record why.
+
+`scripts/measure-localizer.py` localises every demo moment for each non-English partner with the real model. Measured on 2026-10-11, from the English templates as canonical insights:
+
+| | Tribuna Austral (es-MX) | Rheinblick Sport (de-DE) |
+|---|---|---|
+| First-attempt passes | 16 of 17 | 14 of 17 |
+| Written by the model | 17 | 16 |
+| Template fallbacks | 0 | 1 |
+| Model attempts | 18 | 20 |
+
+The first run refused mostly capitalised words: "Rote" in Rote Karte, the genitive "des Gegners", and Spanish openers such as "Casi" and "Se". These were added to the language rules without loosening those on numbers, names or the future. What remains is German "wird", refused by design, and the odd hyphenated coinage.

@@ -196,8 +196,8 @@ def test_ordinary_words_near_the_new_rules_still_pass(text: str, language: objec
     assert problems(text, language) == {}
 
 
-@pytest.mark.parametrize("word", ["Tors", "Torn", "Platzn", "Gelbs"])
-def test_a_linking_letter_only_joins_two_nouns(word: str) -> None:
+@pytest.mark.parametrize("word", ["Müllers", "Kroosen", "Schweinsteigers", "Seitze"])
+def test_case_endings_only_extend_known_nouns_never_names(word: str) -> None:
     assert not GERMAN.capitalised(word)
 
 
@@ -236,3 +236,35 @@ def test_second_round_bypasses_are_refused(text: str, language: object, kind: st
 )
 def test_second_round_false_positives_pass(text: str, language: object) -> None:
     assert problems(text, language) == {}
+
+
+# Found by measuring the Localizer on the demo matchday (scripts/measure-localizer.py).
+@pytest.mark.parametrize(
+    ("text", "language"),
+    [
+        ("{{player:HCY-04}} sieht die Rote Karte.", GERMAN),
+        ("{{player:HCY-04}} sieht die Gelbe Karte.", GERMAN),
+        ("Das Pressing des Gegners lässt nach.", GERMAN),
+        ("Die Abwehr des Tors steht.", GERMAN),
+        ("Casi marca {{club:HCY}}.", SPANISH),
+        ("Se adelanta {{club:HCY}}.", SPANISH),
+        ("Muy cerca estuvo {{club:HCY}}.", SPANISH),
+        ("Su presión baja.", SPANISH),
+    ],
+)
+def test_words_the_localizer_reached_for_pass(text: str, language: object) -> None:
+    assert problems(text, language) == {}
+
+
+def test_an_inflected_noun_never_hides_a_number() -> None:
+    assert "numbers" in problems("die zweiten Pässe", GERMAN)
+
+
+@pytest.mark.parametrize("word", ["Zehnen", "Hunderte", "Tausenden", "Zweiten"])
+def test_a_case_ending_never_turns_a_number_into_a_noun(word: str) -> None:
+    assert not GERMAN.capitalised(word)
+
+
+@pytest.mark.parametrize("word", ["Torss", "Tornen"])
+def test_an_ending_follows_the_last_noun_not_a_linking_letter(word: str) -> None:
+    assert not GERMAN.capitalised(word)

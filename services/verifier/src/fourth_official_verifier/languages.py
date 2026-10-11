@@ -138,6 +138,8 @@ SPANISH = Language(
         penal penalti tarjeta roja amarilla presión ahora así aquí ya pese aunque cuando
         mientras como que qué cómo y o pero también todo toda nada nadie ni no sí
         balón remate pase centro contragolpe jugada error parada después antes
+        casi muy más menos solo sólo incluso entonces allí aquí se le les su sus este esta
+        estos estas ese esa esos esas aquel aquella cada mucho mucha poco poca tanto tanta
         """
     ),
     capitalised=lambda word: word in TERMS,
@@ -147,6 +149,9 @@ SPANISH = Language(
     possessive=r"",
     leading=" \"'(¡¿«",
 )
+
+
+_GERMAN_ENDINGS = ("s", "es", "n", "en", "e")
 
 
 @cache
@@ -163,18 +168,23 @@ def _is_german_noun(word: str) -> bool:
     lower = word.lower()
     if lower in nouns:
         return True
-    # Split into stems of at least three letters, with a linking s or n allowed between them.
+    # Split into stems of at least three letters, with a linking s or n allowed between two stems:
+    # Spielstand, Torchance. A word ends at a stem, or at a stem plus its case or plural ending
+    # (des Gegners, die Torchancen), never at a linking letter ("Torn", "Torss").
     reachable = {0}
+    stem_ends: set[int] = set()
     for start in range(len(lower)):
         if start not in reachable:
             continue
         for end in range(start + 3, len(lower) + 1):
             if lower[start:end] in nouns:
                 reachable.add(end)
-                # A linking s or n joins two stems; it never ends the word ("Tors", "Torn").
+                stem_ends.add(end)
                 if lower[end : end + 1] in {"s", "n"} and end + 1 < len(lower):
                     reachable.add(end + 1)
-    return len(lower) in reachable and not GERMAN.states_number(lower)
+    ends = {len(lower) - len(ending) for ending in _GERMAN_ENDINGS if lower.endswith(ending)}
+    whole = len(lower) in stem_ends or bool(ends & stem_ends)
+    return whole and not GERMAN.states_number(lower)
 
 
 _DE_UNITS = r"(ein|zwei|drei|vier|funf|sechs|sieben|acht|neun)"
