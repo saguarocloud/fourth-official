@@ -6,7 +6,7 @@ from functools import cache
 import pytest
 
 from fourth_official_contracts import GoalEvent, Moment, parse_moment
-from fourth_official_moments.detector import detect
+from fourth_official_moments.detector import DetectorState, detect
 from fourth_official_simulator.engine import simulate
 from fourth_official_stats.context import MatchContext
 from fourth_official_stats.prepare import PreparedMatch, prepare
@@ -44,7 +44,8 @@ def test_moments_come_in_match_order_with_unique_ids() -> None:
 
 def test_detecting_in_pieces_finds_exactly_what_detecting_at_once_does() -> None:
     whole = match(7000)
-    state, found = None, []
+    state: DetectorState | None = None
+    found: list[Moment] = []
     for cut in (400, 900, 1500, len(whole.events)):
         piece = prepare(CTX, whole.events[:cut])
         state, more = detect(piece, state)

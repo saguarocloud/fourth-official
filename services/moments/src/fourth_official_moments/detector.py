@@ -76,6 +76,7 @@ def _by_id(match: PreparedMatch, event_id: str | None) -> MatchEvent | None:
 
 
 def _event_moment(match: PreparedMatch, event: MatchEvent) -> Moment | None:
+    evidence: tuple[MatchEvent, ...]
     if isinstance(event, GoalEvent):
         shot = _by_id(match, event.shot_event_id)
         evidence = (event,) if shot is None else (shot, event)
