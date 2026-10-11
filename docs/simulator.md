@@ -10,27 +10,44 @@ The simulator generates the synthetic Meridian League matches that feed the whol
 - **Probabilities** (`probabilities.py`):
   - A logistic expected-goals model (distance, angle, header, pressure) and a logistic pass-completion model (distance, pressure, pass kind), with documented, hand-calibrated coefficients.
   - Action choice by zone and style.
-- **Engine** (`engine.py`): a possession-chain simulation.
-  - Each phase, the player on the ball may be pressed, may be fouled (with cards and free kicks), then passes, carries, crosses or shoots.
-  - Outcomes produce interceptions, tackles, offsides, throw-ins, saves, corners, goal kicks and goals (assisted when they follow straight from a completed pass).
-  - Each team makes three substitutions; a sent-off player takes no further part; added time is random per half.
-  - The match state is frozen and advanced by pure step functions; only the seeded random generator is stateful.
+- **Engine** (`engine/`): a possession-chain simulation split into four modules.
+  - `state.py`: frozen state and the emitter that stamps every event.
+  - `restarts.py`: possession changes, set pieces, substitutions.
+  - `actions.py`: pressing, fouls, passing, carrying, shooting.
+  - `match.py`: halves, kick-offs, added time.
+- **Phases**: each phase, the player on the ball may be pressed and may be fouled, then passes, carries, crosses or shoots. The ball is struck from where it actually is. Open play rarely gets closer than about 8 m from goal, near goal play turns lateral (cut-backs), and crosses reach 5 to 12 m.
+- **Football rules the tests enforce in every match**:
+  - A foul in the box is a penalty (defenders rarely risk one), never a free kick.
+  - Substitutions happen only at dead balls, never take off the player on the ball, and a substitute is never substituted again.
+  - Players who were sent off or substituted appear in no later event.
+  - Possession changes hands only through a `POSSESSION_CHANGE` event.
+  - The receiver of a completed pass is the next player on the ball.
+  - A goal is assisted by the completed pass that set the scorer up (one dribble allowed); set pieces and turnovers end the move.
+  - Headers mostly follow crosses.
+  - Half time lasts exactly 15 minutes of wall-clock time, whatever the added time.
+- **State**: the match state is frozen and advanced by pure step functions; only the seeded random generator is stateful. A test confirms the same match is produced byte for byte in a fresh process under a different hash seed.
+- **Formation** selects the starting eleven (who plays). It does not yet shape positions on the pitch; tracking frames will.
 - **Output**: a tuple of validated contract events (`fourth_official_contracts.MatchEvent`) with strictly increasing `seq` and non-decreasing wall-clock time.
 
-## Realism checks
+## Realism
 
-`tests/test_engine.py` simulates 30 matches and checks per-match averages against public aggregate norms for top-flight football, using generous bounds:
+Calibrated on 200 seeded matches against public aggregate norms for top-flight football. `tests/test_engine.py` checks 60 matches against tight bounds and three style extremes against broad ones.
 
-| Statistic (per match) | Bound | Current calibration |
+| Statistic (per match, 200 seeds) | Calibration | Test bound (60 seeds) |
 |---|---|---|
-| Passes | 650–1,150 | about 1,080 |
-| Pass completion | 72–88% | about 78% |
-| Shots | 18–32 | about 25 |
-| Shots on target | 25–45% | about 38% |
-| Goals | 1.8–3.8 | about 2.8 |
-| Cards | 1.5–6 | about 3.2 |
+| Passes | 970 | 880–1,060 |
+| Pass completion | 79.5% | 76–83% |
+| Shots | 24.2 | 20–28 |
+| Shots on target | 38% | 32–44% |
+| Goals | 2.71 | 2.2–3.3 |
+| Goals assisted | 81% | 65–90% |
+| Fouls | 22.3 | 18–27 |
+| Cards | 3.9 | 2.8–5 |
+| Sendings-off | 0.12 | ≤ 0.3 |
+| Penalties | 0.44 | — |
+| Offsides | about 4.5 | 2.5–7 |
 
-Fouls (about 24), offsides (about 5) and saves are consistent with these. Only public aggregate knowledge informs the calibration; no real match data is used.
+Only public aggregate knowledge informs the calibration; no real match data is used.
 
 ## Next
 

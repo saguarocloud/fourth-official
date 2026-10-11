@@ -8,8 +8,22 @@ from the home side's left corner flag, with teams switching ends at half time.
 import math
 from enum import StrEnum
 
-PITCH_LENGTH_M = 105.0
-PITCH_WIDTH_M = 68.0
+from fourth_official_contracts import PITCH_LENGTH_M, PITCH_WIDTH_M
+
+__all__ = [
+    "BOX_DEPTH_M",
+    "BOX_WIDTH_M",
+    "GOAL_WIDTH_M",
+    "PITCH_LENGTH_M",
+    "PITCH_WIDTH_M",
+    "Zone",
+    "attacking_to_pitch",
+    "distance_to_goal",
+    "pitch_to_attacking",
+    "shooting_angle",
+    "zone_of",
+]
+
 GOAL_WIDTH_M = 7.32
 # The penalty area is 16.5 m deep and 40.32 m wide.
 BOX_DEPTH_M = 16.5
@@ -36,6 +50,14 @@ def attacking_to_pitch(
     x = progress if attacks_right else 1.0 - progress
     y = lateral if attacks_right else 1.0 - lateral
     return round(x * PITCH_LENGTH_M, 2), round(y * PITCH_WIDTH_M, 2)
+
+
+def pitch_to_attacking(x: float, y: float, *, home: bool, period: int) -> tuple[float, float]:
+    """Convert pitch metres back to the attacking frame of a team (the inverse of
+    `attacking_to_pitch`)."""
+    attacks_right = home == (period == 1)
+    progress, lateral = x / PITCH_LENGTH_M, y / PITCH_WIDTH_M
+    return (progress, lateral) if attacks_right else (1.0 - progress, 1.0 - lateral)
 
 
 def zone_of(progress: float, lateral: float) -> Zone:

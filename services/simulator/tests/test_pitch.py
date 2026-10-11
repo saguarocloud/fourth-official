@@ -11,6 +11,7 @@ from fourth_official_simulator.pitch import (
     Zone,
     attacking_to_pitch,
     distance_to_goal,
+    pitch_to_attacking,
     shooting_angle,
     zone_of,
 )
@@ -67,3 +68,10 @@ def test_the_angle_from_the_penalty_spot_matches_the_goal_geometry() -> None:
     expected = 2 * math.atan((GOAL_WIDTH_M / 2) / 11)
 
     assert shooting_angle(spot, 0.5) == pytest.approx(expected)
+
+
+def test_pitch_to_attacking_inverts_attacking_to_pitch() -> None:
+    for home in (True, False):
+        for period in (1, 2):
+            x, y = attacking_to_pitch(0.8, 0.3, home=home, period=period)
+            assert pitch_to_attacking(x, y, home=home, period=period) == pytest.approx((0.8, 0.3))

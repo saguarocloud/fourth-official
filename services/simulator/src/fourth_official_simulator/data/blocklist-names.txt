@@ -1,5 +1,6 @@
-# Famous current and past footballers. Generated names must never match these, and their surnames
-# are kept out of the name pools entirely. Extend freely; the tests enforce both rules.
+# Famous current and past footballers (and common forms of their names). Generated names must never
+# match these, and their surnames are kept out of the name pools entirely. This is a best-effort
+# guard on top of deliberately ordinary name pools; extend it freely, the tests enforce both rules.
 Alan Shearer
 Alexis Mac Allister
 Alisson Becker

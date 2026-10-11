@@ -2,7 +2,6 @@
 
 import itertools
 from collections import Counter
-from datetime import UTC, datetime
 from functools import cache
 
 import pytest
@@ -19,23 +18,9 @@ from fourth_official_contracts import (
     SubstitutionEvent,
     parse_match_event,
 )
-from fourth_official_simulator.engine import MatchSetup, TeamSetup, simulate
-from fourth_official_simulator.squads import generate_squad
+from fourth_official_simulator.engine import simulate
 from fourth_official_simulator.style import TeamStyle
-
-KICKOFF = datetime(2026, 10, 24, 14, 0, tzinfo=UTC)
-PRESSING = TeamStyle(pressing=0.75, directness=0.4, width=0.6, tempo=0.65)
-BALANCED = TeamStyle(pressing=0.5, directness=0.5, width=0.5, tempo=0.5)
-
-
-def setup(seed: int = 4207, match_id: str = "m42") -> MatchSetup:
-    return MatchSetup(
-        match_id=match_id,
-        seed=seed,
-        kickoff=KICKOFF,
-        home=TeamSetup(squad=generate_squad("HCY", seed=1), formation="4-3-3", style=PRESSING),
-        away=TeamSetup(squad=generate_squad("NGT", seed=1), formation="4-2-3-1", style=BALANCED),
-    )
+from matches import BALANCED, PRESSING, setup
 
 
 @cache
@@ -139,44 +124,63 @@ def test_each_team_makes_at_most_three_substitutions(seed: int) -> None:
     assert all(count <= 3 for count in subs.values())
 
 
-def test_match_statistics_fall_in_realistic_ranges_across_many_seeds() -> None:
-    # Public aggregate norms for top-flight matches, generously bounded for a synthetic engine.
-    seeds = range(4200, 4230)
-    passes = completed = shots = on_target = goals = cards = 0
+def _season_stats(
+    seeds: range, home: TeamStyle = PRESSING, away: TeamStyle = BALANCED
+) -> dict[str, float]:
+    totals: Counter[str] = Counter()
     for seed in seeds:
-        for event in match(seed):
+        for event in simulate(setup(seed, home_style=home, away_style=away)):
+            totals[event.type] += 1
             if isinstance(event, PassEvent):
-                passes += 1
-                completed += event.outcome == "complete"
+                totals["completed"] += event.outcome == "complete"
             elif isinstance(event, ShotEvent):
-                shots += 1
-                on_target += event.outcome in {"goal", "saved"}
+                totals["on_target"] += event.outcome in {"goal", "saved"}
+            elif isinstance(event, CardEvent) and event.card != "yellow":
+                totals["sent_off"] += 1
             elif isinstance(event, GoalEvent):
-                goals += 1
-            elif isinstance(event, CardEvent):
-                cards += 1
+                totals["assisted"] += event.assist_id is not None
     n = len(seeds)
+    return {
+        "passes": totals["PASS"] / n,
+        "completion": totals["completed"] / totals["PASS"],
+        "shots": totals["SHOT"] / n,
+        "on_target": totals["on_target"] / totals["SHOT"],
+        "goals": totals["GOAL"] / n,
+        "assisted": totals["assisted"] / max(totals["GOAL"], 1),
+        "fouls": totals["FOUL"] / n,
+        "cards": totals["CARD"] / n,
+        "sent_off": totals["sent_off"] / n,
+        "offsides": totals["OFFSIDE"] / n,
+    }
 
-    assert 650 <= passes / n <= 1150
-    assert 0.72 <= completed / passes <= 0.88
-    assert 18 <= shots / n <= 32
-    assert 0.25 <= on_target / shots <= 0.45
-    assert 1.8 <= goals / n <= 3.8
-    assert 1.5 <= cards / n <= 6.0
+
+def test_match_statistics_match_public_norms_tightly() -> None:
+    # Calibrated on 200 seeds (docs/simulator.md); bounds allow for sampling noise over 60.
+    stats = _season_stats(range(4200, 4260))
+
+    assert 880 <= stats["passes"] <= 1060
+    assert 0.76 <= stats["completion"] <= 0.83
+    assert 20 <= stats["shots"] <= 28
+    assert 0.32 <= stats["on_target"] <= 0.44
+    assert 2.2 <= stats["goals"] <= 3.3
+    assert 0.65 <= stats["assisted"] <= 0.9
+    assert 18 <= stats["fouls"] <= 27
+    assert 2.8 <= stats["cards"] <= 5.0
+    assert stats["sent_off"] <= 0.3
+    assert 2.5 <= stats["offsides"] <= 7.0
 
 
-def test_goals_straight_after_a_completed_pass_credit_the_passer() -> None:
-    assisted = 0
-    for seed in range(4200, 4230):
-        events = match(seed)
-        by_id = {e.event_id: e for e in events}
-        for goal in (e for e in events if isinstance(e, GoalEvent)):
-            if goal.assist_id is None:
-                continue
-            assisted += 1
-            shot = by_id[goal.shot_event_id or ""]
-            before = [e for e in events if e.seq < shot.seq and isinstance(e, PassEvent)][-1]
-            assert before.outcome == "complete"
-            assert before.player_id == goal.assist_id
-            assert before.receiver_id == goal.scorer_id
-    assert assisted > 0
+EXTREME = TeamStyle(pressing=1.0, directness=1.0, width=1.0, tempo=1.0)
+PASSIVE = TeamStyle(pressing=0.0, directness=0.0, width=0.0, tempo=0.0)
+
+
+@pytest.mark.parametrize(
+    ("home", "away"), [(EXTREME, EXTREME), (PASSIVE, PASSIVE), (EXTREME, PASSIVE)]
+)
+def test_style_extremes_stay_football_shaped(home: TeamStyle, away: TeamStyle) -> None:
+    stats = _season_stats(range(4400, 4420), home, away)
+
+    assert 650 <= stats["passes"] <= 1350
+    assert 0.6 <= stats["completion"] <= 0.92
+    assert 1.2 <= stats["goals"] <= 4.8
+    assert 12 <= stats["shots"] <= 40

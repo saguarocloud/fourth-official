@@ -80,9 +80,7 @@ def _weights(zone: Zone, style: TeamStyle, pressure: float) -> dict[Action, floa
             Action.SHORT_PASS: 1.0 + 5.0 * (1.0 - d),
             Action.LONG_PASS: 1.0 + 3.0 * d,
             Action.THROUGH_BALL: 0.8 + d,
-            Action.CROSS: 0.3 * w,
             Action.CARRY: carry,
-            Action.SHOOT: 0.04,
         }
     if zone is Zone.FINAL_THIRD:
         return {
@@ -91,14 +89,14 @@ def _weights(zone: Zone, style: TeamStyle, pressure: float) -> dict[Action, floa
             Action.THROUGH_BALL: 1.2,
             Action.CROSS: 0.5 + 2.5 * w,
             Action.CARRY: carry,
-            Action.SHOOT: 0.06,
+            Action.SHOOT: 0.08,
         }
     return {
         Action.SHORT_PASS: 2.0,
         Action.THROUGH_BALL: 0.5,
         Action.CROSS: 0.8 * w,
         Action.CARRY: 0.5 * carry,
-        Action.SHOOT: 0.3 - 0.1 * pressure,
+        Action.SHOOT: 0.4 - 0.1 * pressure,
     }
 
 
