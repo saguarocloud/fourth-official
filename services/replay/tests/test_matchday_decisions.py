@@ -3,6 +3,7 @@ feed, so every partner screen and stream sees it at once. Each refusal says why,
 
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
+from functools import partial
 
 import anyio
 import pytest
@@ -15,7 +16,9 @@ from fourth_official_contracts import (
     TenantItemEntry,
 )
 from fourth_official_match_data import demo_store
+from fourth_official_policy import blocked_topics_in, bundled_store
 from fourth_official_replay import Decision, Matchday, Partners, ReplayConfig
+from fourth_official_replay.corrections import restated
 from fourth_official_replay.errors import (
     CorrectedSinceError,
     FullTimeError,
@@ -24,7 +27,7 @@ from fourth_official_replay.errors import (
     ReplayedSinceError,
     UnknownItemError,
 )
-from fourth_official_replay.partners import EntryBuilder
+from fourth_official_replay.partners import EntryBuilder, Partner
 from paused import Paused
 from test_partners import no_wait, partners, template_only
 
@@ -285,3 +288,67 @@ def test_the_desk_retracts_a_held_item_a_correction_touched() -> None:
             assert not evidence & targets
 
     during_the_match(check)
+
+
+def test_a_correction_landing_mid_decision_wins() -> None:
+    class Racing(Partners):
+        async def decide(
+            self,
+            item: TenantItemEntry,
+            decision: Decision,
+            *,
+            reason: str | None,
+            at: MatchClock,
+            now: datetime,
+        ) -> EntryBuilder:
+            build = await super().decide(item, decision, reason=reason, at=at, now=now)
+            # The desk pulls the item while the editor's decision is on its way.
+            feed = racing.day.feed("m42")
+            pulled = restated(item, "retracted")
+            await feed.publish(pulled)
+            return build
+
+    racing = Paused(factory=lambda: Racing(partners()._partners, localizer=None))
+
+    async def check(paused: Paused) -> None:
+        item = untouched(paused)
+        with pytest.raises(NotAwaitingError):
+            await decide(paused, item)
+        latest = [
+            e
+            for e in paused.day.feed("m42").entries
+            if isinstance(e, TenantItemEntry) and e.overlay.item_id == item.overlay.item_id
+        ][-1]
+        assert latest.state == "retracted"
+
+    during_the_match(check, racing)
+
+
+def escalating() -> Partners:
+    return Partners(
+        [
+            Partner(
+                policy=(
+                    policy := loaded.policy.model_copy(update={"correction_behaviour": "escalate"})
+                ),
+                blocked=partial(blocked_topics_in, policy=policy),
+            )
+            for loaded in bundled_store().all()
+        ],
+        localizer=None,
+    )
+
+
+def test_an_escalated_version_can_be_approved() -> None:
+    async def check(paused: Paused) -> None:
+        # The desk escalates when the corrected goal's items arrive: wait for its report.
+        with anyio.fail_after(10):
+            while not [i for i in paused.held() if i.overlay.supersedes is not None]:
+                await anyio.sleep(0)
+        escalated = [i for i in paused.held() if i.overlay.supersedes is not None]
+        entry = await decide(paused, escalated[0])
+        assert entry.state == "on_air"
+        assert entry.overlay.version == 2
+        assert entry.overlay.supersedes == escalated[0].overlay.supersedes
+
+    during_the_match(check, Paused(factory=escalating))

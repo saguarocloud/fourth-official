@@ -66,13 +66,21 @@ class FeedLog:
             self._changed.notify_all()
 
     async def publish(
-        self, build: Callable[[int], FeedEntry], *, generation: int | None = None
+        self,
+        build: Callable[[int], FeedEntry],
+        *,
+        generation: int | None = None,
+        guard: Callable[[tuple[FeedEntry, ...]], None] | None = None,
     ) -> FeedEntry:
         """Append the entry `build` makes for the next number, and wake every waiting reader.
-        With `generation`, the entry is refused if a new run has started since."""
+        With `generation`, the entry is refused if a new run has started since; with `guard`,
+        if it raises on the entries as they stand at the moment of appending (a compare and
+        swap: nothing can slip in between the check and the append)."""
         async with self._changed:
             if generation is not None and generation != self._generation:
                 raise StaleRunError(f"the feed of {self.match_id} has started a new run")
+            if guard is not None:
+                guard(tuple(self._entries))
             if self._finished:
                 raise FeedFinishedError(f"the feed of {self.match_id} is finished")
             number = len(self._entries) + 1

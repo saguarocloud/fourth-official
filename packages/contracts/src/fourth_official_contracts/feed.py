@@ -203,9 +203,6 @@ class TenantItemEntry(FeedEntryBase):
             raise ValueError("a reviewed label needs the approval behind it")
 
 
-_VERSION = re.compile(r"-v([0-9]+)$")
-
-
 class CorrectionAction(WireModel):
     """What the corrections desk did to one partner item a correction touched."""
 
@@ -224,17 +221,18 @@ class CorrectionAction(WireModel):
     def _one_item_and_its_versions(self) -> "CorrectionAction":
         if self.locale != TENANT_LOCALES[self.tenant_id]:
             raise ValueError(f"{self.tenant_id} broadcasts in {TENANT_LOCALES[self.tenant_id]}")
-        stem = f"it-{self.tenant_id}-{self.insight_id}-v"
-        if not self.item_id.startswith(stem):
+        version = re.compile(rf"^it-{self.tenant_id}-{re.escape(self.insight_id)}-v([0-9]+)$")
+        old = version.match(self.item_id)
+        if old is None:
             raise ValueError("the item is the partner's version of the insight")
+        if self.was == "pending_approval" and self.action != "retracted":
+            raise ValueError("a held item was never on air: it can only be pulled")
         if (self.action == "retracted") != (self.new_item_id is None):
             raise ValueError("an amended or escalated item names its new version, and only those")
         if self.new_item_id is not None:
-            old, new = _VERSION.search(self.item_id), _VERSION.search(self.new_item_id)
-            if not self.new_item_id.startswith(stem) or old is None or new is None:
-                raise ValueError("the new version is the same partner's item")
-            if int(new.group(1)) <= int(old.group(1)):
-                raise ValueError("the new version is a later one")
+            new = version.match(self.new_item_id)
+            if new is None or int(new.group(1)) != int(old.group(1)) + 1:
+                raise ValueError("the new version is the next version of the same item")
         return self
 
 
@@ -257,6 +255,12 @@ class CorrectionReportEntry(FeedEntryBase):
             raise ValueError("the correction belongs to another match")
         if match_of(self.target_event_id) != self.match_id:
             raise ValueError("the event belongs to another match")
+        listed = set(self.insight_ids)
+        if any(a.insight_id not in listed for a in self.actions):
+            raise ValueError("every action is about an insight the report lists")
+        items = [(a.tenant_id, a.item_id) for a in self.actions]
+        if len(set(items)) != len(items):
+            raise ValueError("an item is acted on once per report")
         return self
 
 

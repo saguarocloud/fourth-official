@@ -221,8 +221,13 @@ class Partners:
             if disclosure is None:  # pragma: no cover - narrative is always disclosed
                 raise ValueError("an insight is always disclosed")
             rendered = item.rendered
+            # An approved amendment still says which version it replaces.
             overlay = lower_third(
-                item.localized, (rendered.headline, rendered.claims), disclosure, timing
+                item.localized,
+                (rendered.headline, rendered.claims),
+                disclosure,
+                timing,
+                supersedes=item.overlay.supersedes,
             )
         state: Literal["on_air", "rejected"] = "on_air" if decision == "approved" else "rejected"
         # Built through the contract, not copied, so the decided item is checked like any other.
@@ -277,7 +282,13 @@ class Partners:
             new = None
             amendable = was == "on_air" and correction.kind == "EVENT_AMENDED"
             if amendable and moment is not None and behaviour != "retract-and-notify":
-                new = regenerated(item, moment, facts, policy, at=at, held=behaviour == "escalate")
+                try:
+                    new = regenerated(
+                        item, moment, facts, policy, at=at, held=behaviour == "escalate"
+                    )
+                except Exception:
+                    # A version that cannot be made is pulled rather than left on air.
+                    logger.exception("could not regenerate %s", item.overlay.item_id)
             if new is None:
                 builders.append(restated(item, "retracted"))
                 action: Literal["retracted", "amended", "escalated"] = "retracted"

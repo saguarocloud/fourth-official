@@ -166,6 +166,23 @@ describe("parseEntry, for a correction report", () => {
     ["no insights", { ...report, insightIds: "x" }],
     ["no time taken", { ...report, elapsedMs: "10" }],
     ["a malformed action", { ...report, actions: [{ tenantId: "x" }] }],
+    [
+      "an unknown action",
+      {
+        ...report,
+        actions: [
+          {
+            tenantId: "tribuna-austral",
+            locale: "es-MX",
+            insightId: "in-x",
+            itemId: "it-x",
+            was: "on_air",
+            action: "deleted",
+            newItemId: null,
+          },
+        ],
+      },
+    ],
   ])("refuses one with %s", (_, entry) => {
     expect(parseEntry(JSON.stringify(entry), "m42")).toBeNull();
   });

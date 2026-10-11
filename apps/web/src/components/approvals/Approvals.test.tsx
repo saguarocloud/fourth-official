@@ -9,7 +9,7 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => search.value,
 }));
 
-import { FEED } from "@/components/broadcast/testing";
+import { BEFORE_DESK, FEED } from "@/components/broadcast/testing";
 import { FakeEventSource, MATCHES } from "@/components/match-live/testing";
 import type { TenantItemEntry } from "@/contracts/feed";
 import { waiting } from "@/domain/approvals";
@@ -69,13 +69,13 @@ function stream(): FakeEventSource {
   return latest;
 }
 
-async function played(matches: unknown = RUNNING) {
+async function played(matches: unknown = RUNNING, feed = FEED) {
   const fetch = serve(matches);
   const view = render(<Approvals />);
   await screen.findByText("Harbour City v Northgate FC · Meridian League");
   act(() => {
     stream().open();
-    for (const entry of FEED) stream().emit(entry.kind, entry);
+    for (const entry of feed) stream().emit(entry.kind, entry);
   });
   await screen.findByRole("button", { name: /Approve as T\. Ibarra/ });
   await settle();
@@ -228,11 +228,12 @@ describe("Approvals", () => {
   });
 
   it("offers only Reject for an item a correction has since changed", async () => {
-    await played();
+    // Before the desk pulls it, a held item may rest on a corrected fact.
+    await played(RUNNING, BEFORE_DESK);
     const targets = new Set(
-      FEED.flatMap((e) => (e.kind === "correction" ? [e.correction.targetEventId] : [])),
+      BEFORE_DESK.flatMap((e) => (e.kind === "correction" ? [e.correction.targetEventId] : [])),
     );
-    const index = HELD.findIndex((i) =>
+    const index = waiting(foldBroadcast(BEFORE_DESK)).findIndex((i) =>
       i.localized?.claims.some((c) => c.evidence.eventIds.some((id) => targets.has(id))),
     );
 

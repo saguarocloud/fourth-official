@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { FeedEntry, TenantItemEntry } from "@/contracts/feed";
+import { BEFORE_DESK } from "@/components/broadcast/testing";
 import feedM42 from "@/fixtures/feed-m42-partners.json";
 
 import { foldBroadcast } from "./broadcast";
@@ -102,12 +103,26 @@ describe("englishVersion", () => {
 
 describe("correctedSince", () => {
   it("marks a held item whose evidence a correction targets, and only that", () => {
-    const targets = new Set(DONE.corrections.map((c) => c.correction.targetEventId));
-    const touched = held().filter((i) =>
-      i.localized?.claims.some((c) => c.evidence.eventIds.some((id) => targets.has(id))),
+    // Before the desk pulls them, held items may rest on a corrected fact.
+    const before = foldBroadcast(BEFORE_DESK);
+    const targets = new Set(before.corrections.map((c) => c.correction.targetEventId));
+    // The VAR moment explains the void: the voided goal is part of its story, not its claim.
+    const touched = waiting(before).filter(
+      (i) =>
+        before.moments[i.localized!.momentId]?.kind !== "var_overturn" &&
+        i.localized?.claims.some((c) => c.evidence.eventIds.some((id) => targets.has(id))),
     );
 
     expect(touched.length).toBeGreaterThan(0);
-    expect(held().filter((i) => correctedSince(DONE, i))).toEqual(touched);
+    expect(waiting(before).filter((i) => correctedSince(before, i))).toEqual(touched);
+  });
+});
+
+describe("correctedSince, for a version the desk remade", () => {
+  it("does not count the correction it was made from", () => {
+    const remade = DONE.items.find((i) => i.overlay.supersedes !== null)!;
+    const held = { ...remade, state: "pending_approval" as const, approvalRequired: true };
+
+    expect(correctedSince({ ...DONE, items: [...DONE.items, held] }, held)).toBe(false);
   });
 });

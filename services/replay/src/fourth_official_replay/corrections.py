@@ -9,7 +9,7 @@ the corrected event is found and dealt with, per partner, and the whole of it is
 """
 
 import json
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 from datetime import datetime
 from typing import Any, Literal
@@ -39,8 +39,22 @@ _EXPLAINS_A_VOID = frozenset({"var_overturn"})
 _LIVE_STATES = frozenset({"on_air", "pending_approval"})
 
 
-def _rests_on(event_ids: set[str], correction: Correction) -> bool:
-    return correction.target_event_id in event_ids
+def rests_on(evidence: set[str], moment: Moment | None, correction: Correction) -> bool:
+    """Whether claims with this evidence, about this moment, rest on the corrected event. The one
+    rule for the desk and for an editor's decision. A void does not touch the moment that
+    explains it (VAR): the voided goal is part of that story, not a fact it asserts."""
+    if moment is not None and moment.kind in _EXPLAINS_A_VOID and correction.kind == "EVENT_VOIDED":
+        return False
+    return correction.target_event_id in evidence | set(moment.event_ids if moment else ())
+
+
+def item_rests_on(
+    item: TenantItemEntry, correction: Correction, moments: Mapping[str, Moment]
+) -> bool:
+    if item.localized is None:
+        return False
+    evidence = {e for c in item.localized.claims for e in c.evidence.event_ids}
+    return rests_on(evidence, moments.get(item.localized.moment_id), correction)
 
 
 def touched(
@@ -48,25 +62,18 @@ def touched(
 ) -> tuple[tuple[str, ...], tuple[TenantItemEntry, ...]]:
     """The canonical insights resting on the corrected event (only those in `only`, if given),
     and each partner's latest version of them that is still on air or held."""
-    moments = {e.moment.moment_id: e.moment for e in entries if isinstance(e, MomentEntry)}
+    moments = moments_of(entries)
     insight_ids: list[str] = []
     for entry in entries:
         if not isinstance(entry, InsightEntry):
             continue
         insight = entry.insight
-        moment = moments.get(insight.moment_id)
         if (
-            moment is not None
-            and moment.kind in _EXPLAINS_A_VOID
-            and correction.kind == "EVENT_VOIDED"
-        ):
+            only is not None and insight.insight_id not in only
+        ) or insight.insight_id in insight_ids:
             continue
         evidence = {e for c in insight.claims for e in c.evidence.event_ids}
-        if moment is not None:
-            evidence |= set(moment.event_ids)
-        if only is not None and insight.insight_id not in only:
-            continue
-        if _rests_on(evidence, correction) and insight.insight_id not in insight_ids:
+        if rests_on(evidence, moments.get(insight.moment_id), correction):
             insight_ids.append(insight.insight_id)
     latest: dict[tuple[str, str], TenantItemEntry] = {}
     for entry in entries:

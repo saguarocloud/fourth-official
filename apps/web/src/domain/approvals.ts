@@ -54,8 +54,22 @@ export function englishVersion(
   );
 }
 
-/** Whether a correction targets an event the item's claims rest on: such an item cannot air. */
+/** Whether a correction rests on what the item's claims say, as the server decides it: the
+ * claims' evidence and the moment's events, except that a void does not touch the VAR moment that
+ * explains it, and a version the desk remade after a correction is not corrected by it. Such an
+ * item cannot air. */
 export function correctedSince(state: BroadcastState, item: TenantItemEntry): boolean {
-  const evidence = new Set(item.localized?.claims.flatMap((c) => c.evidence.eventIds) ?? []);
-  return state.corrections.some((c) => evidence.has(c.correction.targetEventId));
+  const localized = item.localized;
+  if (localized === null) return false;
+  const moment = state.moments[localized.momentId];
+  const evidence = new Set([
+    ...localized.claims.flatMap((c) => c.evidence.eventIds),
+    ...(moment?.eventIds ?? []),
+  ]);
+  const remade = item.overlay.supersedes !== null;
+  return state.corrections.some((c) => {
+    const explainsTheVoid = moment?.kind === "var_overturn" && c.correction.kind === "EVENT_VOIDED";
+    const madeAfter = remade && item.entrySeq > c.entrySeq;
+    return !explainsTheVoid && !madeAfter && evidence.has(c.correction.targetEventId);
+  });
 }

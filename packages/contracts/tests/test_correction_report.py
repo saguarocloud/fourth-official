@@ -66,6 +66,14 @@ def test_a_report_is_a_feed_entry() -> None:
         (("actions", 0, "itemId"), "it-tribuna-austral-in-m42-goal-HCY-s0287-a1-v1"),
         (("actions", 0, "action"), "deleted"),
         (("actions", 0, "locale"), "es-MX"),  # the partner's own language
+        # The next version, not any later one.
+        (("actions", 0, "newItemId"), "it-rheinblick-sport-in-m42-goal-HCY-s0287-a1-v3"),
+        # A held item can only be pulled: it was never on air to replace.
+        (("actions", 1, "action"), "amended"),
+        # Every action is about an insight the report lists.
+        (("insightIds",), []),
+        # The item belongs to exactly this insight, not one whose id merely starts the same.
+        (("actions", 0, "insightId"), "in-m42-goal-HCY-s0287-a"),
     ],
 )
 def test_an_inconsistent_report_is_refused(path: tuple[str | int, ...], value: object) -> None:
@@ -76,3 +84,10 @@ def test_an_inconsistent_report_is_refused(path: tuple[str | int, ...], value: o
 def test_an_item_can_be_retracted_or_amended_after_a_correction() -> None:
     for state in ("retracted", "amended"):
         assert parse_feed_entry(changed(TENANT_ITEM, ("state",), state)).state == state  # type: ignore[union-attr]
+
+
+def test_an_item_is_acted_on_once_per_report() -> None:
+    twice = changed(REPORT, ("actions",), [REPORT["actions"][0], REPORT["actions"][0]])
+
+    with pytest.raises(ValidationError):
+        parse_feed_entry(twice)

@@ -140,9 +140,14 @@ function isTenantItem(entry: Record<string, unknown>): boolean {
   );
 }
 
+const WAS = new Set(["on_air", "pending_approval"]);
+const ACTIONS = new Set(["retracted", "amended", "escalated"]);
+
 function isAction(value: unknown): boolean {
   return (
     isRecord(value) &&
+    WAS.has(String(value.was)) &&
+    ACTIONS.has(String(value.action)) &&
     ["tenantId", "locale", "insightId", "itemId", "was", "action"].every(
       (k) => typeof value[k] === "string",
     ) &&

@@ -3,6 +3,7 @@ corrected event and acts as each partner's policy says. A voided fact is pulled 
 amended one is regenerated from the corrected facts (auto-amend), pulled (retract-and-notify) or
 regenerated and held for an editor (escalate). Nothing it does goes unreported."""
 
+from dataclasses import replace
 from datetime import UTC, datetime
 from functools import partial
 
@@ -244,3 +245,39 @@ def test_after_the_replay_no_item_rests_on_a_voided_fact_or_an_old_scorer() -> N
             assert "var" in item.localized.insight_id
         if AMEND.target_event_id in evidence:
             assert item.overlay.version == 2
+
+
+def test_a_second_correction_reaches_the_version_the_first_one_made() -> None:
+    # The scorer is amended twice: the second amendment replaces the first one's version 2.
+    again = AMEND.model_copy(update={"correction_id": "c-m42-03"})
+    record = replace(RECORD, corrections=(*RECORD.corrections, again))
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(
+            record, log, template_only, config=ReplayConfig(), sleep=no_wait, partners=partners()
+        )
+    )
+
+    reports = [e for e in log.entries if isinstance(e, CorrectionReportEntry)]
+    second = [a for r in reports if r.correction_id == "c-m42-03" for a in r.actions]
+    assert {a.action for a in second if a.tenant_id != "tribuna-austral"} == {"amended"}
+    assert {a.new_item_id.rsplit("-v", 1)[1] for a in second if a.new_item_id} == {"3"}
+
+
+def test_a_failing_desk_never_stops_the_match() -> None:
+    class Broken(Partners):
+        async def correct(
+            self, *args: object, **kwargs: object
+        ) -> tuple[list[EntryBuilder], list[CorrectionAction]]:
+            raise RuntimeError("desk down")
+
+    log = FeedLog("m42")
+    broken = Broken(partners()._partners, localizer=None)
+    anyio.run(
+        lambda: replay(
+            RECORD, log, template_only, config=ReplayConfig(), sleep=no_wait, partners=broken
+        )
+    )
+
+    assert log.finished
+    assert any(e.kind == "correction" for e in log.entries)

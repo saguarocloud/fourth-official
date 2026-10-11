@@ -132,3 +132,16 @@ def test_a_finished_feed_says_so_in_its_own_error() -> None:
 
     with pytest.raises(FeedFinishedError):
         anyio.run(log.publish, clock)
+
+
+def test_a_guarded_entry_is_appended_only_if_the_log_still_allows_it() -> None:
+    log = FeedLog("m42")
+
+    def refuse(entries: tuple[object, ...]) -> None:
+        raise LookupError("changed since")
+
+    with pytest.raises(LookupError, match="changed since"):
+        anyio.run(lambda: log.publish(clock, guard=refuse))
+    assert log.entries == ()
+    anyio.run(lambda: log.publish(clock, guard=lambda entries: None))
+    assert len(log.entries) == 1

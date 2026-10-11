@@ -23,9 +23,11 @@ from typing import Literal, Protocol
 
 from fourth_official_contracts import ClockEntry, CorrectionEntry, FeedEntry, TenantItemEntry
 from fourth_official_match_data import MatchStore
+from fourth_official_replay.corrections import item_rests_on, moments_of
 from fourth_official_replay.errors import (
     CorrectedSinceError,
     FullTimeError,
+    NotAwaitingError,
     ReplayedSinceError,
     UnknownItemError,
 )
@@ -79,14 +81,16 @@ def _latest_version(
 
 
 def _corrected_since(entries: tuple[FeedEntry, ...], item: TenantItemEntry) -> bool:
-    """Whether a correction targets an event the item's claims rest on."""
-    evidence = {
-        event_id
-        for claim in (item.localized.claims if item.localized else ())
-        for event_id in claim.evidence.event_ids
-    }
+    """Whether a correction rests on what this version's claims say (`corrections.rests_on`).
+    A version the desk made from the corrected facts (it supersedes an earlier version, and came
+    after the correction) is not corrected by it; any other version is, whenever it arrived."""
+    moments = moments_of(entries)
+    remade = item.overlay.supersedes is not None
     return any(
-        isinstance(e, CorrectionEntry) and e.correction.target_event_id in evidence for e in entries
+        isinstance(e, CorrectionEntry)
+        and not (remade and item.entry_seq > e.entry_seq)
+        and item_rests_on(item, e.correction, moments)
+        for e in entries
     )
 
 
@@ -268,8 +272,17 @@ class Matchday:
             clocks = [e.clock for e in entries if isinstance(e, ClockEntry)]
             at = clocks[-1] if clocks else item.overlay.in_at
             build = await partners.decide(item, decision, reason=reason, at=at, now=now)
+
+            def still_as_decided(now: tuple[FeedEntry, ...]) -> None:
+                # The desk may have pulled the item while the decision was being made.
+                current = _latest_version(now, tenant_id, item_id)
+                if current is None or current.entry_seq != item.entry_seq:
+                    raise NotAwaitingError
+                if _corrected_since(now, current):
+                    raise CorrectedSinceError
+
             try:
-                entry = await feed.publish(build, generation=generation)
+                entry = await feed.publish(build, generation=generation, guard=still_as_decided)
             except StaleRunError:
                 raise ReplayedSinceError from None
             except FeedFinishedError:

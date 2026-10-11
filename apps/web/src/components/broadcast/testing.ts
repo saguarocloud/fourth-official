@@ -5,6 +5,17 @@ import feedM42 from "@/fixtures/feed-m42-partners.json";
 
 export const FEED = feedM42 as unknown as FeedEntry[];
 
+/** The feed as it stood before the corrections desk acted: the window in which a held item may
+ * rest on a fact a correction has already changed. */
+export const BEFORE_DESK = FEED.filter(
+  (e) =>
+    e.kind !== "correction_report" &&
+    !(
+      e.kind === "tenant_item" &&
+      (e.state === "retracted" || e.state === "amended" || e.overlay.supersedes !== null)
+    ),
+);
+
 export function itemOf(partner: PartnerId, template: string, nth = 0): TenantItemEntry {
   const items = FEED.filter(
     (e): e is TenantItemEntry =>

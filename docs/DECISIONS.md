@@ -259,14 +259,17 @@ One entry per decision: context, options, choice, consequences. Newest last.
     - `retract-and-notify` pulls the item.
   - A new version that cannot be made, or does not verify, is pulled instead.
 - **Corrected facts** are the match with the amended event added as a new version. `prepare` keeps only the latest version of an event.
-- **Once per item, however the work arrives.** The desk runs when a correction is issued, and again whenever a partner's items for an insight resting on an issued correction are published later (in a fast replay, items can arrive after the correction). A record of the items acted on and the versions made keeps any item from being acted on twice, and one lock serialises the desk.
+- **Once per item, however the work arrives.** The desk runs when a correction is issued, and again whenever a partner's items for an insight resting on an issued correction are published later (in a fast replay, items can arrive after the correction). A record per correction of the items acted on and the versions made keeps any item from being acted on twice by the same correction, while a later correction still reaches them; one lock serialises the desk. An item is marked done only once its entries are published.
+- **Never stops the match.** A desk failure is logged and the match carries on. A version that cannot be regenerated is pulled instead.
+- **One rule for "rests on".** The desk and an editor's decision share one rule (`corrections.rests_on`): the claims' evidence and the moment's events, with a void not touching the VAR moment that explains it. A version the desk remade after a correction is not corrected by it, so an escalated amendment can be approved; any other version is, whenever it arrived.
+- **No re-airing a pulled item.** A decision is published with a guard the feed checks as it appends (a compare and swap): the item must still be the version the editor decided on, held and not corrected since. A correction that lands mid-decision wins.
 - **Reported.** Every run publishes a `correction_report`:
   - the correction and the corrected event;
   - the insights touched;
   - each partner action (`was`, `action`, `newItemId`);
   - when the desk started and how long it took.
 
-  At issue it is published even when nothing was touched. For late items it is published only when something was done. The Corrections Center merges reports by correction.
+  At issue it is published even when nothing was touched. For late items it is published only when something was done. A correction can therefore have several reports; the Corrections Center merges them by correction.
 - **Amended versions air outside the partner's pace limit.** A correction does not wait its turn.
 
 **Consequences.**

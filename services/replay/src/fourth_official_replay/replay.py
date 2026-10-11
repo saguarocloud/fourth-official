@@ -183,12 +183,12 @@ class _Replay:
         self.slots = asyncio.Semaphore(config.concurrency)
         self.tasks: set[asyncio.Task[None]] = set()
         self.corrections: list[Correction] = sorted(record.corrections, key=lambda c: c.issued_at)
-        # Corrections issued so far, the facts with their amendments, and the partner items the
-        # desk has dealt with (and the versions it made): each is acted on once, however the work
-        # arrives.
+        # Corrections issued so far, the facts with their amendments, and, per correction, the
+        # partner items the desk has dealt with and the versions it made: each correction acts on
+        # an item once, however the work arrives, and a later correction still reaches them.
         self.issued: list[Correction] = []
         self.corrected = self.facts
-        self.handled: set[str] = set()
+        self.handled: set[tuple[str, str]] = set()
         self.desk_lock = asyncio.Lock()
         self.last_clock = -record.match.seconds(record.match.events[0]) - config.clock_every
 
@@ -240,7 +240,11 @@ class _Replay:
                 await self._publish_all(
                     await self.partners.correction(correction, self.facts, self.now)
                 )
-                await self.desk(correction)
+                try:
+                    await self.desk(correction)
+                except Exception:
+                    # The match carries on; what the desk did not reach stays as it was, logged.
+                    logger.exception("the corrections desk failed on %s", correction.correction_id)
             published = True
         return published
 
@@ -254,17 +258,15 @@ class _Replay:
             started, began = self.clocks.wall(), self.clocks.elapsed()
             entries = self.log.entries
             found, _ = touched(entries, correction, only=only)
+            cid = correction.correction_id
+            done = frozenset(item for c, item in self.handled if c == cid)
             builders, actions = await self.partners.correct(
-                correction,
-                entries,
-                self.corrected,
-                self.now,
-                only=only,
-                skip=frozenset(self.handled),
+                correction, entries, self.corrected, self.now, only=only, skip=done
             )
-            self.handled |= {a.item_id for a in actions}
-            self.handled |= {a.new_item_id for a in actions if a.new_item_id is not None}
             await self._publish_all(builders)
+            # Marked once published, so work that failed part way is not taken as done.
+            self.handled |= {(cid, a.item_id) for a in actions}
+            self.handled |= {(cid, a.new_item_id) for a in actions if a.new_item_id is not None}
             if only is not None and not actions:
                 return
             elapsed = int((self.clocks.elapsed() - began) * 1000)
