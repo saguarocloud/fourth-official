@@ -10,5 +10,6 @@ correction = parse_correction(raw_json_dict)  # EventVoided or EventAmended
 event.to_wire()  # canonical camelCase JSON form
 ```
 
-- Models are frozen and refuse unknown fields; domain rules (team membership, goal credit, clock ranges, pitch bounds) are validated on construction.
+- Models are frozen, strict and refuse unknown fields; domain rules (team membership, goal credit, references within the match, clock ranges, pitch bounds) are validated on construction.
+- Wire input is parsed by camelCase alias only; Python code may construct models by field name.
 - `schemas/` holds the exported JSON Schemas. Regenerate with `make contracts`; the test suite fails if they drift.

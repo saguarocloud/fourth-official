@@ -29,7 +29,7 @@ Running checklist. Update daily. Times are Mexico City.
 
 ## Phase 1: Thin end to end (Oct 10–14)
 
-- [ ] Match event and correction contracts (ADR-005)
+- [x] Match event and correction contracts (ADR-005) (#7)
 - [ ] TypeScript types generated from the contract schemas when the web consumes events
 
 - [ ] Simulator → Event Hubs → stats → Moment Detector → Analyst ⇄ Verifier → one tenant → Match Live UI, deployed with `azd up`

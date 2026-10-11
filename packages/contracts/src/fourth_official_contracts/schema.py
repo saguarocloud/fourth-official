@@ -1,8 +1,8 @@
 """Export the contracts as JSON Schema (2020-12) for language-neutral consumers.
 
 The Pydantic models are the source of truth; `packages/contracts/schemas/*.schema.json` are
-generated from them and checked for drift by the test suite. TypeScript types are generated from
-those files. Regenerate with `make contracts`.
+generated from them and checked for drift by the test suite. TypeScript types will be generated
+from those files when the web app consumes events. Regenerate with `make contracts`.
 """
 
 import json

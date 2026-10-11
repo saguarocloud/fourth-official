@@ -6,7 +6,7 @@ the concrete event models below; `parse_match_event` validates raw wire data int
 
 from typing import Annotated, Literal
 
-from pydantic import Field, TypeAdapter, model_validator
+from pydantic import ConfigDict, Field, TypeAdapter, model_validator
 
 from fourth_official_contracts.primitives import (
     ClubCode,
@@ -17,10 +17,13 @@ from fourth_official_contracts.primitives import (
     PlayerId,
     Ratio,
     Score,
+    Seq,
     SpeedKmh,
     UtcTimestamp,
+    Version,
     WireModel,
     club_of,
+    match_of,
 )
 
 
@@ -30,16 +33,27 @@ class EventEnvelope(WireModel):
     event_id: EventId
     match_id: MatchId
     # Strictly increasing per match; consumers reorder by it.
-    seq: Annotated[int, Field(ge=1)]
+    seq: Seq
     # Starts at 1; a correction republishes the event with a higher version.
-    version: Annotated[int, Field(ge=1)]
+    version: Version
     clock: MatchClock
     wall_clock: UtcTimestamp
 
     @model_validator(mode="after")
-    def _event_belongs_to_match(self) -> "EventEnvelope":
-        if not self.event_id.startswith(f"{self.match_id}-e"):
+    def _references_stay_in_the_match(self) -> "EventEnvelope":
+        if match_of(self.event_id) != self.match_id:
             raise ValueError(f"event {self.event_id} does not belong to match {self.match_id}")
+        # Every `*_event_id` reference (shot, foul, VAR target) must point at another event of
+        # the same match.
+        for name in type(self).model_fields:
+            if name.endswith("_event_id") and name != "event_id":
+                reference = getattr(self, name)
+                if reference is None:
+                    continue
+                if match_of(reference) != self.match_id:
+                    raise ValueError(f"{name} {reference} belongs to another match")
+                if reference == self.event_id:
+                    raise ValueError(f"{name} cannot reference the event itself")
         return self
 
 
@@ -195,11 +209,14 @@ class GoalEvent(EventEnvelope):
     scorer_id: PlayerId
     assist_id: PlayerId | None
     own_goal: bool
-    shot_event_id: EventId
+    # The shot that produced the goal; own goals often have none.
+    shot_event_id: EventId | None
     score_after: Score
 
     @model_validator(mode="after")
     def _credit_is_consistent(self) -> "GoalEvent":
+        if self.shot_event_id is None and not self.own_goal:
+            raise ValueError("a goal that is not an own goal needs its shot_event_id")
         scorer_club = club_of(self.scorer_id)
         if self.own_goal == (scorer_club == self.team_id):
             raise ValueError(
@@ -226,6 +243,12 @@ class VarDecisionEvent(EventEnvelope):
     target_event_id: EventId
     decision: Literal["confirmed", "overturned"]
     reason: Literal["offside", "foul", "handball", "none"]
+
+    @model_validator(mode="after")
+    def _reason_matches_decision(self) -> "VarDecisionEvent":
+        if (self.decision == "confirmed") != (self.reason == "none"):
+            raise ValueError("a confirmed decision has reason 'none'; an overturned one names why")
+        return self
 
 
 class PeriodStartEvent(EventEnvelope):
@@ -260,9 +283,40 @@ MatchEvent = Annotated[
 ]
 """Any match event, discriminated by `type`."""
 
-MATCH_EVENT_ADAPTER: TypeAdapter[MatchEvent] = TypeAdapter(MatchEvent)
+MATCH_EVENT_TYPES: tuple[type[EventEnvelope], ...] = (
+    PassEvent,
+    CarryEvent,
+    ShotEvent,
+    SaveEvent,
+    TackleEvent,
+    InterceptionEvent,
+    ClearanceEvent,
+    PressureEvent,
+    FoulEvent,
+    CardEvent,
+    OffsideEvent,
+    SetPieceEvent,
+    SubstitutionEvent,
+    PossessionChangeEvent,
+    GoalEvent,
+    VarCheckEvent,
+    VarDecisionEvent,
+    PeriodStartEvent,
+    PeriodEndEvent,
+)
+"""Every concrete event model; use with `isinstance` (the `MatchEvent` union cannot be)."""
+
+# Errors must never echo untrusted input back into logs or responses.
+MATCH_EVENT_ADAPTER: TypeAdapter[MatchEvent] = TypeAdapter(
+    MatchEvent, config=ConfigDict(hide_input_in_errors=True)
+)
 
 
 def parse_match_event(raw: object) -> MatchEvent:
-    """Validate raw wire data (a dict from JSON) into its concrete event model."""
-    return MATCH_EVENT_ADAPTER.validate_python(raw)
+    """Validate decoded wire data (a dict from JSON, camelCase keys) into its event model."""
+    return MATCH_EVENT_ADAPTER.validate_python(raw, by_alias=True, by_name=False)
+
+
+def parse_match_event_json(data: str | bytes) -> MatchEvent:
+    """Validate JSON text from the wire into its event model."""
+    return MATCH_EVENT_ADAPTER.validate_json(data, by_alias=True, by_name=False)
