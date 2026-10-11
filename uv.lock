@@ -6,6 +6,7 @@ requires-python = "==3.12.*"
 members = [
     "fourth-official",
     "fourth-official-api",
+    "fourth-official-broadcast",
     "fourth-official-contracts",
     "fourth-official-explain",
     "fourth-official-match-data",
@@ -553,6 +554,21 @@ requires-dist = [
     { name = "fourth-official-replay", editable = "services/replay" },
     { name = "fourth-official-verifier", editable = "services/verifier" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
+]
+
+[[package]]
+name = "fourth-official-broadcast"
+version = "0.1.0"
+source = { editable = "services/broadcast" }
+dependencies = [
+    { name = "fourth-official-contracts" },
+    { name = "fourth-official-verifier" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fourth-official-contracts", editable = "packages/contracts" },
+    { name = "fourth-official-verifier", editable = "services/verifier" },
 ]
 
 [[package]]
