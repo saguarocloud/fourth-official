@@ -1,4 +1,4 @@
-"""The feed log: append-only, numbered, and something a client can wait on."""
+"""The feed log: append-only within a run, numbered, reset per run, something clients wait on."""
 
 import anyio
 import pytest
@@ -22,8 +22,8 @@ def test_entries_are_numbered_as_they_are_published() -> None:
     log = FeedLog("m42")
 
     async def publish() -> None:
-        await log.publish(lambda n: clock(n, as_of_seq=10))
-        await log.publish(lambda n: clock(n, as_of_seq=20))
+        await log.publish(clock)
+        await log.publish(clock)
 
     anyio.run(publish)
 
@@ -32,48 +32,84 @@ def test_entries_are_numbered_as_they_are_published() -> None:
     assert log.since(2) == ()
 
 
-def test_an_entry_for_another_match_or_out_of_order_is_refused() -> None:
-    log = FeedLog("m43")
-
+def test_an_entry_for_another_match_out_of_order_or_after_the_end_is_refused() -> None:
     with pytest.raises(ValueError, match="m43"):
-        anyio.run(log.publish, clock)
+        anyio.run(FeedLog("m43").publish, clock)
     with pytest.raises(ValueError, match="numbered"):
         anyio.run(FeedLog("m42").publish, lambda n: clock(n + 1))
 
+    finished = FeedLog("m42")
+    anyio.run(finished.finish)
+    with pytest.raises(RuntimeError, match="finished"):
+        anyio.run(finished.publish, clock)
 
-def test_a_waiting_client_wakes_when_an_entry_arrives_or_times_out() -> None:
+
+def test_a_waiting_reader_wakes_when_an_entry_arrives_and_otherwise_times_out() -> None:
     log = FeedLog("m42")
-    woken: list[int] = []
 
-    async def scenario() -> None:
-        async def client() -> None:
-            woken.extend(e.entry_seq for e in await log.wait_beyond(0, timeout=5))
+    async def scenario() -> tuple[int, ...]:
+        woken: list[int] = []
+        waiting = anyio.Event()
+
+        async def reader() -> None:
+            waiting.set()
+            view = await log.wait_beyond(0, 0, timeout=5)
+            woken.extend(e.entry_seq for e in view.entries)
 
         async with anyio.create_task_group() as group:
-            group.start_soon(client)
-            await anyio.sleep(0.01)
+            group.start_soon(reader)
+            await waiting.wait()
+            await anyio.lowlevel.checkpoint()
             await log.publish(clock)
-        assert await log.wait_beyond(1, timeout=0.01) == ()
+        idle = await log.wait_beyond(0, 1, timeout=0.01)
+        assert idle.entries == ()
+        return tuple(woken)
 
-    anyio.run(scenario)
-
-    assert woken == [1]
+    assert anyio.run(scenario) == (1,)
 
 
-def test_finishing_wakes_waiters_and_marks_the_log_done() -> None:
+def test_a_new_run_wakes_readers_of_the_old_one_with_a_fresh_view() -> None:
     log = FeedLog("m42")
 
-    async def scenario() -> tuple[object, ...]:
+    async def scenario() -> tuple[int, int]:
+        await log.publish(clock)
+        await log.publish(clock)
+        result: list[tuple[int, int]] = []
+        waiting = anyio.Event()
+
+        async def reader() -> None:
+            waiting.set()
+            view = await log.wait_beyond(0, 2, timeout=5)
+            result.append((view.generation, len(view.entries)))
+
         async with anyio.create_task_group() as group:
-            result: list[tuple[object, ...]] = []
-
-            async def client() -> None:
-                result.append(await log.wait_beyond(0, timeout=5))
-
-            group.start_soon(client)
-            await anyio.sleep(0.01)
-            await log.finish()
+            group.start_soon(reader)
+            await waiting.wait()
+            await anyio.lowlevel.checkpoint()
+            await log.reset()
         return result[0]
 
-    assert anyio.run(scenario) == ()
-    assert log.finished
+    assert anyio.run(scenario) == (1, 0)
+    assert log.entries == ()
+    assert not log.finished
+
+
+def test_finishing_wakes_waiters_and_marks_the_run_done() -> None:
+    log = FeedLog("m42")
+
+    async def scenario() -> bool:
+        waiting = anyio.Event()
+        seen: list[bool] = []
+
+        async def reader() -> None:
+            waiting.set()
+            seen.append((await log.wait_beyond(0, 0, timeout=5)).finished)
+
+        async with anyio.create_task_group() as group:
+            group.start_soon(reader)
+            await waiting.wait()
+            await anyio.lowlevel.checkpoint()
+            await log.finish()
+        return seen[0]
+
+    assert anyio.run(scenario) is True

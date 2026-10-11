@@ -1,7 +1,7 @@
 """The matchday API: list matches, start the replay, read or stream each match's feed."""
 
+import asyncio
 import json
-import time
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
 
@@ -29,6 +29,9 @@ async def template_only(moment: Moment, facts: MatchFacts) -> Explanation:
     return await explain(moment, facts, [])
 
 
+START = {"X-Requested-By": "fourth-official"}
+
+
 @pytest.fixture
 def client() -> Iterator[TestClient]:
     day = Matchday(
@@ -38,13 +41,15 @@ def client() -> Iterator[TestClient]:
         yield client
 
 
+def start(client: TestClient) -> int:
+    return client.post("/api/matchday", headers=START).status_code
+
+
 def finish(client: TestClient) -> None:
-    deadline = time.monotonic() + 60
-    while time.monotonic() < deadline:
-        if all(m["state"] == "finished" for m in client.get("/api/matches").json()["matches"]):
-            return
-        time.sleep(0.2)
-    raise AssertionError("the matchday did not finish")
+    """Wait for the run on the app's own event loop: no polling, no timing."""
+    assert client.portal is not None
+    day: Matchday = client.app.state.matchday  # type: ignore[attr-defined]
+    client.portal.call(day.wait)
 
 
 def test_matches_are_listed_idle_before_the_matchday_starts(client: TestClient) -> None:
@@ -60,9 +65,7 @@ def test_matches_are_listed_idle_before_the_matchday_starts(client: TestClient) 
 
 
 def test_starting_the_matchday_replays_and_fills_every_feed(client: TestClient) -> None:
-    started = client.post("/api/matchday")
-
-    assert started.status_code == 202
+    assert start(client) == 202
     finish(client)
     feed = client.get("/api/matches/m42/feed").json()
     assert feed["finished"] is True
@@ -71,16 +74,16 @@ def test_starting_the_matchday_replays_and_fills_every_feed(client: TestClient) 
 
 
 def test_a_second_start_is_refused_while_running_or_cooling_down(client: TestClient) -> None:
-    client.post("/api/matchday")
+    start(client)
 
-    again = client.post("/api/matchday")
+    again = client.post("/api/matchday", headers=START)
 
     assert again.status_code == 409
     assert "matchday" in again.json()["detail"]
 
 
 def test_the_feed_resumes_after_the_entries_a_client_has(client: TestClient) -> None:
-    client.post("/api/matchday")
+    start(client)
     finish(client)
 
     everything = client.get("/api/matches/m42/feed").json()["entries"]
@@ -91,14 +94,16 @@ def test_the_feed_resumes_after_the_entries_a_client_has(client: TestClient) -> 
 
 
 def test_the_stream_sends_every_entry_as_a_server_sent_event(client: TestClient) -> None:
-    client.post("/api/matchday")
+    start(client)
     finish(client)
 
-    with client.stream("GET", "/api/matches/m43/stream", headers={"Last-Event-ID": "3"}) as stream:
+    with client.stream(
+        "GET", "/api/matches/m43/stream", headers={"Last-Event-ID": "1:3"}
+    ) as stream:
         assert stream.headers["content-type"].startswith("text/event-stream")
         events = [e for e in stream.iter_text() for e in e.split("\n\n") if e.startswith("id:")]
 
-    ids = [int(e.split("\n")[0].removeprefix("id: ")) for e in events]
+    ids = [int(e.split("\n")[0].removeprefix("id: 1:")) for e in events]
     assert ids[0] == 4
     assert ids == sorted(ids)
     first = json.loads(events[0].split("data: ", 1)[1])
@@ -137,7 +142,7 @@ def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
     monkeypatch.setattr(main, "foundry_explainer", fake)
     foundry = FoundrySettings(
         project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
-        match_data_url="http://ca-match-data/mcp",
+        match_data_url="http://127.0.0.1:8100/mcp",
         client_id="",
     )
 
@@ -150,7 +155,7 @@ def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
 def test_the_foundry_explainer_builds_the_fast_then_fallback_analysts() -> None:
     foundry = FoundrySettings(
         project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
-        match_data_url="http://ca-match-data/mcp",
+        match_data_url="http://127.0.0.1:8100/mcp",
         client_id="",
     )
 
@@ -199,7 +204,7 @@ def test_the_foundry_explainer_opens_its_credential_and_drafters_and_explains(
     )
     foundry = FoundrySettings(
         project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
-        match_data_url="http://ca-match-data/mcp",
+        match_data_url="http://127.0.0.1:8100/mcp",
         client_id="00000000-0000-0000-0000-000000000001",
     )
     record = demo_store().record("m42")
@@ -229,10 +234,99 @@ def test_an_idle_stream_sends_heartbeats(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(matchday_routes, "HEARTBEAT_SECONDS", 0.01)
 
     async def first_chunk() -> str:
-        events = matchday_routes.events(FeedLog("m42"), 0)
+        events = matchday_routes.events(FeedLog("m42"), 0, 0)
         try:
             return await anext(events)
         finally:
             await events.aclose()
 
     assert anyio.run(first_chunk) == ": keep-alive\n\n"
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [{}, {"X-Requested-By": "someone"}, {**START, "Origin": "https://evil.example"}],
+)
+def test_starting_needs_the_studio_header_and_no_foreign_origin(
+    client: TestClient, headers: dict[str, str]
+) -> None:
+    response = client.post("/api/matchday", headers=headers)
+
+    assert response.status_code == 403
+    assert response.headers["cache-control"] == "no-store"
+
+
+@pytest.mark.parametrize(
+    ("last_event_id", "generation", "resume"),
+    [
+        (None, 1, 0),
+        ("1:5", 1, 5),
+        ("0:5", 1, 0),
+        ("abc", 1, 0),
+        ("-1", 1, 0),
+        ("1:99999999999", 1, 1_000_000),
+    ],
+)
+def test_reconnecting_clients_resume_only_within_their_run(
+    last_event_id: str | None, generation: int, resume: int
+) -> None:
+    assert matchday_routes.resume_point(last_event_id, generation) == resume
+
+
+def test_a_garbled_last_event_id_still_streams_from_the_top(client: TestClient) -> None:
+    start(client)
+    finish(client)
+
+    with client.stream(
+        "GET", "/api/matches/m44/stream", headers={"Last-Event-ID": "abc"}
+    ) as stream:
+        first = next(stream.iter_text())
+
+    assert first.startswith("id: 1:1\n")
+
+
+def test_a_new_run_resets_readers_of_the_old_one() -> None:
+    feed = FeedLog("m42")
+
+    async def scenario() -> str:
+        events = matchday_routes.events(feed, 0, 0, lifetime=5)
+        pending = asyncio.ensure_future(anext(events))
+        await asyncio.sleep(0.01)
+        await feed.reset()
+        try:
+            return await pending
+        finally:
+            await events.aclose()
+
+    assert anyio.run(scenario).startswith("event: reset\n")
+
+
+def test_a_stream_ends_when_its_lifetime_is_up() -> None:
+    async def drain() -> list[str]:
+        return [chunk async for chunk in matchday_routes.events(FeedLog("m42"), 0, 0, lifetime=0)]
+
+    assert anyio.run(drain) == []
+
+
+def test_streams_beyond_the_limit_are_refused(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(matchday_routes, "MAX_STREAMS", 0)
+    day = Matchday(demo_store(), template_only, sleep=no_wait)
+
+    with TestClient(create_app(Settings(version="test"), matchday=day)) as client:
+        assert client.get("/api/matches/m42/stream").status_code == 503
+
+
+def test_a_long_feed_is_paged_and_not_finished_until_the_last_page(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(matchday_routes, "MAX_ENTRIES_PER_PAGE", 10)
+    start(client)
+    finish(client)
+
+    first = client.get("/api/matches/m42/feed").json()
+    total = len(client.app.state.matchday.feed("m42").entries)  # type: ignore[attr-defined]
+    last = client.get("/api/matches/m42/feed", params={"after": total - 5}).json()
+
+    assert (len(first["entries"]), first["hasMore"], first["finished"]) == (10, True, False)
+    assert (len(last["entries"]), last["hasMore"], last["finished"]) == (5, False, True)
+    assert first["generation"] == 1

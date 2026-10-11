@@ -45,22 +45,23 @@ def create_app(settings: Settings, *, matchday: Matchday | None = None) -> FastA
     given `matchday` is used as is; otherwise one is built at startup with the Analyst on Foundry
     when configured, or the templates alone."""
     store = demo_store()
-    days: list[Matchday] = [matchday] if matchday else []
 
     @asynccontextmanager
-    async def lifespan(_: FastAPI) -> AsyncIterator[None]:
+    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
-            if not days:
+            day = matchday
+            if day is None:
                 explainer = (
                     await stack.enter_async_context(foundry_explainer(settings.foundry))
                     if settings.foundry
                     else template_explainer
                 )
-                days.append(Matchday(store, explainer))
+                day = Matchday(store, explainer)
+            app.state.matchday = day
             try:
                 yield
             finally:
-                await days[0].stop()
+                await day.stop()
 
     app = FastAPI(title="Fourth Official API", version=settings.version, lifespan=lifespan)
 
@@ -70,7 +71,7 @@ def create_app(settings: Settings, *, matchday: Matchday | None = None) -> FastA
         response.headers["Cache-Control"] = "no-store"
         return Health(status="ok", service=SERVICE_NAME, version=settings.version)
 
-    app.include_router(matchday_router(lambda: days[0], _summaries(store)))
+    app.include_router(matchday_router(_summaries(store)))
     return app
 
 

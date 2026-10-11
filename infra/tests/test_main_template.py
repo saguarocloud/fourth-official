@@ -280,3 +280,10 @@ def test_agents_identity_can_only_use_models(compiled: CompiledTemplate) -> None
     }
 
     assert roles == {AZURE_AI_USER}
+
+
+
+def test_the_api_runs_as_one_replica_so_its_spend_guards_hold(compiled: CompiledTemplate) -> None:
+    (api,) = [m for m in compiled.modules if m.name == "api"]
+
+    assert api.parameters["maxReplicas"] == 1

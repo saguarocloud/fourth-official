@@ -108,6 +108,9 @@ module api 'modules/container-app.bicep' = {
     registryServer: registry.outputs.loginServer
     targetPort: 8000
     exists: apiExists
+    // One replica: the matchday's run guards (one run at a time, cooldown, daily budget) live in
+    // the process, so a single replica is what bounds model spend for the whole deployment.
+    maxReplicas: 1
   }
 }
 

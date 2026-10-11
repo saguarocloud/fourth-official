@@ -140,8 +140,12 @@ class _Replay:
         return published
 
     async def explain(self, moment: Moment) -> None:
-        async with self.slots:
-            explanation = await self.explainer(moment, self.facts)
+        try:
+            async with self.slots:
+                explanation = await self.explainer(moment, self.facts)
+        except Exception:  # one moment's failure must never stop the match or lose the others
+            logger.exception("explaining %s failed", moment.moment_id)
+            return
         if explanation.insight is None:
             logger.warning("no verified insight for %s", moment.moment_id)
             return
@@ -219,4 +223,8 @@ async def replay(
         await run.corrections_due(None)
         await asyncio.gather(*run.tasks)
     finally:
+        # However the replay ends (done, failed or cancelled), no explanation outlives it.
+        for task in run.tasks:
+            task.cancel()
+        await asyncio.gather(*run.tasks, return_exceptions=True)
         await log.finish()

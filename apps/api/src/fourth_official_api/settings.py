@@ -9,7 +9,11 @@ DEFAULT_VERSION = "dev"
 FOUNDRY_ENDPOINT = re.compile(
     r"^https://[a-z0-9][a-z0-9-]{1,62}\.services\.ai\.azure\.com/api/projects/[A-Za-z0-9-]{2,64}$"
 )
-MATCH_DATA_URL = re.compile(r"^https?://[A-Za-z0-9.-]{1,253}(:[0-9]{1,5})?/mcp$")
+# The Match Data server: over HTTPS on an Azure Container Apps host, or plain HTTP on this machine.
+MATCH_DATA_URL = re.compile(
+    r"https://[a-z0-9][a-z0-9.-]{1,240}\.azurecontainerapps\.io/mcp"
+    r"|http://(127\.0\.0\.1|localhost)(:[0-9]{1,5})?/mcp"
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,9 +47,9 @@ def _foundry_from_env() -> FoundrySettings | None:
     url = os.environ.get("MATCH_DATA_URL", "").strip()
     if not endpoint and not url:
         return None
-    if not FOUNDRY_ENDPOINT.match(endpoint):
+    if not FOUNDRY_ENDPOINT.fullmatch(endpoint):
         raise ValueError("FOUNDRY_PROJECT_ENDPOINT must be a Foundry project endpoint")
-    if not MATCH_DATA_URL.match(url):
+    if not MATCH_DATA_URL.fullmatch(url):
         raise ValueError("MATCH_DATA_URL must be the Match Data server's /mcp URL")
     return FoundrySettings(
         project_endpoint=endpoint,

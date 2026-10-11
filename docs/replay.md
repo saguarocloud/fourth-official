@@ -19,8 +19,9 @@ The feed is a wire contract (`FeedEntry`, `packages/contracts/schemas/feed-entry
 ## Matchday
 
 `Matchday` replays every match of the demo matchday together.
-- **One run at a time:** a run spends model tokens, so only one runs at a time, and runs start at most once per cooldown (15 minutes, counted from the start of the last run).
-- **Fresh feeds:** each run starts every feed afresh.
+- **Spend guards:** a run spends model tokens. Only one runs at a time, runs start at most once per cooldown (15 minutes, counted from the start of the last run), and no more than 24 start in any 24 hours. The guards live in the process, so the API runs as one replica, which a policy test pins.
+- **Robust runs:** a moment whose explanation fails is logged and the match carries on. However a run ends, no explanation outlives it. A run that crashes reports `failed`.
+- **One feed per match, reset per run:** each run starts a new generation of the same feed, waking every reader, so a page opened before the run started follows it.
 - **Explainer choice:** with Foundry configured (`FOUNDRY_PROJECT_ENDPOINT`, `MATCH_DATA_URL` and the agents identity's `AZURE_CLIENT_ID`), moments are explained by the Analyst (`docs/explain.md`). Without it, they are explained by the deterministic templates alone, at no cost.
 
 ## API
@@ -28,8 +29,8 @@ The feed is a wire contract (`FeedEntry`, `packages/contracts/schemas/feed-entry
 | Endpoint | Returns |
 |---|---|
 | `GET /api/matches` | Each match's clubs, state (`idle`, `running`, `finished`) and number of feed entries |
-| `POST /api/matchday` | `202` when the replay starts; `409` while one runs or during the cooldown |
-| `GET /api/matches/{id}/feed?after=n` | Entries after `n` (at most 1000), and whether the feed is finished |
-| `GET /api/matches/{id}/stream` | Server-sent events: one event per entry (`id` = `entrySeq`, `event` = kind, `data` = the entry), resuming after `Last-Event-ID`, with a heartbeat every 15 s, ending when the feed is finished |
+| `POST /api/matchday` | `202` when the replay starts; `409` while one runs, during the cooldown or beyond the daily budget; `403` without the `X-Requested-By: fourth-official` header or from a foreign browser origin (a cross-site form cannot set the header, and the API grants no CORS) |
+| `GET /api/matches/{id}/feed?after=n` | The run's generation, the entries after `n` (at most 1000), whether more remain, and whether the run is finished |
+| `GET /api/matches/{id}/stream` | Server-sent events: one event per entry (`id` = `generation:entrySeq`, `event` = kind, `data` = the entry), a `reset` event when a new run starts, and a heartbeat every 15 s. It resumes after `Last-Event-ID` only within the same run; an ID from another run, or an unreadable one, starts from the top. It ends when the run is finished, or after 30 minutes (reconnect to continue). At most 200 streams are open at once; beyond that, `503`. |
 
 Responses are never cached. Insight text arrives rendered by code: clients show it as plain text.

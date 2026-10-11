@@ -44,7 +44,9 @@ def test_without_foundry_the_api_explains_with_templates(monkeypatch: pytest.Mon
 
 def test_foundry_settings_come_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("FOUNDRY_PROJECT_ENDPOINT", ENDPOINT)
-    monkeypatch.setenv("MATCH_DATA_URL", "http://ca-match-data/mcp")
+    monkeypatch.setenv(
+        "MATCH_DATA_URL", "https://ca-match-data.internal.x.eastus2.azurecontainerapps.io/mcp"
+    )
     monkeypatch.setenv("AZURE_CLIENT_ID", "00000000-0000-0000-0000-000000000001")
 
     foundry = Settings.from_env().foundry
@@ -52,7 +54,7 @@ def test_foundry_settings_come_from_the_environment(monkeypatch: pytest.MonkeyPa
     assert foundry is not None
     assert (foundry.project_endpoint, foundry.match_data_url) == (
         ENDPOINT,
-        "http://ca-match-data/mcp",
+        "https://ca-match-data.internal.x.eastus2.azurecontainerapps.io/mcp",
     )
     assert foundry.client_id == "00000000-0000-0000-0000-000000000001"
 
@@ -60,10 +62,19 @@ def test_foundry_settings_come_from_the_environment(monkeypatch: pytest.MonkeyPa
 @pytest.mark.parametrize(
     ("endpoint", "url"),
     [
-        ("http://ais-abc.services.ai.azure.com/api/projects/p", "http://ca-match-data/mcp"),
-        ("https://evil.example/api/projects/p", "http://ca-match-data/mcp"),
+        (
+            "http://ais-abc.services.ai.azure.com/api/projects/p",
+            "https://ca-match-data.internal.x.eastus2.azurecontainerapps.io/mcp",
+        ),
+        (
+            "https://evil.example/api/projects/p",
+            "https://ca-match-data.internal.x.eastus2.azurecontainerapps.io/mcp",
+        ),
         (ENDPOINT, "ftp://ca-match-data/mcp"),
         (ENDPOINT, ""),
+        (ENDPOINT, "http://169.254.169.254/mcp"),
+        (ENDPOINT, "http://ca-match-data.internal.x.eastus2.azurecontainerapps.io/mcp"),
+        (ENDPOINT, "https://evil.example/mcp"),
     ],
 )
 def test_foundry_settings_are_validated(
@@ -74,3 +85,13 @@ def test_foundry_settings_are_validated(
 
     with pytest.raises(ValueError, match=r"FOUNDRY_PROJECT_ENDPOINT|MATCH_DATA_URL"):
         Settings.from_env()
+
+
+def test_plain_http_is_allowed_only_on_this_machine(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("FOUNDRY_PROJECT_ENDPOINT", ENDPOINT)
+    monkeypatch.setenv("MATCH_DATA_URL", "http://127.0.0.1:8100/mcp")
+
+    foundry = Settings.from_env().foundry
+
+    assert foundry is not None
+    assert foundry.match_data_url == "http://127.0.0.1:8100/mcp"

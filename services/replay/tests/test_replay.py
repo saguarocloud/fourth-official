@@ -1,8 +1,10 @@
 """Replaying a match publishes its clock, moments, verified insights and corrections, in order."""
 
+import asyncio
 from functools import cache
 
 import anyio
+import pytest
 
 from fourth_official_contracts import (
     Amendment,
@@ -22,11 +24,11 @@ from fourth_official_replay import FeedLog, ReplayConfig, replay
 from fourth_official_replay.replay import correction_summary
 from fourth_official_verifier import MatchFacts
 
-pauses: list[float] = []
+PAUSES: dict[str, list[float]] = {}
 
 
 async def no_wait(seconds: float) -> None:
-    pauses.append(seconds)
+    return None
 
 
 async def template_only(moment: Moment, facts: MatchFacts) -> Explanation:
@@ -38,8 +40,13 @@ def featured() -> tuple[FeedEntry, ...]:
     record = demo_store().record("m42")
     log = FeedLog("m42")
 
+    pauses = PAUSES.setdefault("featured", [])
+
+    async def record_pause(seconds: float) -> None:
+        pauses.append(seconds)
+
     async def run() -> None:
-        await replay(record, log, template_only, config=ReplayConfig(speed=8.0), sleep=no_wait)
+        await replay(record, log, template_only, config=ReplayConfig(speed=8.0), sleep=record_pause)
 
     anyio.run(run)
     return log.entries
@@ -103,6 +110,7 @@ def test_corrections_are_published_when_they_are_issued() -> None:
 def test_replay_waits_scaled_and_capped_between_events() -> None:
     featured()
     config = ReplayConfig()
+    pauses = PAUSES["featured"]
 
     assert pauses
     assert max(pauses) <= config.max_pause
@@ -170,3 +178,49 @@ def test_a_correction_without_a_new_scorer_is_described_generically() -> None:
     assert correction_summary(record, assist_removed) == (
         f"Harbour City goal at {goal.clock.minute}' amended by the data provider"
     )
+
+
+def test_a_failing_explanation_is_logged_and_the_match_carries_on(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    record = demo_store().record("m42")
+    log = FeedLog("m42")
+    calls: list[str] = []
+
+    async def flaky(moment: Moment, facts: MatchFacts) -> Explanation:
+        calls.append(moment.moment_id)
+        if len(calls) == 1:
+            raise RuntimeError("model unavailable")
+        return await template_only(moment, facts)
+
+    async def run() -> None:
+        await replay(record, log, flaky, sleep=no_wait)
+
+    anyio.run(run)
+
+    moments = [e for e in log.entries if isinstance(e, MomentEntry)]
+    insights = [e for e in log.entries if isinstance(e, InsightEntry)]
+    assert len(insights) == len(moments) - 1
+    assert log.finished
+    assert any("failed" in r.getMessage() for r in caplog.records)
+
+
+def test_cancelling_a_replay_leaves_no_explanation_running() -> None:
+    record = demo_store().record("m42")
+    log = FeedLog("m42")
+
+    async def slow_explainer(moment: Moment, facts: MatchFacts) -> Explanation:
+        await anyio.sleep(30)
+        return await template_only(moment, facts)
+
+    async def scenario() -> int:
+        task = asyncio.create_task(replay(record, log, slow_explainer, sleep=no_wait))
+        while not any(isinstance(e, MomentEntry) for e in log.entries):
+            await asyncio.sleep(0)
+        await asyncio.sleep(0.05)
+        task.cancel()
+        await asyncio.gather(task, return_exceptions=True)
+        return len([t for t in asyncio.all_tasks() if t is not asyncio.current_task()])
+
+    assert asyncio.run(scenario()) == 0
+    assert log.finished

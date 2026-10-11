@@ -19,8 +19,15 @@ async def template_only(moment: Moment, facts: MatchFacts) -> Explanation:
     return await explain(moment, facts, [])
 
 
-def matchday(**options: float) -> Matchday:
-    return Matchday(demo_store(), template_only, config=ReplayConfig(), sleep=no_wait, **options)
+def matchday(*, cooldown: float = 15 * 60.0, runs_per_day: int = 24) -> Matchday:
+    return Matchday(
+        demo_store(),
+        template_only,
+        config=ReplayConfig(),
+        sleep=no_wait,
+        cooldown=cooldown,
+        runs_per_day=runs_per_day,
+    )
 
 
 def test_before_it_starts_every_match_is_listed_and_idle() -> None:
@@ -65,20 +72,77 @@ def test_only_one_run_at_a_time_and_a_cooldown_after_it() -> None:
     assert [m.state for m in day.status()] == ["finished"] * 3
 
 
-def test_a_restart_begins_a_fresh_feed() -> None:
+def test_a_restart_resets_the_same_feed_so_readers_follow_the_new_run() -> None:
     day = matchday(cooldown=0.0)
+    feed = day.feed("m42")
 
-    async def run() -> int:
+    async def run() -> tuple[int, int]:
         await day.start(now=0.0)
         await day.wait()
-        first = len(day.feed("m42").entries)
+        first = (feed.generation, len(feed.entries))
         await day.start(now=1.0)
         await day.wait()
         return first
 
-    first = anyio.run(run)
+    first_generation, first_entries = anyio.run(run)
 
-    assert len(day.feed("m42").entries) == first
+    assert day.feed("m42") is feed
+    assert feed.generation == first_generation + 1
+    assert len(feed.entries) == first_entries
+
+
+def test_a_reader_waiting_before_the_first_run_follows_it() -> None:
+    day = matchday()
+    feed = day.feed("m42")
+
+    async def scenario() -> int:
+        seen: list[int] = []
+        waiting = anyio.Event()
+
+        async def reader() -> None:
+            waiting.set()
+            view = await feed.wait_beyond(feed.generation, 0, timeout=10)
+            seen.append(view.generation)
+
+        async with anyio.create_task_group() as group:
+            group.start_soon(reader)
+            await waiting.wait()
+            await anyio.lowlevel.checkpoint()
+            await day.start(now=0.0)
+        await day.wait()
+        return seen[0]
+
+    assert anyio.run(scenario) == 1
+
+
+def test_a_run_that_crashes_is_reported_as_failed() -> None:
+    async def broken_sleep(seconds: float) -> None:
+        raise RuntimeError("clock failure")
+
+    day = Matchday(demo_store(), template_only, sleep=broken_sleep)
+
+    async def run() -> None:
+        await day.start(now=0.0)
+        await day.wait()
+
+    anyio.run(run)
+
+    assert [m.state for m in day.status()] == ["failed"] * 3
+
+
+def test_no_more_than_the_daily_budget_of_runs_start() -> None:
+    day = matchday(cooldown=0.0, runs_per_day=2)
+
+    async def run() -> None:
+        for now in (0.0, 1.0):
+            await day.start(now=now)
+            await day.wait()
+        with pytest.raises(MatchdayBusyError, match="as often as allowed today"):
+            await day.start(now=2.0)
+        await day.start(now=2.0 + 24 * 60 * 60)
+        await day.wait()
+
+    anyio.run(run)
 
 
 def test_an_unknown_match_has_no_feed() -> None:
