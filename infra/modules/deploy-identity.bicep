@@ -22,6 +22,9 @@ param appIdentityName string
 @description('The agents identity the API also runs as; its revisions re-assert it too.')
 param agentsIdentityName string
 
+@description('The signer identity the API also runs as; its revisions re-assert it too.')
+param signerIdentityName string
+
 @description('Container Apps environment hosting those apps; updating an app re-asserts that it joins it.')
 param managedEnvironmentName string
 
@@ -132,6 +135,24 @@ resource agentsIdentityOperator 'Microsoft.Authorization/roleAssignments@2022-04
   properties: {
     // Managed Identity Operator on the agents identity only, for the same reason: API revisions
     // carry it. Assigning an identity does not grant its roles to the deploy identity.
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'f1a07417-d97a-45cb-824c-7a7467783830'
+    )
+    principalId: identity.properties.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource signerIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
+  name: signerIdentityName
+}
+
+resource signerIdentityOperator 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(signerIdentity.id, identity.id, 'f1a07417-d97a-45cb-824c-7a7467783830')
+  scope: signerIdentity
+  properties: {
+    // Managed Identity Operator on the signer identity only: API revisions carry it too.
     roleDefinitionId: subscriptionResourceId(
       'Microsoft.Authorization/roleDefinitions',
       'f1a07417-d97a-45cb-824c-7a7467783830'

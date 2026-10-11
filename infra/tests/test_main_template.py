@@ -15,6 +15,7 @@ RBAC_ADMINISTRATOR = "f58310d9-a9f6-439a-9e8d-f62e7b41a168"
 MANAGED_IDENTITY_OPERATOR = "f1a07417-d97a-45cb-824c-7a7467783830"
 AZURE_AI_USER = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
 STORAGE_BLOB_DATA_CONTRIBUTOR = "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
+KEY_VAULT_CRYPTO_USER = "12338af0-0e69-4776-bea7-57ae8d297424"
 GUID = re.compile(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}")
 
 
@@ -218,8 +219,10 @@ EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
     ),
     MANAGED_IDENTITY_OPERATOR: ("Microsoft.ManagedIdentity/userAssignedIdentities'",),
     AZURE_AI_USER: ("Microsoft.CognitiveServices/accounts'",),
-    # On the ledger's one container, never the account.
+    # On the ledger's and the records' containers, never the account.
     STORAGE_BLOB_DATA_CONTRIBUTOR: ("Microsoft.Storage/storageAccounts/blobServices/containers'",),
+    # On the one signing key, never the vault.
+    KEY_VAULT_CRYPTO_USER: ("Microsoft.KeyVault/vaults/keys'",),
     READER: None,
 }
 
@@ -308,19 +311,31 @@ def test_storage_is_keyless_private_and_locally_redundant(compiled: CompiledTemp
     assert account.properties["defaultToOAuthAuthentication"] is True
     assert account.properties["minimumTlsVersion"] == "TLS1_2"
     assert account.properties["supportsHttpsTrafficOnly"] is True
-    (container,) = compiled.of_type("Microsoft.Storage/storageAccounts/blobServices/containers")
-    assert container.properties["publicAccess"] == "None"
+    containers = compiled.of_type("Microsoft.Storage/storageAccounts/blobServices/containers")
+    assert len(containers) == 2  # the start ledger, and the provenance records
+    assert {c.properties["publicAccess"] for c in containers} == {"None"}
 
 
-def test_only_the_api_identity_writes_the_start_ledger(compiled: CompiledTemplate) -> None:
-    (grant,) = [
+def test_only_the_api_identity_writes_the_ledger_and_the_records(
+    compiled: CompiledTemplate,
+) -> None:
+    grants = [
         a
         for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
         if STORAGE_BLOB_DATA_CONTRIBUTOR in str(a.properties["roleDefinitionId"])
     ]
 
-    assert "storage" in grant.module
-    assert "writerPrincipalId" in str(grant.properties["principalId"])
+    # One grant per container, each scoped to its container, never to the account: the ledger to
+    # the agents identity, the records to the signer identity.
+    assert len(grants) == 2
+    principals = {str(g.properties["principalId"]) for g in grants}
+    assert any("writerPrincipalId" in p for p in principals)
+    assert any("recordsWriterPrincipalId" in p for p in principals)
+    for grant in grants:
+        assert "storage" in grant.module
+        assert "containers" in str(grant.body.get("scope", ""))
+    (storage_module,) = [m for m in compiled.modules if m.name == "storage"]
+    assert "signerPrincipalId" in str(storage_module.parameters["recordsWriterPrincipalId"])
     (storage,) = [m for m in compiled.modules if m.name == "storage"]
     assert "agentsIdentityPrincipalId" in str(storage.parameters["writerPrincipalId"])
 
@@ -346,6 +361,9 @@ def test_the_api_runs_the_analyst_with_a_durable_ledger_and_a_small_daily_allowa
         "AZURE_CLIENT_ID",
         "START_LEDGER_URL",
         "MATCHDAY_RUNS_PER_DAY",
+        "PROVENANCE_KEY_ID",
+        "PROVENANCE_CONTAINER_URL",
+        "PROVENANCE_CLIENT_ID",
     }
     assert env["MATCHDAY_RUNS_PER_DAY"] == "6"
     assert ".internal." in env["MATCH_DATA_URL"]
@@ -375,8 +393,8 @@ def test_the_deploy_identity_may_assign_exactly_the_identities_the_apps_run_as(
     ]
     (deploy,) = [m for m in compiled.modules if m.name == "deploy-identity"]
 
-    assert len(grants) == 2
-    assert {"appIdentityName", "agentsIdentityName"} <= set(deploy.parameters)
+    assert len(grants) == 3
+    assert {"appIdentityName", "agentsIdentityName", "signerIdentityName"} <= set(deploy.parameters)
 
 
 def test_the_ledger_survives_a_bad_write_or_delete(compiled: CompiledTemplate) -> None:
@@ -385,3 +403,44 @@ def test_the_ledger_survives_a_bad_write_or_delete(compiled: CompiledTemplate) -
     assert blobs.properties["isVersioningEnabled"] is True
     assert blobs.properties["deleteRetentionPolicy"] == {"enabled": True, "days": 7}
     assert blobs.properties["containerDeleteRetentionPolicy"] == {"enabled": True, "days": 7}
+
+
+# --- Provenance -------------------------------------------------------------------------------
+
+
+def test_the_signing_key_lives_in_a_standard_rbac_vault(compiled: CompiledTemplate) -> None:
+    (vault,) = compiled.of_type("Microsoft.KeyVault/vaults")
+
+    assert vault.properties["sku"]["name"] == "standard"
+    assert vault.properties["enableRbacAuthorization"] is True
+    assert vault.properties.get("accessPolicies", []) == []
+    assert vault.properties["enableSoftDelete"] is True
+    # Nobody can delete and purge the key that every record's signature depends on.
+    assert vault.properties["enablePurgeProtection"] is True
+
+
+def test_the_signing_key_is_ec_p256_and_can_only_sign_and_verify(
+    compiled: CompiledTemplate,
+) -> None:
+    (key,) = compiled.of_type("Microsoft.KeyVault/vaults/keys")
+
+    assert key.properties["kty"] == "EC"
+    assert key.properties["curveName"] == "P-256"
+    assert sorted(key.properties["keyOps"]) == ["sign", "verify"]
+
+
+def test_only_the_api_identity_uses_the_key_and_only_that_key(compiled: CompiledTemplate) -> None:
+    (grant,) = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if KEY_VAULT_CRYPTO_USER in str(a.properties["roleDefinitionId"])
+    ]
+
+    assert "keys" in str(grant.body.get("scope", ""))
+    # A signer identity of its own: not the one that talks to the models.
+    assert "signerIdentityName" in str(grant.properties["principalId"])
+    (api,) = [m for m in compiled.modules if m.name == "api"]
+    assert "signerIdentityId" in str(api.parameters["additionalIdentityIds"])
+    env = _env(compiled, "api")
+    assert "signerClientId" in env["PROVENANCE_CLIENT_ID"]
+    assert "keyUriWithVersion" in env["PROVENANCE_KEY_ID"]

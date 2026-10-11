@@ -12,6 +12,7 @@ members = [
     "fourth-official-match-data",
     "fourth-official-moments",
     "fourth-official-policy",
+    "fourth-official-provenance",
     "fourth-official-replay",
     "fourth-official-simulator",
     "fourth-official-stats",
@@ -272,6 +273,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/e6/87/e88098a024d74b7434de5b110c261da024fe5d6c139f1847f6f8a2b76678/azure_identity-1.26.0.tar.gz", hash = "sha256:61b4538b87df10d2d6d44b77cd5ea28a8929fd4929d58b45bf3f230f7daba02e", size = 310151 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/d5/ae45ce8009d0d015304b206c7c4a6cbab02c03f8f07eedefb32b099ccee3/azure_identity-1.26.0-py3-none-any.whl", hash = "sha256:3c60d9682b3ac01507388d474cb5a5ffbe54152a96b6cdcaa7013da9315cf186", size = 195958 },
+]
+
+[[package]]
+name = "azure-keyvault-keys"
+version = "4.11.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-core" },
+    { name = "cryptography" },
+    { name = "isodate" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6e/d4/e0ba8e8d661fcb2f536e1ba572369053aa37e3bc5c0bdb9aaab6603248ab/azure_keyvault_keys-4.11.3.tar.gz", hash = "sha256:abe258a46937ab69b148d1832150192f6a300578451d69304a0c3be24b9881aa", size = 279998 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/c9/8c/068322e5b6803cf2babde45a9a20d61697bc584a52710ac1f75d1c350bcb/azure_keyvault_keys-4.11.3-py3-none-any.whl", hash = "sha256:c492fa29cc2f437d1ad2464e7ddf5f40196c8ec8e25fad94dae5d474e0432d0a", size = 202493 },
 ]
 
 [[package]]
@@ -539,6 +555,7 @@ dependencies = [
     { name = "fourth-official-explain" },
     { name = "fourth-official-match-data" },
     { name = "fourth-official-policy" },
+    { name = "fourth-official-provenance" },
     { name = "fourth-official-replay" },
     { name = "fourth-official-verifier" },
     { name = "uvicorn", extra = ["standard"] },
@@ -553,6 +570,7 @@ requires-dist = [
     { name = "fourth-official-explain", editable = "services/explain" },
     { name = "fourth-official-match-data", editable = "services/match-data" },
     { name = "fourth-official-policy", editable = "services/policy" },
+    { name = "fourth-official-provenance", editable = "services/provenance" },
     { name = "fourth-official-replay", editable = "services/replay" },
     { name = "fourth-official-verifier", editable = "services/verifier" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
@@ -658,6 +676,25 @@ dependencies = [
 requires-dist = [
     { name = "fourth-official-contracts", editable = "packages/contracts" },
     { name = "pyyaml", specifier = ">=6.0.2,<7" },
+]
+
+[[package]]
+name = "fourth-official-provenance"
+version = "0.1.0"
+source = { editable = "services/provenance" }
+dependencies = [
+    { name = "azure-identity" },
+    { name = "azure-keyvault-keys" },
+    { name = "azure-storage-blob", extra = ["aio"] },
+    { name = "fourth-official-contracts" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "azure-identity", specifier = ">=1.25,<2" },
+    { name = "azure-keyvault-keys", specifier = ">=4.10,<5" },
+    { name = "azure-storage-blob", extras = ["aio"], specifier = ">=12.26,<13" },
+    { name = "fourth-official-contracts", editable = "packages/contracts" },
 ]
 
 [[package]]

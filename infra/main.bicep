@@ -130,6 +130,18 @@ module storage 'modules/storage.bicep' = {
     location: location
     tags: tags
     writerPrincipalId: foundry.outputs.agentsIdentityPrincipalId
+    recordsWriterPrincipalId: keyVault.outputs.signerPrincipalId
+  }
+}
+
+module keyVault 'modules/key-vault.bicep' = {
+  name: 'key-vault'
+  scope: resourceGroup
+  params: {
+    name: 'kv-fo-${token}'
+    location: location
+    tags: tags
+    signerIdentityName: 'id-signer-${token}'
   }
 }
 
@@ -151,7 +163,7 @@ module api 'modules/container-app.bicep' = {
     // restarts, because starts are claimed atomically in the durable ledger (ADR-008).
     maxReplicas: 1
     // The API runs as the agents identity too: it calls the models and claims ledger starts.
-    additionalIdentityIds: [foundry.outputs.agentsIdentityId]
+    additionalIdentityIds: [foundry.outputs.agentsIdentityId, keyVault.outputs.signerIdentityId]
     env: [
       { name: 'FOUNDRY_PROJECT_ENDPOINT', value: foundry.outputs.projectEndpoint }
       { name: 'MATCH_DATA_URL', value: 'https://${matchDataHost}/mcp' }
@@ -159,6 +171,10 @@ module api 'modules/container-app.bicep' = {
       { name: 'START_LEDGER_URL', value: storage.outputs.startLedgerUrl }
       // At most 6 runs a day keeps the worst case of model spend well inside the budget.
       { name: 'MATCHDAY_RUNS_PER_DAY', value: '6' }
+      // Every narrative item is issued a record signed with the vault key (ADR-013).
+      { name: 'PROVENANCE_KEY_ID', value: keyVault.outputs.keyUriWithVersion }
+      { name: 'PROVENANCE_CONTAINER_URL', value: storage.outputs.provenanceContainerUrl }
+      { name: 'PROVENANCE_CLIENT_ID', value: keyVault.outputs.signerClientId }
     ]
   }
 }
@@ -215,6 +231,7 @@ module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubReposit
     containerAppNames: [api.outputs.name, web.outputs.name, matchData.outputs.name]
     appIdentityName: appIdentity.outputs.name
     agentsIdentityName: foundry.outputs.agentsIdentityName
+    signerIdentityName: keyVault.outputs.signerIdentityName
     managedEnvironmentName: containerAppsEnvironment.outputs.name
   }
 }

@@ -177,3 +177,50 @@ def test_the_daily_allowance_must_be_a_whole_number_up_to_the_default(
 
     with pytest.raises(ValueError, match="MATCHDAY_RUNS_PER_DAY"):
         Settings.from_env()
+
+
+KEY_ID = "https://kv-abc123.vault.azure.net/keys/provenance/0123456789abcdef0123456789abcdef"
+RECORDS = "https://stabc123.blob.core.windows.net/provenance"
+
+
+def test_provenance_comes_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROVENANCE_KEY_ID", KEY_ID)
+    monkeypatch.setenv("PROVENANCE_CONTAINER_URL", RECORDS)
+    monkeypatch.setenv("AZURE_CLIENT_ID", "agents")
+    monkeypatch.setenv("PROVENANCE_CLIENT_ID", "client-1")
+
+    provenance = Settings.from_env().provenance
+
+    assert provenance is not None
+    assert (provenance.key_id, provenance.container_url, provenance.client_id) == (
+        KEY_ID,
+        RECORDS,
+        "client-1",
+    )
+
+
+def test_without_provenance_settings_records_stay_local(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("PROVENANCE_KEY_ID", raising=False)
+    monkeypatch.delenv("PROVENANCE_CONTAINER_URL", raising=False)
+
+    assert Settings.from_env().provenance is None
+
+
+@pytest.mark.parametrize(
+    ("key_id", "container"),
+    [
+        (KEY_ID, ""),  # half configured
+        ("", RECORDS),
+        ("https://evil.example/keys/provenance/1", RECORDS),
+        (KEY_ID, "https://stabc123.blob.core.windows.net/provenance?sv=1"),
+        ("https://kv-abc123.vault.azure.net/keys/provenance", RECORDS),  # no version
+    ],
+)
+def test_provenance_settings_must_name_a_vault_key_version_and_a_container(
+    monkeypatch: pytest.MonkeyPatch, key_id: str, container: str
+) -> None:
+    monkeypatch.setenv("PROVENANCE_KEY_ID", key_id)
+    monkeypatch.setenv("PROVENANCE_CONTAINER_URL", container)
+
+    with pytest.raises(ValueError, match="PROVENANCE"):
+        Settings.from_env()

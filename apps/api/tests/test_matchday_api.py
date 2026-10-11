@@ -15,12 +15,14 @@ from fastapi.testclient import TestClient
 from fourth_official_api import explainers, main, matchday_routes
 from fourth_official_api.explainers import foundry_drafters
 from fourth_official_api.main import create_app
+from fourth_official_api.provenance import Issuer
 from fourth_official_api.settings import FoundrySettings, Settings, StartLedgerSettings
 from fourth_official_api.start_ledger import LedgerError
 from fourth_official_contracts import Moment, Provenance, parse_feed_entry
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
 from fourth_official_moments import detect
+from fourth_official_provenance import InMemoryStore, LocalSigner
 from fourth_official_replay import (
     Explainer,
     FeedLog,
@@ -190,7 +192,11 @@ def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
         client_id="",
     )
 
-    app = main.create_app(Settings(version="test", foundry=foundry), ledger=InMemoryLedger())
+    app = main.create_app(
+        Settings(version="test", foundry=foundry),
+        ledger=InMemoryLedger(),
+        provenance=local_issuer(),
+    )
     with TestClient(app) as client:
         assert client.get("/api/matches").status_code == 200
 
@@ -225,7 +231,7 @@ def test_a_configured_start_ledger_is_opened_at_startup_and_lets_the_analyst_run
         runs_per_day=6,
     )
 
-    with TestClient(main.create_app(settings)) as client:
+    with TestClient(main.create_app(settings, provenance=local_issuer())) as client:
         assert client.get("/api/matchday").json()["ready"] is True
         day: Matchday = client.app.state.matchday  # type: ignore[attr-defined]
         assert day.runs_per_day == 6
@@ -448,6 +454,11 @@ def test_a_stream_that_fails_before_it_starts_gives_its_slot_back(
     assert anyio.run(scenario) == [200, 200, 200]
 
 
+def local_issuer() -> Issuer:
+    """Records signed with a local key, as tests need; a deployment uses the vault key."""
+    return Issuer(LocalSigner(), InMemoryStore())
+
+
 def test_the_analyst_is_never_enabled_without_a_durable_start_ledger() -> None:
     foundry = FoundrySettings(
         project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
@@ -494,3 +505,17 @@ def test_an_unavailable_start_ledger_is_a_503_and_starts_nothing(
         assert response.json() == {"detail": "the matchday cannot be started right now"}
     assert [m.state for m in day.status()] == ["idle"] * 3
     assert any("start ledger" in r.getMessage() for r in caplog.records)
+
+
+def test_the_analyst_is_never_enabled_without_the_studio_s_signing_key() -> None:
+    foundry = FoundrySettings(
+        project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
+        match_data_url="http://127.0.0.1:8100/mcp",
+        client_id="",
+    )
+
+    # A deployment that writes with models signs with the vault key, never a throwaway one.
+    app = create_app(Settings(version="test", foundry=foundry), ledger=InMemoryLedger())
+
+    with pytest.raises(RuntimeError, match="signing key"), TestClient(app):
+        pass
