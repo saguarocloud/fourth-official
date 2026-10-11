@@ -13,6 +13,7 @@ from mcp.types import CallToolResult, TextContent
 
 from fourth_official_match_data import __main__ as entry
 from fourth_official_match_data import create_server, demo_store
+from fourth_official_match_data.server import LOOPBACK
 
 EXPECTED_TOOLS = {
     "list_matches",
@@ -121,8 +122,7 @@ def test_http_answers_only_to_loopback_and_the_listed_public_host() -> None:
     security = server.settings.transport_security
     assert security is not None
     assert security.enable_dns_rebinding_protection
-    assert "data.example.net" in security.allowed_hosts
-    assert "127.0.0.1:*" in security.allowed_hosts
+    assert security.allowed_hosts == [*LOOPBACK, "data.example.net"]
     assert security.allowed_origins == []
 
 
@@ -140,4 +140,4 @@ def test_the_command_line_serves_stdio_or_http(monkeypatch: pytest.MonkeyPatch) 
 
     assert served[0][:3] == ("stdio", "127.0.0.1", 8100)
     assert served[1][:3] == ("streamable-http", "0.0.0.0", 8123)  # noqa: S104
-    assert "x.example" in served[1][3]
+    assert served[1][3] == [*LOOPBACK, "x.example"]
