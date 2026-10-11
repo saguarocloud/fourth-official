@@ -111,3 +111,32 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Consequences.** Contract rules are enforced at every boundary that parses with these models, and are readable as ordinary Python. Non-Python consumers get the structural schema (types, ranges, patterns); cross-field rules are only enforced in Python, which is where all producers and validators run.
 
 **Known limits, deliberately out of scope:** no extra time or penalty shoot-outs (the synthetic league has none); the models do not check geometry against event kind (a corner taken from the corner arc, a pass whose origin equals its end) or sequences across events (an interception followed by the matching possession change). Those belong to the simulator's realism tests and the stats engine, which see whole matches.
+
+---
+
+## ADR-006: Claims reference facts with markup; code renders every number and name
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** The product promise is that a language model never calculates a number, and that every published claim can be traced to match data. The Verifier must block wrong numbers, invented players, wrong scorelines and future leakage every time. If the Analyst wrote free text, the Verifier would have to parse numbers and names out of prose, decide which snapshot each number came from, and allow for rounding. That makes it heuristic in exactly the place where it must be certain.
+
+**Options.**
+- Free text, with the Verifier extracting and matching numbers and names. This is fragile across phrasing, rounding and languages, and an extractor that misses a number lets it through.
+- Structured claims with no text, rendered from templates. This is safe but dull, and it gives up the reason to use a model at all: explaining *why* something matters.
+- **Free text with references.** The Analyst writes the sentence, but every fact is a reference: `{{value:<snapshotId>}}`, `{{player:HCY-11}}`, `{{club:HCY}}`, `{{minute:61}}`, `{{score}}`. Code renders the references from the evidence.
+
+**Choice.** Free text with references (`fourth_official_contracts.Insight`).
+- **The contract** checks shape: markup is well-formed, every value referenced is cited in that claim's evidence, every claim has evidence, the text is one printable line, and provenance names the agent, prompt version and model alias.
+- **The deterministic Verifier** (`services/verifier`) checks truth against the match at the moment:
+  - claim text is built from an allowlist, not checked against a denylist: printable ASCII, a curated football-English vocabulary that contains no names and no number words, and capitals only for known terms and a closed set of sentence openers;
+  - no club or player names are written out, in any case;
+  - every player and minute referenced appears in the claim's cited events, and nothing is in the future;
+  - every cited event and snapshot exists, is not after the moment, and has not been voided or restated.
+- The score is rendered by code at the moment, without voided goals, so it is always right.
+- The Verifier returns a `Verdict` with typed findings, which go back to the Analyst as feedback and into the provenance record.
+
+**Consequences.**
+- Numbers are correct by construction, so the Verifier's job becomes deciding what may be referenced, which it can do exactly.
+- The vocabulary and opener lists are deliberately strict. An unusual word costs a retry, never a wrong publication; the Analyst's prompt asks for plain football English.
+- Localisation must keep the reference set unchanged; the post-localisation check compares it.
+- Whether a claim is *supported* by its evidence (no extra assertions) remains a judgement, and belongs to the LLM judge layer that runs after the deterministic checks.

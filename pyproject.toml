@@ -14,6 +14,7 @@ members = [
   "services/moments",
   "services/simulator",
   "services/stats-engine",
+  "services/verifier",
 ]
 
 [dependency-groups]
@@ -87,6 +88,8 @@ mypy_path = [
   "services/simulator/tests",
   "services/stats-engine/src",
   "services/stats-engine/tests",
+  "services/verifier/src",
+  "services/verifier/tests",
   "infra/tests",
 ]
 files = [
@@ -100,6 +103,8 @@ files = [
   "services/simulator/tests",
   "services/stats-engine/src",
   "services/stats-engine/tests",
+  "services/verifier/src",
+  "services/verifier/tests",
   "infra/tests",
 ]
 plugins = ["pydantic.mypy"]
@@ -113,6 +118,7 @@ testpaths = [
   "services/moments/tests",
   "services/simulator/tests",
   "services/stats-engine/tests",
+  "services/verifier/tests",
 ]
 # Infrastructure tests need the Azure CLI with Bicep; run them with `make check-infra`.
 pythonpath = [
@@ -121,6 +127,7 @@ pythonpath = [
   "services/moments/tests",
   "services/simulator/tests",
   "services/stats-engine/tests",
+  "services/verifier/tests",
 ]
 markers = ["integration: needs emulators or Azure; excluded from the default run"]
 xfail_strict = true
@@ -134,6 +141,7 @@ source = [
   "fourth_official_moments",
   "fourth_official_simulator",
   "fourth_official_stats",
+  "fourth_official_verifier",
 ]
 
 [tool.coverage.report]

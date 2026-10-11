@@ -13,6 +13,7 @@ COPY packages/contracts/pyproject.toml packages/contracts/pyproject.toml
 COPY services/moments/pyproject.toml services/moments/pyproject.toml
 COPY services/simulator/pyproject.toml services/simulator/pyproject.toml
 COPY services/stats-engine/pyproject.toml services/stats-engine/pyproject.toml
+COPY services/verifier/pyproject.toml services/verifier/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package fourth-official-api --no-install-workspace
 COPY apps/api apps/api
