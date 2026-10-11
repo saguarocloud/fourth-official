@@ -1,0 +1,73 @@
+[project]
+name = "fourth-official"
+version = "0.1.0"
+description = "Fourth Official monorepo (Python workspace root)"
+requires-python = ">=3.12,<3.13"
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["apps/api"]
+
+[dependency-groups]
+dev = [
+  "httpx2>=2.13",
+  "hypothesis>=6.168",
+  "mypy>=2.4",
+  "pytest>=9.1",
+  "pytest-cov>=7.1",
+  "ruff>=0.17",
+]
+
+# --- Lint and format ---------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["apps/*/src", "apps/*/tests"]
+
+[tool.ruff.lint]
+select = [
+  "E", "W", "F",   # pycodestyle, pyflakes
+  "I",             # isort
+  "B",             # bugbear
+  "UP",            # pyupgrade
+  "N",             # naming
+  "S",             # bandit (security)
+  "C4", "SIM", "RET", "PIE", "PT", "PL", "RUF",
+  "ANN",           # type annotations everywhere
+  "TID",           # tidy imports
+]
+ignore = ["PLR2004"]  # magic values: tests compare against literal fixtures by design
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]  # assert is how pytest works
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+# --- Types -------------------------------------------------------------------
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+mypy_path = ["apps/api/src"]
+files = ["apps/api/src", "apps/api/tests"]
+
+# --- Tests and coverage ------------------------------------------------------
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
+testpaths = ["apps/api/tests"]
+markers = ["integration: needs emulators or Azure; excluded from the default run"]
+xfail_strict = true
+filterwarnings = ["error"]
+
+[tool.coverage.run]
+branch = true
+source = ["fourth_official_api"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true
+exclude_also = ["if TYPE_CHECKING:", "raise NotImplementedError"]
