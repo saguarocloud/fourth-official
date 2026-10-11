@@ -40,7 +40,7 @@ def _goal(moment: Moment, facts: MatchFacts) -> tuple[str, list[Line]]:
     lines: list[Line] = [
         (
             "stat",
-            f"{{{{player:{goal.scorer_id}}}}} scores for {{{{club:{goal.team_id}}}}} in the "
+            f"{{{{player:{goal.scorer_id}}}}} scores for {{{{club:{goal.team_id}}}}} at "
             f"{{{{minute:{goal.clock.minute}}}}}: {{{{score}}}}.",
         )
     ]
@@ -55,7 +55,7 @@ def _big_chance(moment: Moment, facts: MatchFacts) -> tuple[str, list[Line]]:
     return f"{{{{club:{shot.team_id}}}}} go close", [
         (
             "stat",
-            f"{{{{player:{shot.player_id}}}}} {what} for {{{{club:{shot.team_id}}}}} in the "
+            f"{{{{player:{shot.player_id}}}}} {what} for {{{{club:{shot.team_id}}}}} at "
             f"{{{{minute:{shot.clock.minute}}}}}.",
         )
     ]
@@ -67,7 +67,7 @@ def _red_card(moment: Moment, facts: MatchFacts) -> tuple[str, list[Line]]:
     return f"{club} down a player", [
         (
             "stat",
-            f"{{{{player:{card.player_id}}}}} is sent off in the {minute}, leaving {club} a "
+            f"{{{{player:{card.player_id}}}}} is sent off at {minute}, leaving {club} a "
             "player short.",
         )
     ]
@@ -80,7 +80,7 @@ def _var_overturn(moment: Moment, facts: MatchFacts) -> tuple[str, list[Line]]:
     return f"VAR rules out a {{{{club:{moment.club}}}}} goal", [
         (
             "milestone",
-            f"VAR rules out the {{{{club:{moment.club}}}}} goal from the "
+            f"VAR rules out the {{{{club:{moment.club}}}}} goal from "
             f"{{{{minute:{target.clock.minute}}}}} for {reason}.",
         )
     ]

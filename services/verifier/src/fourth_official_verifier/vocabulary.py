@@ -17,6 +17,10 @@ SENTENCE_OPENERS = frozenset(
     a after all an at before both by despite each every few for from here however in into it its
     many meanwhile more neither no nobody not nothing on only over possession pressing pressure
     since that the their there these they this those through under when while with without
+    as until across against along among around behind beyond inside outside within
+    goal goals penalty chance chances save saved red card cards press collapse surge lead
+    equaliser winner comeback control chaos momentum danger tempo shift switch
+    offside overturned ruled disallowed denied missed late early
     """.split()  # noqa: SIM905 - a word list reads best as text
 )
 

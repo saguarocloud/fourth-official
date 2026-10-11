@@ -14,12 +14,23 @@ from fourth_official_verifier.vocabulary import NUMBER_WORDS, SENTENCE_OPENERS, 
 
 _TOKEN = re.compile(r"\{\{[^{}]*\}\}")
 _TYPOGRAPHIC = str.maketrans(
-    {"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"', "\u2013": "-", "\u2014": "-"}
+    {
+        "\u2018": "'",
+        "\u2019": "'",
+        "\u201c": '"',
+        "\u201d": '"',
+        "\u2010": "-",
+        "\u2011": "-",
+        "\u2013": "-",
+        "\u2014": "-",
+        "\u00a0": " ",
+        "\u202f": " ",
+    }
 )
 _ALLOWED = re.compile(r"^[\x20-\x7e]*$")
 # A number and anything stuck to it ("3", "2-0", "1st", "90th").
 _NUMBERS = re.compile(r"[0-9][0-9A-Za-z]*")
-_WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
+_WORD = re.compile(r"[A-Za-z][A-Za-z'_-]*")
 _SENTENCE_END = re.compile(r"[.!?;:]\s+|[.!?;:]$|\s-\s")
 # Wording that reaches past the moment an insight is about.
 _FUTURE = re.compile(
@@ -42,12 +53,21 @@ class TextProblems:
     future: list[str] = field(default_factory=list)
 
 
+# A reference may take a possessive: "{{club:NGT}}'s press".
+_POSSESSIVE_TOKEN = re.compile(r"\{\{[^{}]*\}\}(?:['\u2019]s\b|s['\u2019])?")
+
+
 def _plain(text: str) -> str:
-    return _TOKEN.sub(_HOLE, text).translate(_TYPOGRAPHIC)
+    return _POSSESSIVE_TOKEN.sub(_HOLE, text).translate(_TYPOGRAPHIC)
+
+
+# Football phrases that contain a number word but state no count. Only places qualify: phrases
+# about time ("first half", "for the first time") make claims the Verifier cannot check.
+_PLACE_PHRASES = re.compile(r"\bfinal[ -]third\b", re.IGNORECASE)
 
 
 def _name_forms(player_names: Iterable[str]) -> set[str]:
-    forms = {n.casefold() for n in CLUB_NAMES.values()}
+    forms = {n.casefold() for n in CLUB_NAMES.values()} | {c.casefold() for c in CLUB_NAMES}
     for name in player_names:
         forms.add(name.casefold())
         forms |= {part.casefold() for part in re.split(r"[\s-]+", name) if len(part) > 1}
@@ -82,6 +102,7 @@ def check_text(text: str, player_names: Iterable[str]) -> TextProblems:
     if not _ALLOWED.match(plain.replace(_HOLE, " ")):
         return TextProblems(unsupported=True)
     plain, raw = _strip_names(plain, _name_forms(player_names))
+    plain = _PLACE_PHRASES.sub(_HOLE, plain)
     numbers = _NUMBERS.findall(plain)
     plain = _NUMBERS.sub(_HOLE, plain)
     names: list[str] = []

@@ -11,6 +11,7 @@ package = false
 members = [
   "apps/api",
   "packages/contracts",
+  "services/explain",
   "services/match-data",
   "services/moments",
   "services/simulator",
@@ -83,6 +84,8 @@ mypy_path = [
   "apps/api/src",
   "packages/contracts/src",
   "packages/contracts/tests",
+  "services/explain/src",
+  "services/explain/tests",
   "services/match-data/src",
   "services/match-data/tests",
   "services/moments/src",
@@ -100,6 +103,8 @@ files = [
   "apps/api/tests",
   "packages/contracts/src",
   "packages/contracts/tests",
+  "services/explain/src",
+  "services/explain/tests",
   "services/match-data/src",
   "services/match-data/tests",
   "services/moments/src",
@@ -120,6 +125,7 @@ addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
 testpaths = [
   "apps/api/tests",
   "packages/contracts/tests",
+  "services/explain/tests",
   "services/match-data/tests",
   "services/moments/tests",
   "services/simulator/tests",
@@ -130,6 +136,7 @@ testpaths = [
 pythonpath = [
   "infra/tests",
   "packages/contracts/tests",
+  "services/explain/tests",
   "services/match-data/tests",
   "services/moments/tests",
   "services/simulator/tests",
@@ -145,6 +152,7 @@ branch = true
 source = [
   "fourth_official_api",
   "fourth_official_contracts",
+  "fourth_official_explain",
   "fourth_official_match_data",
   "fourth_official_moments",
   "fourth_official_simulator",

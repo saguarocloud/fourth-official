@@ -25,7 +25,7 @@ from fourth_official_verifier.text import TextProblems, check_text
 
 MAX_DETAIL = 200
 MAX_EXAMPLES = 3
-MAX_EXAMPLE_LENGTH = 20
+MAX_EXAMPLE_LENGTH = 12
 _PARTICIPANTS = (
     "player_id",
     "scorer_id",

@@ -3,11 +3,19 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from types import MappingProxyType
+from typing import Protocol
 
 from fourth_official_contracts import GoalEvent, MetricSnapshot
 from fourth_official_stats.prepare import PreparedMatch
 
 _NONE: Mapping[str, int] = MappingProxyType({})
+
+
+class SnapshotLookup(Protocol):
+    """Snapshots by ID. Only lookups: a source may compute snapshots on demand and so cannot
+    list them (a plain dict also qualifies)."""
+
+    def get(self, snapshot_id: str, /) -> MetricSnapshot | None: ...
 
 
 @dataclass(frozen=True, slots=True)
@@ -17,7 +25,7 @@ class MatchFacts:
     club_names: Mapping[str, str]
     player_names: Mapping[str, str]
     # Metric snapshots that may be cited, by ID.
-    snapshots: Mapping[str, MetricSnapshot]
+    snapshots: SnapshotLookup
     # Events voided by corrections, and snapshots superseded by restatements, each with the seq
     # from which it counts: nothing is known before it happened.
     voided: Mapping[str, int] = field(default_factory=lambda: _NONE)
