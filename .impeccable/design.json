@@ -1,0 +1,455 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-11T07:48:25+00:00",
+  "title": "Design System: Fourth Official",
+  "extensions": {
+    "colorMeta": {
+      "panel-0": {
+        "role": "neutral",
+        "displayName": "Gallery black",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "panel-1": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "panel-2": {
+        "role": "neutral",
+        "displayName": "Raised key",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "panel-3": {
+        "role": "neutral",
+        "displayName": "Pressed key",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "hairline-strong": {
+        "role": "neutral",
+        "displayName": "Strong hairline",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "ink-1": {
+        "role": "neutral",
+        "displayName": "Ink 1",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "led-off": {
+        "role": "neutral",
+        "displayName": "Unlit dot",
+        "tonalRamp": [
+          "#07090b",
+          "#0d1013",
+          "#151a1e",
+          "#1c2227",
+          "#2d363e",
+          "#7c8791",
+          "#a1abb4",
+          "#e9edf0"
+        ]
+      },
+      "led-white": {
+        "role": "primary",
+        "displayName": "Board white",
+        "tonalRamp": [
+          "oklch(15% 0.005 240)",
+          "oklch(25% 0.005 240)",
+          "oklch(38% 0.005 240)",
+          "oklch(50% 0.005 240)",
+          "oklch(62% 0.005 240)",
+          "oklch(74% 0.005 240)",
+          "oklch(85% 0.005 240)",
+          "oklch(95% 0.005 240)"
+        ]
+      },
+      "led-green": {
+        "role": "secondary",
+        "displayName": "Verified green",
+        "tonalRamp": [
+          "oklch(15% 0.19 152)",
+          "oklch(25% 0.19 152)",
+          "oklch(38% 0.19 152)",
+          "oklch(50% 0.19 152)",
+          "oklch(62% 0.19 152)",
+          "oklch(74% 0.19 152)",
+          "oklch(85% 0.19 152)",
+          "oklch(95% 0.19 152)"
+        ]
+      },
+      "led-red": {
+        "role": "secondary",
+        "displayName": "On-air red",
+        "tonalRamp": [
+          "oklch(15% 0.21 29)",
+          "oklch(25% 0.21 29)",
+          "oklch(38% 0.21 29)",
+          "oklch(50% 0.21 29)",
+          "oklch(62% 0.21 29)",
+          "oklch(74% 0.21 29)",
+          "oklch(85% 0.21 29)",
+          "oklch(95% 0.21 29)"
+        ]
+      },
+      "led-amber": {
+        "role": "secondary",
+        "displayName": "Pending amber",
+        "tonalRamp": [
+          "oklch(15% 0.16 72)",
+          "oklch(25% 0.16 72)",
+          "oklch(38% 0.16 72)",
+          "oklch(50% 0.16 72)",
+          "oklch(62% 0.16 72)",
+          "oklch(74% 0.16 72)",
+          "oklch(85% 0.16 72)",
+          "oklch(95% 0.16 72)"
+        ]
+      },
+      "led-violet": {
+        "role": "secondary",
+        "displayName": "Amended violet",
+        "tonalRamp": [
+          "oklch(15% 0.14 295)",
+          "oklch(25% 0.14 295)",
+          "oklch(38% 0.14 295)",
+          "oklch(50% 0.14 295)",
+          "oklch(62% 0.14 295)",
+          "oklch(74% 0.14 295)",
+          "oklch(85% 0.14 295)",
+          "oklch(95% 0.14 295)"
+        ]
+      },
+      "led-blue": {
+        "role": "tertiary",
+        "displayName": "AI blue",
+        "tonalRamp": [
+          "oklch(15% 0.14 252)",
+          "oklch(25% 0.14 252)",
+          "oklch(38% 0.14 252)",
+          "oklch(50% 0.14 252)",
+          "oklch(62% 0.14 252)",
+          "oklch(74% 0.14 252)",
+          "oklch(85% 0.14 252)",
+          "oklch(95% 0.14 252)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Screen title; never wraps."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Product name and top-bar readout values."
+      },
+      "stat": {
+        "displayName": "Stat",
+        "purpose": "Match board counts, tabular figures."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text."
+      },
+      "body-dense": {
+        "displayName": "Body dense",
+        "purpose": "Nav, tables, activity, state labels, captions."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase silk-screened hardware labels and panel headings."
+      },
+      "mono": {
+        "displayName": "Key cap",
+        "purpose": "Keyboard shortcut caps on keys only."
+      }
+    },
+    "shadows": [
+      {
+        "name": "key-bevel",
+        "value": "inset 0 1px 0 rgb(255 255 255 / 0.05)",
+        "purpose": "1px top highlight on default keys; removed on press."
+      },
+      {
+        "name": "focus-ring",
+        "value": "0 0 0 2px #07090b, 0 0 0 4px #f2f5f7",
+        "purpose": "Visible focus on every focusable element."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All transitions."
+      },
+      {
+        "name": "duration-ui",
+        "value": "160ms",
+        "purpose": "Key and nav hover/press."
+      },
+      {
+        "name": "duration-light",
+        "value": "220ms",
+        "purpose": "LED dot and lamp light changes."
+      },
+      {
+        "name": "led-light-up",
+        "value": "420ms ease-out, 260ms delay",
+        "purpose": "The one authored moment: IN panel lights after OUT."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "0.01ms",
+        "purpose": "All animation and transition durations under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "control-room",
+        "value": "1440px"
+      },
+      {
+        "name": "laptop",
+        "value": "1280px"
+      },
+      {
+        "name": "icon-rail",
+        "value": "1024px"
+      },
+      {
+        "name": "stacked",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Default Key",
+      "kind": "button",
+      "refersTo": "key-default",
+      "description": "Square-cut hardware key for ordinary actions.",
+      "html": "<button class=\"ds-key\">Hold <kbd class=\"ds-key__cap\">E</kbd></button>",
+      "css": ".ds-key { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 16px; border:1px solid var(--hairline-strong,#2d363e); border-radius:2px; background:var(--panel-2,#151a1e); box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:var(--ink-1,#e9edf0); font-size:13px; font-weight:500; cursor:pointer; transition:background 160ms cubic-bezier(0.16,1,0.3,1), transform 160ms cubic-bezier(0.16,1,0.3,1); } .ds-key:hover { background:var(--panel-3,#1c2227); } .ds-key:active { transform:translateY(1px); box-shadow:none; } .ds-key:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-key__cap { min-width:18px; padding:0 4px; border:1px solid currentColor; border-radius:2px; font-family:var(--font-data, 'Geist Mono', ui-monospace, monospace); font-size:11px; opacity:0.7; }"
+    },
+    {
+      "name": "Primary Key",
+      "kind": "button",
+      "refersTo": "key-primary",
+      "description": "The lit key: one per context, for the main action.",
+      "html": "<button class=\"ds-key-primary\">Approve <kbd class=\"ds-key-primary__cap\">A</kbd></button>",
+      "css": ".ds-key-primary { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 16px; border:1px solid #f2f5f7; border-radius:2px; background:#f2f5f7; color:#07090b; font-size:13px; font-weight:500; cursor:pointer; transition:background 160ms cubic-bezier(0.16,1,0.3,1), transform 160ms cubic-bezier(0.16,1,0.3,1); } .ds-key-primary:hover { background:#ffffff; } .ds-key-primary:active { transform:translateY(1px); } .ds-key-primary:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-key-primary__cap { min-width:18px; padding:0 4px; border:1px solid currentColor; border-radius:2px; font-family:'Geist Mono', ui-monospace, monospace; font-size:11px; opacity:0.7; }"
+    },
+    {
+      "name": "Danger Key",
+      "kind": "button",
+      "refersTo": "key-danger",
+      "description": "Destructive action such as reject or retract.",
+      "html": "<button class=\"ds-key-danger\">Reject</button>",
+      "css": ".ds-key-danger { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; height:36px; padding:0 16px; border:1px solid color-mix(in oklab, #ff4a3d 45%, #2d363e); border-radius:2px; background:#151a1e; box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:#ff4a3d; font-size:13px; font-weight:500; cursor:pointer; transition:background 160ms cubic-bezier(0.16,1,0.3,1); } .ds-key-danger:hover { background:#1c2227; } .ds-key-danger:active { transform:translateY(1px); box-shadow:none; } .ds-key-danger:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; }"
+    },
+    {
+      "name": "AI Tag",
+      "kind": "chip",
+      "refersTo": "ai-tag",
+      "description": "Marks model-written content; the only blue element.",
+      "html": "<span class=\"ds-ai-tag\" title=\"AI-generated, verified before publishing\">AI</span>",
+      "css": ".ds-ai-tag { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; height:18px; padding:0 6px; border:1px solid color-mix(in oklab, #63b4ff 60%, transparent); border-radius:2px; color:#63b4ff; font-size:10px; font-weight:700; letter-spacing:0.08em; }"
+    },
+    {
+      "name": "Status Lamp",
+      "kind": "chip",
+      "refersTo": null,
+      "description": "One colour, one icon, one label per item state.",
+      "html": "<span class=\"ds-lamp\" data-tone=\"amber\"><svg viewBox=\"0 0 24 24\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M5 22h14\"/><path d=\"M5 2h14\"/><path d=\"M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22\"/><path d=\"M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2\"/></svg>Pending approval</span>",
+      "css": ".ds-lamp { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-lamp[data-tone=green] { color:#3ee07f; } .ds-lamp[data-tone=red] { color:#ff4a3d; } .ds-lamp[data-tone=amber] { color:#ffb43a; } .ds-lamp[data-tone=violet] { color:#bc9dff; } .ds-lamp[data-tone=muted] { color:#a1abb4; }"
+    },
+    {
+      "name": "Tally Light",
+      "kind": "custom",
+      "refersTo": "tally-lamp",
+      "description": "Broadcast tally per partner: round lamp lit red while on air.",
+      "html": "<span class=\"ds-tally\" data-live=\"true\"><span class=\"ds-tally__lamp\"></span>On air</span> <span class=\"ds-tally\"><span class=\"ds-tally__lamp\"></span>Off</span>",
+      "css": ".ds-tally { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:inline-flex; align-items:center; gap:8px; margin-right:16px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-tally__lamp { width:10px; height:10px; border-radius:999px; background:rgb(255 255 255 / 0.12); } .ds-tally[data-live=true] { color:#ff4a3d; } .ds-tally[data-live=true] .ds-tally__lamp { background:radial-gradient(circle at 35% 35%, #ff8a80 0 18%, #ff4a3d 45%); }"
+    },
+    {
+      "name": "Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item",
+      "description": "Screen rail key; the current screen is lit with a green lamp.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav__item\" aria-current=\"page\" href=\"#\">Control Room</a><a class=\"ds-nav__item\" href=\"#\">Approvals</a><a class=\"ds-nav__item\" href=\"#\">Corrections</a></nav>",
+      "css": ".ds-nav { display:flex; flex-direction:column; gap:2px; width:208px; padding:12px; background:#0d1013; } .ds-nav__item { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:flex; align-items:center; height:36px; padding:0 12px; border-radius:2px; color:#a1abb4; font-size:13px; text-decoration:none; transition:background 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-nav__item:hover { background:#151a1e; color:#e9edf0; } .ds-nav__item:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-nav__item[aria-current=page] { background:#1c2227; color:#e9edf0; font-weight:500; } .ds-nav__item[aria-current=page]::after { content:''; margin-left:auto; width:6px; height:6px; border-radius:999px; background:#3ee07f; }"
+    },
+    {
+      "name": "OUT/IN Substitution Board",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "The correction pattern: what went out (red) and what replaced it (green); IN lights a beat after OUT.",
+      "html": "<figure class=\"ds-sub\"><div class=\"ds-sub__panel\" data-side=\"out\"><span class=\"ds-sub__label\">Out</span><span class=\"ds-sub__led\">2-0</span></div><div class=\"ds-sub__panel\" data-side=\"in\"><span class=\"ds-sub__label\">In</span><span class=\"ds-sub__led\">1-0</span></div></figure>",
+      "css": ".ds-sub { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:0; width:320px; } .ds-sub__panel { display:grid; gap:8px; padding:12px; background:#07090b; border:1px solid #20272d; border-radius:2px; } .ds-sub__label { font-family: var(--font-ui, Geist, system-ui, sans-serif); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-sub__led { font-family:'Geist Mono', ui-monospace, monospace; font-size:28px; font-weight:700; letter-spacing:0.12em; } [data-side=out] .ds-sub__label, [data-side=out] .ds-sub__led { color:#ff4a3d; } [data-side=in] .ds-sub__label, [data-side=in] .ds-sub__led { color:#3ee07f; } [data-side=in] .ds-sub__led { animation:ds-light 420ms cubic-bezier(0.16,1,0.3,1) 260ms both; } @keyframes ds-light { from { color:rgb(255 255 255 / 0.07); } } @media (prefers-reduced-motion: reduce) { [data-side=in] .ds-sub__led { animation:none; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Fourth Official's Board",
+    "overview": "**Creative North Star: \"The Fourth Official's Board\"**\n\nThe control room speaks the fourth official's language: the LED substitution board. Lit 5x7 dot-matrix numerals sit on a black panel field, and state is the board's red, green and amber light. Everything else is anodised near-black hardware: panels joined by hairlines, square-cut keys, round lamps, silk-screened uppercase labels. It is built for a dark production gallery at 1440 to 1920 wide, read in glances between other monitors.\n\nDensity is high but ordered. Each screen leads with one verdict line an executive can read in five seconds, then a wall of match boards an operator scans for lamps, tallies and counts. Colour is never decoration: it appears only as signal light, so a lit dot always means something.\n\nThe system refuses the generic dark SaaS dashboard: rounded-card soup, glowing charts, gradients, coloured accents used for brand or emphasis.",
+    "keyCharacteristics": [
+      "Near-black anodised panels, flat, joined by 1px hairlines.",
+      "5x7 dot-matrix LED readouts with faint unlit dots for scorelines and clocks.",
+      "Colour only as signal light: one colour, one icon and one label per state.",
+      "Square-cut 2px keys; perfectly round lamps.",
+      "Geist for UI text with tabular figures; Geist Mono only on key caps."
+    ],
+    "rules": [
+      {
+        "name": "The Signal Light Rule",
+        "body": "Colour appears only as signal light. Green, red, amber and violet mean item or system state; if nothing has that state, the colour is absent. Never use them for brand, emphasis, charts or links.",
+        "section": "colors"
+      },
+      {
+        "name": "The State Vocabulary Rule",
+        "body": "Each item state has exactly one colour, one icon and one label, identical on every screen, and is never shown by colour alone:",
+        "section": "colors"
+      },
+      {
+        "name": "The One Blue Rule",
+        "body": "Blue is reserved for the AI tag. Nothing else is blue.",
+        "section": "colors"
+      },
+      {
+        "name": "The White Clock Rule",
+        "body": "Clocks and scorelines are lit white. A number becomes a state colour only when it is itself a state (a pending count, an SLO breach).",
+        "section": "colors"
+      },
+      {
+        "name": "The Silk-screen Rule",
+        "body": "Uppercase only at 11px with 0.08em tracking, and only for hardware labels. Sentence case everywhere else.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Glow Rule",
+        "body": "Lit things are lit by colour, not by blur or bloom. No glow shadows, no gradients behind readouts or charts. The one sanctioned exception is the lit tally lamp's small specular highlight (a radial gradient from #ff8a80 into led-red), which models a physical bulb.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Moment Rule",
+        "body": "This is the single authored motion moment: the IN panel's lit dots light up 260ms after OUT, over 420ms ease-out, like the board being raised. No other element animates for effect.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "**Do** use one colour, one icon and one label per item state, exactly as in the State Vocabulary table.",
+      "**Do** keep clocks and scorelines lit white; set numbers in tabular figures.",
+      "**Do** draw LED readouts with 5x7 glyphs, a 1-dot gap, whole-pixel dot sizes, fixed character width and faint unlit dots.",
+      "**Do** give the featured match the largest board on the wall.",
+      "**Do** summarise every correction with the OUT/IN board.",
+      "**Do** lead every screen with a verdict line.",
+      "**Do** use the 2px key radius for hardware and perfect circles for lamps.",
+      "**Do** show the focus ring (2px gallery-black gap, 2px board-white ring) on every focusable element.",
+      "**Do** honour `prefers-reduced-motion`: all animation and transition durations collapse to 0.01ms.",
+      "**Do** label replay mode, synthetic data and AI content."
+    ],
+    "donts": [
+      "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
+      "**Don't** build rounded-card soup: no radius above 2px on containers, no floating cards.",
+      "**Don't** use green, amber, red or violet for anything that is not a state; don't use blue for anything but the AI tag.",
+      "**Don't** colour a clock or scoreline by state.",
+      "**Don't** convey state by colour alone.",
+      "**Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms.",
+      "**Don't** use partner or tenant brand colours in the chrome; they belong only inside Broadcast Preview."
+    ]
+  }
+}

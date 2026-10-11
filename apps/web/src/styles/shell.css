@@ -64,12 +64,10 @@
 .top-bar__replay {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--hairline-strong);
-  border-radius: 999px;
+  gap: var(--space-1);
+  margin-top: 2px;
   color: var(--ink-2);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -214,21 +212,6 @@ a.nav-rail__item:hover {
   cursor: default;
 }
 
-.nav-rail__footnote {
-  display: flex;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  color: var(--ink-3);
-  font-size: var(--text-xs);
-  line-height: 1.4;
-}
-
-.nav-rail__footnote svg {
-  width: 14px;
-  height: 14px;
-  flex: none;
-}
-
 /* Responsive: control rooms run at 1440–1920; laptops collapse the rail; small screens stack. */
 @media (max-width: 1439px) {
   .app-shell {
@@ -247,16 +230,6 @@ a.nav-rail__item:hover {
     padding: 0 var(--space-3);
   }
 
-  .top-bar__slo,
-  .top-bar__replay-detail {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
   .live-clock {
     padding-left: var(--space-3);
   }
@@ -273,7 +246,6 @@ a.nav-rail__item:hover {
   }
 
   .nav-rail__item > span,
-  .nav-rail__footnote,
   .nav-rail__item[aria-current="page"]::after {
     position: absolute;
     width: 1px;
@@ -333,7 +305,12 @@ a.nav-rail__item:hover {
     row-gap: var(--space-2);
   }
 
-  .top-bar__readouts > div:first-child {
+  .top-bar__readouts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .top-bar__readouts > div {
     border-left: 0;
     padding-left: 0;
   }

@@ -12,6 +12,14 @@ describe("Control Room", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Control Room" })).toBeInTheDocument();
   });
 
+  it("gives a one-line verdict on the whole matchday", () => {
+    render(<Home />);
+
+    expect(screen.getByRole("status", { name: "Matchday verdict" })).toHaveTextContent(
+      "All 3 matches under control. 3 items await approval.",
+    );
+  });
+
   it("shows every live match on the wall", () => {
     render(<Home />);
 

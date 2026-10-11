@@ -78,6 +78,7 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: "tribuna-austral",
       state: "pending_approval",
       text: "Headline: Northgate's press fades after the hour",
+      aiGenerated: true,
     },
     {
       id: "a6",
@@ -88,6 +89,7 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: "rheinblick",
       state: "amended",
       text: "Score card restated to 1-0 after VAR",
+      aiGenerated: false,
     },
     {
       id: "a5",
@@ -98,6 +100,7 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: "northlight",
       state: "retracted",
       text: "Goal graphic for the 67:12 strike pulled",
+      aiGenerated: false,
     },
     {
       id: "a4",
@@ -108,6 +111,7 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: "northlight",
       state: "published",
       text: "Stat card: Calder Town keeper, six saves",
+      aiGenerated: true,
     },
     {
       id: "a3",
@@ -118,6 +122,7 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: "tribuna-austral",
       state: "on_air",
       text: "Moment explainer: ten men, one shape change",
+      aiGenerated: true,
     },
     {
       id: "a2",
@@ -128,6 +133,7 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: "rheinblick",
       state: "published",
       text: "Pressing intensity drops 38% since 55'",
+      aiGenerated: true,
     },
     {
       id: "a1",
@@ -138,11 +144,14 @@ export const DEMO_MATCHDAY: Matchday = {
       partnerId: null,
       state: "dropped",
       text: "Analyst draft blocked by the verifier: unsupported claim",
+      aiGenerated: true,
     },
   ],
   latestCorrection: {
     matchId: "m42",
     reason: "VAR: goal at 67:12 disallowed for offside",
+    eventAt: "67:12",
+    receivedAt: "68:03",
     published: "2-0",
     corrected: "1-0",
     itemsCorrected: 17,

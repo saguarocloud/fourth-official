@@ -32,3 +32,29 @@ describe("ActivityFeed", () => {
     ).toBeInTheDocument();
   });
 });
+
+describe("ActivityFeed labels", () => {
+  it("names each entry's state in words, not just icon and colour", () => {
+    const entry = { ...DEMO_MATCHDAY.activity[0]!, state: "retracted" as const };
+    render(<ActivityFeed entries={[entry]} partners={DEMO_MATCHDAY.partners} />);
+
+    expect(screen.getByText("Retracted")).not.toHaveClass("sr-only");
+  });
+
+  it("labels model-generated entries as AI", () => {
+    const entry = { ...DEMO_MATCHDAY.activity[0]!, aiGenerated: true };
+    render(<ActivityFeed entries={[entry]} partners={DEMO_MATCHDAY.partners} />);
+
+    expect(screen.getByText("AI")).toHaveAttribute(
+      "title",
+      "AI-generated, verified before publishing",
+    );
+  });
+
+  it("does not label template output as AI", () => {
+    const entry = { ...DEMO_MATCHDAY.activity[0]!, aiGenerated: false };
+    render(<ActivityFeed entries={[entry]} partners={DEMO_MATCHDAY.partners} />);
+
+    expect(screen.queryByText("AI")).toBeNull();
+  });
+});

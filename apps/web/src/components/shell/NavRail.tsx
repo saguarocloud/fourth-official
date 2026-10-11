@@ -6,7 +6,6 @@ import {
   Gauge,
   LayoutGrid,
   MonitorPlay,
-  Radio,
   ScrollText,
   Undo2,
   type LucideIcon,
@@ -61,10 +60,6 @@ export function NavRail({ current }: NavRailProps) {
           </li>
         ))}
       </ul>
-      <p className="nav-rail__footnote">
-        <Radio aria-hidden="true" strokeWidth={1.75} />
-        <span>More screens arrive with each phase.</span>
-      </p>
     </nav>
   );
 }

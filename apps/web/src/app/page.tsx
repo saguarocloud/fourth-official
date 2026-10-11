@@ -2,7 +2,7 @@ import { ActivityFeed } from "@/components/control-room/ActivityFeed";
 import { MatchBoard } from "@/components/control-room/MatchBoard";
 import { SubstitutionBoard } from "@/components/control-room/SubstitutionBoard";
 import { AppShell } from "@/components/shell/AppShell";
-import { summarise } from "@/domain/matchday";
+import { matchdayVerdict, summarise } from "@/domain/matchday";
 import { DEMO_MATCHDAY } from "@/fixtures/matchday";
 
 export default function Home() {
@@ -11,6 +11,7 @@ export default function Home() {
     sloMs: matchday.sloMs,
     costCents: matchday.costCents,
   });
+  const verdict = matchdayVerdict(summary);
   const featuredFirst = [...matchday.matches].sort(
     (a, b) => Number(b.featured) - Number(a.featured),
   );
@@ -43,6 +44,10 @@ export default function Home() {
       <header className="page-header">
         <h1>Control Room</h1>
         <p>{`${matchday.label} · ${summary.liveMatches} matches live · ${matchday.partners.length} partners`}</p>
+        <p role="status" aria-label="Matchday verdict" className="verdict" data-tone={verdict.tone}>
+          <span aria-hidden="true" className="verdict__lamp" />
+          {verdict.text}
+        </p>
       </header>
       <section aria-label="Match wall" className="match-wall">
         {featuredFirst.map((match) => (

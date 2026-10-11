@@ -23,14 +23,12 @@ export function MatchBoard({ match, partners, sloMs, locale = "en-GB" }: MatchBo
       <h2 id={headingId} className="sr-only">
         {`${home.name} ${match.homeScore}, ${away.name} ${match.awayScore}, ${minute}`}
       </h2>
+      {/* One line, as on the physical board; it scales with the board, so the featured match reads largest. */}
       <div className="match-board__scoreline" aria-hidden="true">
-        <LedReadout text={home.code} label={home.name} dotSize={match.featured ? 5 : 4} />
         <LedReadout
-          text={`${match.homeScore}-${match.awayScore}`}
-          tone="amber"
-          dotSize={match.featured ? 5 : 4}
+          text={`${home.code} ${match.homeScore}-${match.awayScore} ${away.code}`}
+          dotSize={6}
         />
-        <LedReadout text={away.code} label={away.name} dotSize={match.featured ? 5 : 4} />
       </div>
       <div className="match-board__names" aria-hidden="true">
         <span>{home.name}</span>
@@ -40,8 +38,7 @@ export function MatchBoard({ match, partners, sloMs, locale = "en-GB" }: MatchBo
         <LedReadout
           text={formatMatchClock(match.minute, match.second)}
           label={`Match clock ${formatMatchClock(match.minute, match.second)}`}
-          tone="green"
-          dotSize={2}
+          dotSize={3}
         />
         <span className="match-board__minute">{minute}</span>
       </div>

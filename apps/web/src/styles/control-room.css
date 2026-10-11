@@ -19,6 +19,35 @@
   color: var(--ink-2);
 }
 
+/* The matchday verdict: the one line an executive reads first. */
+.page-header .verdict {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 500;
+  color: var(--ink-1);
+}
+
+.verdict__lamp {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.verdict[data-tone="green"] .verdict__lamp {
+  background: var(--led-green);
+}
+.verdict[data-tone="amber"] .verdict__lamp {
+  background: var(--led-amber);
+}
+.verdict[data-tone="red"] .verdict__lamp {
+  background: var(--led-red);
+}
+
 /* Match wall ---------------------------------------------------------------------------------- */
 .match-wall {
   display: grid;
@@ -48,10 +77,12 @@
   padding: var(--space-6);
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   grid-template-areas:
-    "score tally"
+    "score score"
     "names tally"
     "clock tally"
     "stats stats";
+  /* The clock row absorbs the tally list's extra height, so the clock stays under the names. */
+  grid-template-rows: auto auto 1fr auto;
   column-gap: var(--space-6);
 }
 
@@ -60,8 +91,7 @@
   grid-area: score;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
+  justify-content: center;
   padding: var(--space-4) var(--space-5);
   background: var(--panel-0);
   border: 1px solid var(--hairline);
@@ -70,10 +100,18 @@
 }
 
 .match-board__scoreline .led {
-  max-width: 100%;
+  width: 100%;
   height: auto;
-  flex-shrink: 1;
-  min-width: 0;
+  max-width: 26rem;
+}
+
+/* The featured match carries the largest board on the wall. */
+.match-board[data-featured="true"] .match-board__scoreline {
+  padding: var(--space-5) var(--space-6);
+}
+
+.match-board[data-featured="true"] .match-board__scoreline .led {
+  max-width: 60rem;
 }
 
 .match-board__names {
@@ -86,6 +124,7 @@
 
 .match-board__clock {
   grid-area: clock;
+  align-self: start;
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -182,6 +221,12 @@
   border-left: 0;
 }
 
+.match-board:not([data-featured="true"]) .match-board__stats li:nth-child(n + 3) {
+  border-top: 1px solid var(--hairline);
+  padding-bottom: 0;
+  margin-top: var(--space-3);
+}
+
 /* Rail: latest correction and activity -------------------------------------------------------- */
 .sub-board {
   display: grid;
@@ -237,7 +282,13 @@
 }
 
 .sub-board__impact {
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.sub-board__when {
   color: var(--ink-2);
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
 }
 
@@ -247,7 +298,7 @@
 
 .activity__item {
   display: grid;
-  grid-template-columns: 48px 20px 1fr;
+  grid-template-columns: 44px 1fr;
   column-gap: var(--space-2);
   row-gap: 2px;
   padding: var(--space-3) 0;
@@ -266,9 +317,49 @@
 }
 
 .activity__meta {
-  grid-column: 3;
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-top: var(--space-1);
   color: var(--ink-2);
   font-size: var(--text-xs);
+}
+
+.activity__meta .status-lamp {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.activity__meta .status-lamp__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.activity__meta .status-lamp[data-tone="green"] {
+  color: var(--led-green);
+}
+.activity__meta .status-lamp[data-tone="red"] {
+  color: var(--led-red);
+}
+.activity__meta .status-lamp[data-tone="amber"] {
+  color: var(--led-amber);
+}
+.activity__meta .status-lamp[data-tone="violet"] {
+  color: var(--led-violet);
+}
+.activity__meta .status-lamp[data-tone="muted"] {
+  color: var(--ink-2);
+}
+
+/* Retracted content is struck through: it went out, it is no longer on anyone's air. */
+.activity__item[data-state="retracted"] .activity__text {
+  color: var(--ink-2);
+  text-decoration: line-through;
+  text-decoration-color: color-mix(in oklab, var(--led-red) 70%, transparent);
 }
 
 .activity__empty {

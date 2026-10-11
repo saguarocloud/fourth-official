@@ -1,3 +1,4 @@
+import { AiTag } from "@/components/ui/AiTag";
 import { StatusLamp } from "@/components/ui/StatusLamp";
 import type { ActivityEntry, Partner } from "@/domain/matchday";
 import { formatMatchMinute } from "@/lib/format";
@@ -20,14 +21,15 @@ export function ActivityFeed({ entries, partners }: ActivityFeedProps) {
       ) : (
         <ol className="activity__list">
           {entries.map((entry) => (
-            <li key={entry.id} className="activity__item">
+            <li key={entry.id} className="activity__item" data-state={entry.state}>
               <time className="activity__time">
                 {formatMatchMinute(entry.minute, entry.period)}
               </time>
-              <StatusLamp state={entry.state} compact />
               <p className="activity__text">{entry.text}</p>
               <p className="activity__meta">
-                {entry.partnerId ? partnerName.get(entry.partnerId) : "All partners"}
+                <StatusLamp state={entry.state} />
+                {entry.aiGenerated && <AiTag />}
+                <span>{entry.partnerId ? partnerName.get(entry.partnerId) : "All partners"}</span>
               </p>
             </li>
           ))}

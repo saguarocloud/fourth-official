@@ -21,17 +21,14 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
         <div className="top-bar__names">
           <span className="top-bar__product">Fourth Official</span>
           <span className="top-bar__studio">{studio}</span>
+          {replay && (
+            <span className="top-bar__replay">
+              <History aria-hidden="true" strokeWidth={1.75} />
+              Replay of a synthetic matchday
+            </span>
+          )}
         </div>
       </div>
-
-      {replay && (
-        <span className="top-bar__replay">
-          <History aria-hidden="true" strokeWidth={1.75} />
-          <span>
-            Replay<span className="top-bar__replay-detail"> · synthetic matchday</span>
-          </span>
-        </span>
-      )}
 
       <dl className="top-bar__readouts">
         <div data-breach={!summary.withinSlo || undefined}>

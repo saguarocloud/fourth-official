@@ -58,11 +58,17 @@ export interface ActivityEntry {
   readonly partnerId: PartnerId | null;
   readonly state: ItemState;
   readonly text: string;
+  /** Written by a model (then verified), as opposed to filled from a deterministic template. */
+  readonly aiGenerated: boolean;
 }
 
 export interface Correction {
   readonly matchId: string;
   readonly reason: string;
+  /** Match clock of the corrected event, e.g. "67:12". */
+  readonly eventAt: string;
+  /** Match clock when the correction was received, e.g. "68:03". */
+  readonly receivedAt: string;
   readonly published: string;
   readonly corrected: string;
   readonly itemsCorrected: number;
@@ -115,4 +121,28 @@ export function summarise(
     withinSlo: p95LatencyMs <= sloMs,
     costCents,
   };
+}
+
+export interface Verdict {
+  readonly tone: "green" | "amber" | "red";
+  readonly text: string;
+}
+
+/** The five-second reading of the whole matchday, most serious condition first. */
+export function matchdayVerdict(summary: MatchdaySummary): Verdict {
+  if (!summary.withinSlo) {
+    return {
+      tone: "red",
+      text: "Event-to-air latency is outside the SLO. Investigate before more items publish.",
+    };
+  }
+  const matches = `All ${summary.liveMatches} matches under control.`;
+  if (summary.pendingApprovals > 0) {
+    const items =
+      summary.pendingApprovals === 1
+        ? "1 item awaits approval."
+        : `${summary.pendingApprovals} items await approval.`;
+    return { tone: "amber", text: `${matches} ${items}` };
+  }
+  return { tone: "green", text: `${matches} Every item on air is verified.` };
 }

@@ -23,13 +23,9 @@ describe("TopBar", () => {
   });
 
   it("labels replayed synthetic data honestly", () => {
-    const { container } = render(
-      <TopBar summary={summary} studio="Meridian League Studios" replay />,
-    );
+    render(<TopBar summary={summary} studio="Meridian League Studios" replay />);
 
-    expect(container.querySelector(".top-bar__replay")).toHaveTextContent(
-      "Replay · synthetic matchday",
-    );
+    expect(screen.getByText("Replay of a synthetic matchday")).toBeInTheDocument();
   });
 
   it("states latency against the SLO in words", () => {

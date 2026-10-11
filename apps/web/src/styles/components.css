@@ -50,14 +50,13 @@
   color: var(--ink-3);
 }
 
+/* A round lamp, unlit (dim) or lit; never an outlined square, which reads as a checkbox. */
 .tally__lamp {
   width: 10px;
   height: 10px;
-  border-radius: 2px;
-  border: 1px solid var(--hairline-strong);
-  transition:
-    background var(--duration-light) var(--ease-out),
-    border-color var(--duration-light) var(--ease-out);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  transition: background var(--duration-light) var(--ease-out);
 }
 
 .tally[data-live="true"] {
@@ -65,8 +64,21 @@
 }
 
 .tally[data-live="true"] .tally__lamp {
-  background: var(--led-red);
-  border-color: var(--led-red);
+  background: radial-gradient(circle at 35% 35%, #ff8a80 0 18%, var(--led-red) 45%);
+}
+
+/* AI disclosure tag: the one place blue appears. */
+.ai-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border: 1px solid color-mix(in oklab, var(--led-blue) 60%, transparent);
+  border-radius: var(--radius-key);
+  color: var(--led-blue);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
 }
 
 /* Key button: square-cut hardware key; the primary key is the lit one. ---------------------- */

@@ -37,8 +37,7 @@ export function LiveClock() {
       <LedReadout
         text={time}
         label={now ? `Studio time ${time}` : "Studio time loading"}
-        tone="green"
-        dotSize={2}
+        dotSize={3}
       />
     </span>
   );

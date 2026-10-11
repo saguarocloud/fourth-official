@@ -37,7 +37,10 @@ export function SubstitutionBoard({ correction, locale = "en-GB" }: Substitution
       <figcaption className="sub-board__caption">
         <span>{correction.reason}</span>
         <span className="sub-board__impact">
-          {`${correction.itemsCorrected} items · ${correction.partners} partners · ${correction.languages} languages · ${formatLatency(correction.elapsedMs, locale)}`}
+          {`Corrected ${correction.itemsCorrected} published items across ${correction.partners} partners and ${correction.languages} languages in ${formatLatency(correction.elapsedMs, locale)}.`}
+        </span>
+        <span className="sub-board__when">
+          {`Correction received ${correction.receivedAt} · event at ${correction.eventAt}`}
         </span>
       </figcaption>
     </figure>
