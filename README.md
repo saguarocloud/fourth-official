@@ -24,6 +24,7 @@ make fmt       # auto-format and fix lint where safe
 |---|---|
 | `apps/api` | FastAPI gateway (Python 3.12) |
 | `apps/web` | Next.js web app (TypeScript) |
+| `packages/contracts` | Match event and correction contracts (Pydantic, exported to JSON Schema) |
 | `infra/` | Bicep for Azure, with policy tests (`infra/tests`) |
 | `scripts/` | Container and deployment smoke tests |
 | `docs/` | Plan and architecture decisions |

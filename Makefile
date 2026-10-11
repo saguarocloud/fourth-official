@@ -1,5 +1,5 @@
 # Local entry points. CI runs the same commands (.github/workflows/ci.yml).
-.PHONY: install check check-python check-web check-infra smoke-containers test fmt
+.PHONY: install check check-python check-web check-infra smoke-containers contracts test fmt
 
 install:
 	uv sync --all-packages
@@ -25,6 +25,9 @@ smoke-containers:
 	docker build -f apps/web/Dockerfile --build-arg APP_VERSION=local -t fo-web:local apps/web
 	scripts/smoke-container.sh fo-api:local 8000 fourth-official-api local
 	scripts/smoke-container.sh fo-web:local 3000 fourth-official-web local
+
+contracts:
+	uv run python -m fourth_official_contracts.schema
 
 test:
 	uv run pytest

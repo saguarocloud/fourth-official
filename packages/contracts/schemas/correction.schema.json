@@ -1,0 +1,251 @@
+{
+  "$defs": {
+    "Amendment": {
+      "additionalProperties": false,
+      "description": "Fields of the target event that change. Only the fields present on the wire change.",
+      "properties": {
+        "assistId": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assistid"
+        },
+        "card": {
+          "anyOf": [
+            {
+              "enum": [
+                "yellow",
+                "second_yellow",
+                "red"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Card"
+        },
+        "clock": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MatchClock"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ownGoal": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owngoal"
+        },
+        "scorerId": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scorerid"
+        }
+      },
+      "title": "Amendment",
+      "type": "object"
+    },
+    "EventAmended": {
+      "additionalProperties": false,
+      "description": "The event stands, with corrected details (for example, a reassigned scorer).",
+      "properties": {
+        "changes": {
+          "$ref": "#/$defs/Amendment"
+        },
+        "correctionId": {
+          "pattern": "^c-[0-9]{4,9}$",
+          "title": "Correctionid",
+          "type": "string"
+        },
+        "issuedAt": {
+          "format": "date-time",
+          "title": "Issuedat",
+          "type": "string"
+        },
+        "kind": {
+          "const": "EVENT_AMENDED",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "newVersion": {
+          "maximum": 1000,
+          "minimum": 2,
+          "title": "Newversion",
+          "type": "integer"
+        },
+        "reason": {
+          "enum": [
+            "VAR_OFFSIDE",
+            "VAR_FOUL",
+            "VAR_HANDBALL",
+            "ACCREDITATION_PANEL",
+            "PROVIDER_RESTATEMENT"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "targetEventId": {
+          "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+          "title": "Targeteventid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correctionId",
+        "matchId",
+        "reason",
+        "issuedAt",
+        "targetEventId",
+        "newVersion",
+        "kind",
+        "changes"
+      ],
+      "title": "EventAmended",
+      "type": "object"
+    },
+    "EventVoided": {
+      "additionalProperties": false,
+      "description": "The event no longer stands (for example, a goal disallowed by VAR).",
+      "properties": {
+        "correctionId": {
+          "pattern": "^c-[0-9]{4,9}$",
+          "title": "Correctionid",
+          "type": "string"
+        },
+        "issuedAt": {
+          "format": "date-time",
+          "title": "Issuedat",
+          "type": "string"
+        },
+        "kind": {
+          "const": "EVENT_VOIDED",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "newVersion": {
+          "maximum": 1000,
+          "minimum": 2,
+          "title": "Newversion",
+          "type": "integer"
+        },
+        "reason": {
+          "enum": [
+            "VAR_OFFSIDE",
+            "VAR_FOUL",
+            "VAR_HANDBALL",
+            "ACCREDITATION_PANEL",
+            "PROVIDER_RESTATEMENT"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "targetEventId": {
+          "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+          "title": "Targeteventid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correctionId",
+        "matchId",
+        "reason",
+        "issuedAt",
+        "targetEventId",
+        "newVersion",
+        "kind"
+      ],
+      "title": "EventVoided",
+      "type": "object"
+    },
+    "MatchClock": {
+      "additionalProperties": false,
+      "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
+      "properties": {
+        "minute": {
+          "maximum": 104,
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Period",
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Second",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "period",
+        "minute",
+        "second"
+      ],
+      "title": "MatchClock",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/correction.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "discriminator": {
+    "mapping": {
+      "EVENT_AMENDED": "#/$defs/EventAmended",
+      "EVENT_VOIDED": "#/$defs/EventVoided"
+    },
+    "propertyName": "kind"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/EventVoided"
+    },
+    {
+      "$ref": "#/$defs/EventAmended"
+    }
+  ],
+  "title": "Correction"
+}

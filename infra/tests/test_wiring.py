@@ -1,6 +1,7 @@
 """Cross-file contracts: azure.yaml, the Bicep, the provision hook and the deploy workflow agree."""
 
 import re
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -63,3 +64,14 @@ def test_main_parameters_read_the_prefix_the_preprovision_hook_writes() -> None:
     parameters = (REPO / "infra/main.parameters.json").read_text()
 
     assert "${GITHUB_DEPLOY_SUBJECT_PREFIX=}" in parameters
+
+
+def test_api_image_copies_every_workspace_manifest() -> None:
+    # uv validates the whole workspace lockfile, so the image needs every member's pyproject.
+    members = tomllib.loads((REPO / "pyproject.toml").read_text())["tool"]["uv"]["workspace"][
+        "members"
+    ]
+    dockerfile = (REPO / "apps/api/Dockerfile").read_text()
+
+    for member in members:
+        assert f"COPY {member}/pyproject.toml {member}/pyproject.toml" in dockerfile, member
