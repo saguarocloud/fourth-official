@@ -9,6 +9,7 @@ from fourth_official_replay.matchday import (
     MatchStatus,
     StartLedger,
 )
+from fourth_official_replay.partners import Partner, Partners
 from fourth_official_replay.replay import Explainer, ReplayConfig, facts_for, replay
 
 __all__ = [
@@ -19,6 +20,8 @@ __all__ = [
     "MatchStatus",
     "Matchday",
     "MatchdayBusyError",
+    "Partner",
+    "Partners",
     "ReplayConfig",
     "StartLedger",
     "facts_for",

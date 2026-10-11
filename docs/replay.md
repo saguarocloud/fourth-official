@@ -36,4 +36,21 @@ The feed is a wire contract (`FeedEntry`, `packages/contracts/schemas/feed-entry
 
 The web app's proxy lets one client (by the address the ingress appends) hold at most 6 live streams at a time, so nobody can take every stream the API allows; beyond that it answers `429` with `Retry-After`.
 
+| `GET /api/tenants` | The broadcast partners: id, display name, locale and disclosure mode |
+| `GET /api/tenants/{tenant}/matches/{id}/feed?after=n` | A partner's feed. It holds the shared clock and corrections, plus that partner's items and no other partner's. Pages and ids are the match feed's own |
+| `GET /api/tenants/{tenant}/matches/{id}/stream` | The same as server-sent events. Ids stay the match feed's own, so resuming works as above |
+
 Responses are never cached. Insight text arrives rendered by code: clients show it as plain text.
+
+
+## Partners
+
+Every match also publishes each broadcast partner's items (`partners.py`) as `tenant_item` entries:
+- **Insights.** Each verified insight is localised for every partner concurrently, then:
+  - routed to an editor where the partner's policy says so (`pending_approval`, off air);
+  - labelled as its disclosure mode requires;
+  - timed by the director (`fourth_official_broadcast`).
+- **Corrections.** Each correction airs as a strap for every partner, in its language. A correction is never held.
+- **The score.** Each change of score updates every partner's score bug: kick-off, goals, and the score after a VAR void.
+
+A failure for one partner is logged and stays with that partner: the others and the match carry on. Each match of each run starts with fresh director schedules. With the Analyst on, the Localizer runs on the `fast` model for each non-English partner, about two small calls per insight. Without Foundry, partners receive their templates.

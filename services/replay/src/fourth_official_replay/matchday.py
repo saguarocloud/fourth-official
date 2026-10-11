@@ -19,6 +19,7 @@ from typing import Literal, Protocol
 
 from fourth_official_match_data import MatchStore
 from fourth_official_replay.log import FeedLog
+from fourth_official_replay.partners import Partners
 from fourth_official_replay.replay import Explainer, ReplayConfig, Sleep, replay
 
 MatchState = Literal["idle", "running", "finished", "failed"]
@@ -75,7 +76,7 @@ class MatchStatus:
 
 
 class Matchday:
-    def __init__(
+    def __init__(  # noqa: PLR0913 - the matchday's configuration, keyword-only after the store
         self,
         store: MatchStore,
         explainer: Explainer,
@@ -85,8 +86,11 @@ class Matchday:
         runs_per_day: int = DEFAULT_RUNS_PER_DAY,
         ledger: StartLedger | None = None,
         sleep: Sleep = asyncio.sleep,
+        partners: Callable[[], Partners] | None = None,
     ) -> None:
         self._store, self._explainer, self._sleep = store, explainer, sleep
+        # Each match of each run gets its own partners' state (their director schedules).
+        self._partners = partners
         self._config = config or ReplayConfig()
         self._cooldown, self._runs_per_day = cooldown, runs_per_day
         self._feeds = {match_id: FeedLog(match_id) for match_id in store.match_ids()}
@@ -175,6 +179,7 @@ class Matchday:
                         self._explainer,
                         config=self._config,
                         sleep=self._sleep,
+                        partners=self._partners() if self._partners else None,
                     ),
                     name=f"replay-{match_id}",
                 )

@@ -10,7 +10,7 @@ import asyncio
 import json
 import logging
 import time
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable, Sequence
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
@@ -19,7 +19,7 @@ from fastapi.responses import StreamingResponse
 from starlette.types import Receive, Scope, Send
 
 from fourth_official_api.start_ledger import LedgerError
-from fourth_official_contracts import WireModel
+from fourth_official_contracts import FeedEntry, TenantItemEntry, TenantPolicy, WireModel
 from fourth_official_replay import FeedLog, Matchday, MatchdayBusyError
 
 # A reader with nothing new still hears from the server this often, so proxies keep it open.
@@ -34,6 +34,7 @@ MAX_ENTRIES_PER_PAGE = 1000
 START_HEADER = "X-Requested-By"
 START_HEADER_VALUE = "fourth-official"
 MatchIdParam = Annotated[str, Path(pattern=r"^m[0-9]{1,12}$")]
+TenantIdParam = Annotated[str, Path(max_length=40, pattern=r"^[a-z]+(-[a-z]+)*$")]
 
 
 class MatchSummary(WireModel):
@@ -58,6 +59,35 @@ def _feed(matchday: Matchday, match_id: str) -> FeedLog:
         raise HTTPException(status_code=404, detail="unknown match") from None
 
 
+# A partner sees the shared clock and corrections, and its own items: never another partner's.
+_SHARED_KINDS = frozenset({"clock", "correction"})
+
+
+def for_partner(tenant_id: str) -> Callable[[FeedEntry], bool]:
+    def keep(entry: FeedEntry) -> bool:
+        if entry.kind in _SHARED_KINDS:
+            return True
+        return isinstance(entry, TenantItemEntry) and entry.tenant_id == tenant_id
+
+    return keep
+
+
+def _tenant(request: Request, tenant_id: str) -> TenantPolicy:
+    tenants: dict[str, TenantPolicy] = request.app.state.tenants
+    policy = tenants.get(tenant_id)
+    if policy is None:
+        raise HTTPException(status_code=404, detail="unknown partner")
+    return policy
+
+
+def _page(
+    view_entries: Sequence[FeedEntry], keep: Callable[[FeedEntry], bool]
+) -> tuple[list[FeedEntry], bool]:
+    kept = [e for e in view_entries if keep(e)]
+    page = kept[:MAX_ENTRIES_PER_PAGE]
+    return page, len(page) < len(kept)
+
+
 def resume_point(last_event_id: str | None, generation: int) -> int:
     """Where a reconnecting client resumes: after its last entry if it is from the current run,
     otherwise from the top. Anything unreadable also starts from the top."""
@@ -68,10 +98,16 @@ def resume_point(last_event_id: str | None, generation: int) -> int:
 
 
 async def events(
-    feed: FeedLog, generation: int, after: int, *, lifetime: float = STREAM_LIFETIME_SECONDS
+    feed: FeedLog,
+    generation: int,
+    after: int,
+    *,
+    lifetime: float = STREAM_LIFETIME_SECONDS,
+    keep: Callable[[FeedEntry], bool] = lambda entry: True,
 ) -> AsyncGenerator[str]:
     """Server-sent events for the feed after `after`, with heartbeats, until the run is finished
-    or the stream's lifetime runs out. A new run is announced with a `reset` event."""
+    or the stream's lifetime runs out. A new run is announced with a `reset` event. Only entries
+    `keep` accepts are sent; ids stay the feed's own, so a client resumes where it left off."""
     deadline = time.monotonic() + lifetime
     while time.monotonic() < deadline:
         view = await feed.wait_beyond(generation, after, timeout=HEARTBEAT_SECONDS)
@@ -80,9 +116,11 @@ async def events(
             yield f"event: reset\ndata: {json.dumps({'generation': generation})}\n\n"
             continue
         for entry in view.entries:
+            after = entry.entry_seq
+            if not keep(entry):
+                continue
             data = json.dumps(entry.to_wire(), separators=(",", ":"))
             yield f"id: {generation}:{entry.entry_seq}\nevent: {entry.kind}\ndata: {data}\n\n"
-            after = entry.entry_seq
         if view.finished and after >= len(feed.entries):
             # Tells the client the run is over, so it stops reconnecting until a new one starts.
             yield f"event: end\ndata: {json.dumps({'generation': generation})}\n\n"
@@ -190,8 +228,7 @@ def matchday_router(
     ) -> dict[str, Any]:
         view = _feed(_matchday(request), match_id).view(after)
         response.headers["Cache-Control"] = "no-store"
-        page = view.entries[:MAX_ENTRIES_PER_PAGE]
-        more = len(page) < len(view.entries)
+        page, more = _page(view.entries, lambda entry: True)
         return {
             "generation": view.generation,
             "entries": [e.to_wire() for e in page],
@@ -212,6 +249,68 @@ def matchday_router(
         generation = log.generation
         return _SlotResponse(
             events(log, generation, resume_point(last_event_id, generation)),
+            release=streams.release,
+            media_type="text/event-stream",
+            headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
+        )
+
+    @router.get("/tenants")
+    def tenants(request: Request, response: Response) -> dict[str, list[dict[str, str]]]:
+        """The broadcast partners, with their language and how they disclose AI involvement."""
+        response.headers["Cache-Control"] = "no-store"
+        policies: dict[str, TenantPolicy] = request.app.state.tenants
+        return {
+            "tenants": [
+                {
+                    "tenantId": policy.tenant_id,
+                    "displayName": policy.display_name,
+                    "locale": policy.locale,
+                    "disclosureMode": policy.disclosure_mode,
+                }
+                for _, policy in sorted(policies.items())
+            ]
+        }
+
+    @router.get("/tenants/{tenant_id}/matches/{match_id}/feed")
+    def tenant_feed(
+        tenant_id: TenantIdParam,
+        match_id: MatchIdParam,
+        *,
+        request: Request,
+        response: Response,
+        after: Annotated[int, Query(ge=0, le=1_000_000)] = 0,
+    ) -> dict[str, Any]:
+        policy = _tenant(request, tenant_id)
+        view = _feed(_matchday(request), match_id).view(after)
+        response.headers["Cache-Control"] = "no-store"
+        page, more = _page(view.entries, for_partner(policy.tenant_id))
+        return {
+            "generation": view.generation,
+            "entries": [e.to_wire() for e in page],
+            "hasMore": more,
+            "finished": view.finished and not more,
+        }
+
+    @router.get("/tenants/{tenant_id}/matches/{match_id}/stream")
+    async def tenant_stream(
+        tenant_id: TenantIdParam,
+        match_id: MatchIdParam,
+        request: Request,
+        last_event_id: Annotated[str | None, Header()] = None,
+    ) -> StreamingResponse:
+        policy = _tenant(request, tenant_id)
+        log = _feed(_matchday(request), match_id)
+        if streams.locked():
+            raise HTTPException(status_code=503, detail="too many open streams; try again soon")
+        await streams.acquire()
+        generation = log.generation
+        return _SlotResponse(
+            events(
+                log,
+                generation,
+                resume_point(last_event_id, generation),
+                keep=for_partner(policy.tenant_id),
+            ),
             release=streams.release,
             media_type="text/event-stream",
             headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"},
