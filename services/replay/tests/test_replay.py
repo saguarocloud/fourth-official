@@ -12,6 +12,7 @@ from fourth_official_contracts import (
     ClockEntry,
     CorrectionEntry,
     EventAmended,
+    EventVoided,
     FeedEntry,
     GoalEvent,
     InsightEntry,
@@ -22,7 +23,7 @@ from fourth_official_contracts import (
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
 from fourth_official_replay import FeedLog, ReplayConfig, replay
-from fourth_official_replay.replay import correction_summary
+from fourth_official_replay.replay import correction_board, correction_summary
 from fourth_official_verifier import MatchFacts
 
 replay_module = importlib.import_module("fourth_official_replay.replay")
@@ -269,3 +270,49 @@ def test_a_correction_about_an_unknown_event_is_described_generically() -> None:
     )
 
     assert correction_summary(record, stray) == "An event amended by the data provider"
+
+
+def test_corrections_light_the_out_in_board() -> None:
+    void, amendment = of(CorrectionEntry)
+    record = demo_store().record("m42")
+    goal = next(
+        e for e in record.match.events if e.event_id == amendment.correction.target_event_id
+    )
+    assert isinstance(goal, GoalEvent)
+    assert isinstance(amendment.correction, EventAmended)
+    old = record.players[goal.scorer_id]
+    new = record.players[amendment.correction.changes.scorer_id or ""]
+
+    assert (void.out_text, void.in_text) == ("2-0", "1-0")
+    assert (amendment.out_text, amendment.in_text) == (
+        f"HCY {old.shirt:02d}",
+        f"HCY {new.shirt:02d}",
+    )
+
+
+def test_boards_for_unusual_corrections_still_light() -> None:
+    record = demo_store().record("m42")
+    issued = record.match.events[0].wall_clock
+    unknown_void = EventVoided(
+        correction_id="c-m42-08",
+        match_id="m42",
+        reason="PROVIDER_RESTATEMENT",
+        issued_at=issued,
+        target_event_id="m42-e9999",
+        new_version=2,
+        kind="EVENT_VOIDED",
+    )
+    goal = next(e for e in record.match.events if isinstance(e, GoalEvent))
+    assist_removed = EventAmended(
+        correction_id="c-m42-09",
+        match_id="m42",
+        reason="PROVIDER_RESTATEMENT",
+        issued_at=issued,
+        target_event_id=goal.event_id,
+        new_version=2,
+        kind="EVENT_AMENDED",
+        changes=Amendment(assist_id=None),
+    )
+
+    assert correction_board(record, unknown_void) == ("EVENT", "VOID")
+    assert correction_board(record, assist_removed) == ("AS PUBLISHED", "AMENDED")

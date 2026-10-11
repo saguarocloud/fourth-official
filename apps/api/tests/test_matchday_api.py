@@ -18,7 +18,14 @@ from fourth_official_contracts import Moment, Provenance, parse_feed_entry
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
 from fourth_official_moments import detect
-from fourth_official_replay import Explainer, FeedLog, Matchday, ReplayConfig, facts_for
+from fourth_official_replay import (
+    Explainer,
+    FeedLog,
+    InMemoryLedger,
+    Matchday,
+    ReplayConfig,
+    facts_for,
+)
 from fourth_official_verifier import MatchFacts
 
 
@@ -147,7 +154,8 @@ def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
         client_id="",
     )
 
-    with TestClient(main.create_app(Settings(version="test", foundry=foundry))) as client:
+    app = main.create_app(Settings(version="test", foundry=foundry), ledger=InMemoryLedger())
+    with TestClient(app) as client:
         assert client.get("/api/matches").status_code == 200
 
     assert opened == [foundry.project_endpoint, "closed"]
@@ -366,3 +374,16 @@ def test_a_stream_that_fails_before_it_starts_gives_its_slot_back(
         return statuses
 
     assert anyio.run(scenario) == [200, 200, 200]
+
+
+def test_the_analyst_is_never_enabled_without_a_durable_start_ledger() -> None:
+    foundry = FoundrySettings(
+        project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
+        match_data_url="http://127.0.0.1:8100/mcp",
+        client_id="",
+    )
+
+    app = create_app(Settings(version="test", foundry=foundry))
+
+    with pytest.raises(RuntimeError, match="durable start ledger"), TestClient(app):
+        pass

@@ -264,6 +264,11 @@
           "title": "Entryseq",
           "type": "integer"
         },
+        "inText": {
+          "pattern": "^[A-Z0-9 :.,+'%/$-]{1,12}$",
+          "title": "Intext",
+          "type": "string"
+        },
         "kind": {
           "const": "correction",
           "title": "Kind",
@@ -272,6 +277,11 @@
         "matchId": {
           "pattern": "^m[0-9]{1,12}$",
           "title": "Matchid",
+          "type": "string"
+        },
+        "outText": {
+          "pattern": "^[A-Z0-9 :.,+'%/$-]{1,12}$",
+          "title": "Outtext",
           "type": "string"
         },
         "summary": {
@@ -286,7 +296,9 @@
         "matchId",
         "kind",
         "correction",
-        "summary"
+        "summary",
+        "outText",
+        "inText"
       ],
       "title": "CorrectionEntry",
       "type": "object"

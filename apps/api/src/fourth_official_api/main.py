@@ -11,7 +11,7 @@ from fourth_official_api.explainers import foundry_explainer, template_explainer
 from fourth_official_api.matchday_routes import matchday_router
 from fourth_official_api.settings import Settings
 from fourth_official_match_data import MatchStore, demo_store
-from fourth_official_replay import Matchday
+from fourth_official_replay import Matchday, StartLedger
 
 SERVICE_NAME = "fourth-official-api"
 
@@ -40,7 +40,9 @@ def _summaries(store: MatchStore) -> dict[str, dict[str, str]]:
     return summaries
 
 
-def create_app(settings: Settings, *, matchday: Matchday | None = None) -> FastAPI:
+def create_app(
+    settings: Settings, *, matchday: Matchday | None = None, ledger: StartLedger | None = None
+) -> FastAPI:
     """Build the API with explicit settings, so tests never depend on process environment. A
     given `matchday` is used as is; otherwise one is built at startup with the Analyst on Foundry
     when configured, or the templates alone."""
@@ -51,12 +53,17 @@ def create_app(settings: Settings, *, matchday: Matchday | None = None) -> FastA
         async with AsyncExitStack() as stack:
             day = matchday
             if day is None:
+                if settings.foundry and ledger is None:
+                    # Model spend is bounded by the matchday's guards, which must survive restarts.
+                    raise RuntimeError(
+                        "the Analyst needs a durable start ledger; none is configured"
+                    )
                 explainer = (
                     await stack.enter_async_context(foundry_explainer(settings.foundry))
                     if settings.foundry
                     else template_explainer
                 )
-                day = Matchday(store, explainer)
+                day = Matchday(store, explainer, ledger=ledger)
             app.state.matchday = day
             try:
                 yield

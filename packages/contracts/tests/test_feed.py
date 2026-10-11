@@ -62,6 +62,8 @@ ENTRIES: list[dict[str, Any]] = [
             "newVersion": 2,
         },
         "summary": "Harbour City goal at 67' ruled out for offside",
+        "outText": "2-0",
+        "inText": "1-0",
     },
 ]
 
@@ -100,6 +102,8 @@ def test_an_insight_entry_is_typed() -> None:
         (ENTRIES[3] | {"matchId": "m7"}, "another match"),
         (INSIGHT_ENTRY | {"attempts": [ATTEMPTS[1] | {"error": "not a class name!"}]}, "error"),
         (INSIGHT_ENTRY | {"entrySeq": 0}, "entrySeq"),
+        (ENTRIES[3] | {"inText": "no goal"}, "inText"),
+        (ENTRIES[3] | {"outText": "WAY TOO LONG FOR A BOARD"}, "outText"),
     ],
 )
 def test_incoherent_entries_are_refused(wire: dict[str, Any], message: str) -> None:

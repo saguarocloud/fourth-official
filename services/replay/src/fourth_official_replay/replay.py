@@ -94,15 +94,43 @@ def correction_summary(record: MatchRecord, correction: Correction) -> str:
     return f"{what}{when} amended {why}"
 
 
+def _board_player(record: MatchRecord, player_id: str | None) -> str:
+    player = record.players.get(player_id or "")
+    return f"{player.player_id[:3]} {player.shirt:02d}" if player else "?"
+
+
+def correction_board(record: MatchRecord, correction: Correction) -> tuple[str, str]:
+    """What went out and what came in, for the OUT/IN board."""
+    target = next(
+        (e for e in record.match.events if e.event_id == correction.target_event_id), None
+    )
+    if isinstance(correction, EventVoided):
+        if target is None:
+            return "EVENT", "VOID"
+        facts = facts_for(record)
+        decided = record.void_seqs().get(correction.target_event_id, target.seq)
+        home, away = facts.score_at(decided - 1)
+        after_home, after_away = facts.score_at(decided)
+        return f"{home}-{away}", f"{after_home}-{after_away}"
+    scorer = getattr(target, "scorer_id", None)
+    new_scorer = correction.changes.scorer_id
+    if new_scorer is not None:
+        return _board_player(record, scorer), _board_player(record, new_scorer)
+    return "AS PUBLISHED", "AMENDED"
+
+
 def _correction_entry(
     record: MatchRecord, match_id: str, correction: Correction, entry_seq: int
 ) -> CorrectionEntry:
+    out_text, in_text = correction_board(record, correction)
     return CorrectionEntry(
         kind="correction",
         entry_seq=entry_seq,
         match_id=match_id,
         correction=correction,
         summary=correction_summary(record, correction),
+        out_text=out_text,
+        in_text=in_text,
     )
 
 

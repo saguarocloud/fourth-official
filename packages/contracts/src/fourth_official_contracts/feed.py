@@ -16,6 +16,8 @@ from fourth_official_contracts.primitives import MatchClock, MatchId, Score, Seq
 from fourth_official_contracts.verdicts import FindingCode, Verdict
 
 EntrySeq = Annotated[int, Field(ge=1, le=1_000_000)]
+# Text for the fourth official's LED board: characters the board can light, kept short.
+BoardText = Annotated[str, StringConstraints(pattern=r"^[A-Z0-9 :.,+'%/$-]{1,12}$")]
 MAX_ATTEMPTS = 99
 
 
@@ -92,6 +94,10 @@ class CorrectionEntry(FeedEntryBase):
     correction: Correction
     # What changed, in words, rendered by code from the correction and the squad lists.
     summary: Annotated[str, StringConstraints(min_length=1, max_length=200)]
+    # What went out and what came in, for the OUT/IN board: the score for a void, the scorer's
+    # club and shirt for a reassignment.
+    out_text: BoardText
+    in_text: BoardText
 
     @model_validator(mode="after")
     def _same_match(self) -> "CorrectionEntry":
