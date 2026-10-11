@@ -104,6 +104,21 @@ describe("ProgramMonitor", () => {
     expect(document.querySelector(".gfx-third")).toBeNull();
   });
 
+  it("shows the score without a time in preview, where no clock runs", () => {
+    render(
+      <ProgramMonitor
+        partner={PARTNERS[2]!}
+        program={{ ...NOTHING, score: itemOf("rheinblick-sport", "score_bug", 1) }}
+        mode="preview"
+        clock={null}
+        guides={false}
+      />,
+    );
+
+    expect(screen.getByText("1:0")).toBeInTheDocument();
+    expect(screen.queryByText("12:26")).not.toBeInTheDocument();
+  });
+
   it("marks a held graphic in preview, and shows the safe areas when asked", () => {
     const held = itemOf("tribuna-austral", "lower_third");
     render(

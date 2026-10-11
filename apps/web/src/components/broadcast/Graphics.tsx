@@ -40,18 +40,24 @@ export function CorrectionStrap({ item }: { item: TenantItemEntry }) {
 }
 
 /** The score bug: both clubs, the score as the partner's market writes it, and the clock: the
- * running match clock when there is one, else the time the score changed. */
-export function ScoreBug({ item, clock: running }: { item: TenantItemEntry; clock?: string }) {
+ * running match clock when there is one, else the time the score changed; null shows no time. */
+export function ScoreBug({
+  item,
+  clock: running,
+}: {
+  item: TenantItemEntry;
+  clock?: string | null;
+}) {
   const content = item.overlay.content;
   if (content.template !== "score_bug") return null;
   const { home, away, score, clock: changed } = content;
-  const clock = running ?? changed;
+  const clock = running === undefined ? changed : running;
   return (
     <div className="gfx gfx-bug">
       <span className="gfx-bug__club">{home}</span>
       <span className="gfx-bug__score tabular">{score}</span>
       <span className="gfx-bug__club">{away}</span>
-      <span className="gfx-bug__clock tabular">{clock}</span>
+      {clock !== null && <span className="gfx-bug__clock tabular">{clock}</span>}
     </div>
   );
 }

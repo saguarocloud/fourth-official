@@ -162,6 +162,18 @@ components:
     backgroundColor: "{colors.panel-1}"
     rounded: "{rounded.key}"
     padding: "12px"
+  ticket:
+    backgroundColor: "{colors.panel-1}"
+    textColor: "{colors.ink-2}"
+    rounded: "{rounded.key}"
+    padding: "8px 12px"
+  ticket-current:
+    backgroundColor: "{colors.panel-2}"
+    textColor: "{colors.ink-1}"
+  reject-form:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "16px"
 ---
 
 # Design System: Fourth Official
@@ -269,6 +281,16 @@ The main wall leads with the page header and verdict, then the match wall: a two
 - **Keyboard:** 1, 2 and 3 put a partner on the monitor; G toggles the safe-area guides; Esc returns from a previewed row to program. Keys are ignored while typing in a field and when Alt, Ctrl or Meta is held.
 - **Phones (720 and below):** the partner keys become a three-up grid reading cap and partner code (name for screen readers, language dropped; the monitor bar names it); the monitor bar stays on one line, the partner name truncates and the locale hides; rundown rows become cards, each partner cell labelled by its code; the table keeps explicit `role`s (`rowgroup`, `row`, `cell`, `rowheader`) so its semantics survive the restyle.
 
+**Approvals** (`/approvals`) has no live rail, so main takes the full width. One held item owns the desk, read against English, the next one a key away; it is not an inbox table. The first viewport runs: page header (title, "Home v Away · Meridian League", verdict line); the controls row (`.approvals__controls`) with the match keys; a message line (`aria-live="polite"`, 13px ink-1, its height reserved so a message never moves the desk) naming the item just decided (Approved "headline". It airs from the match clock. / Rejected "headline". It stays off air.) or the refusal; then the floor (`.approvals__floor`): the call sheet of waiting tickets at the left (`18rem | minmax(0, 1fr)` from 1280, stacking above the desk below it) and the desk beside it; the decisions log beneath the floor; the synthetic-data footnote, which says decisions are recorded against each partner's duty editor, a named demo identity.
+- **Verdict** (phase-aware, how many wait and since which match minute): "Loading the matchday." (neutral); "This match has not started. Start the matchday from Match Live." (neutral); while running, amber "N items wait for an editor; the oldest since 61'." or "Nothing waits for an editor. N decisions this match." (green once anything is decided, neutral otherwise); at full time, neutral "Full time. N held items stayed off air." or "Full time. Nothing waits for an editor; N decisions this match."; red "This match's replay stopped. Held items stay off air." and red "The match service is unavailable. Retrying every few seconds."
+- **Call sheet:** the "Waiting" panel heading with its count in tabular figures; beside it, only when two or more wait, the small K Previous and J Next keys (each disabled at its end of the queue). Tickets run oldest first, one per item, the one on the desk current. Empty, a dashed panel says "Nothing waits. Items a partner's policy holds for an editor appear here as the match runs." (at full time, "Full time. Nothing more will be held this match.").
+- **Desk** (`7fr | 5fr` from 1280: the stage left spanning two rows, the reading, keys and reject form right; one column below): the item on its partner's stage, the program monitor in preview without guides, its stage label saying the words are on the desk as text; "In English" (the English partner's version of the same moment) or, when there is none, "As written", each a panel-1 panel with the headline (16px, 600, ink-1) over the claims (14px, ink-2) in the item's own `lang`; "Why it waits": the partner's policy reason ("Tribuna Austral's policy sends every insight to an editor before it airs."), the evidence count and that it was checked twice ("It rests on 3 match events, checked twice: once in English, then in Spanish."), and, when a correction has since changed its facts, an ink-1 line led by an 8px red lamp saying it cannot air and should be rejected with the correction as the reason; the keys (primary "A Approve as T. Ibarra", default "R Reject…" with `aria-expanded`); the duty-editor line in 11px ink-3 ("T. Ibarra is Tribuna Austral's duty editor (demo identity): this demo has no sign-in."); the reject form when open. A visually hidden `h2` ("Partner: headline", `tabindex="-1"`) heads the desk and takes focus when a new item arrives. An item from a partner the studio does not know shows a dashed panel saying it cannot be decided here.
+- **Empty floor:** with nothing on the desk the floor drops to one column (`data-empty`), so the call sheet spans the floor rather than sitting as one narrow box.
+- **Keyboard:** A approves; R rejects, opening a one-line reason (prefilled "A correction changed this item's facts" for a corrected item); Esc cancels the reason (a visible Esc key cap on Cancel); J and K move down and up the queue. Shortcuts ignore key repeat, Shift, Alt, Ctrl and Meta, IME composition and typing in a field, and the keystroke is spent on the shortcut (R never also types into the reason it opens). E (edit and approve) is not offered: edited words would have to pass the Verifier again.
+- **Safety:** after the desk shows a different item its keys and buttons wait 600ms (`SETTLE_MS`), so no decision lands on an item the editor has not had time to see. They also wait while a request is in flight, outside a running match and before the run is known. An item decided here leaves the queue at once, before the feed confirms it. When the item on the desk is decided elsewhere, the desk keeps its place, shows the item that took it, and the message line says so ("headline" was decided elsewhere, then either "The next item is on the desk." or "Nothing else waits."). A corrected item can only be rejected: Approve is disabled and A does nothing.
+- **Focus:** after a decision, to the new item's desk heading; after Cancel, back to the R key; to the "Waiting" heading when the queue empties.
+- **Phones (720 and below):** the decisions log becomes cards, each column a labelled line (see Decisions log).
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -278,6 +300,7 @@ Breakpoints:
 - **Below 1024:** everything stacks (top, nav as a horizontal icon strip with 40x44 targets, main, rail); top-bar readouts become a two-column grid; main padding 16px.
 - **Below 768:** the match wall goes to one column; stats go two across.
 - **Broadcast Preview only:** 1800 and up puts the rundown beside the monitor; 720 and below is the phone layout above.
+- **Approvals only:** 1280 and up puts the call sheet beside the desk and the stage beside the reading; 720 and below turns the decisions log into cards.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -305,7 +328,7 @@ A square-cut hardware key, as on a vision mixer; the primary key is the lit one.
 - **Primary:** led-white face, panel-0 text; hover goes pure white.
 - **Danger:** red text on a red-tinted edge. **Quiet:** transparent, ink-2.
 - **Hover / Active:** hover moves to panel-3; press translates 1px down and drops the bevel (160ms, ease-out).
-- **Shortcuts:** every shortcut has a visible key cap and `aria-keyshortcuts`, shipped together with the handler, never one without the other. Broadcast Preview has 1/2/3, G and Esc; Approvals will add A, R and E the same way.
+- **Shortcuts:** every shortcut has a visible key cap and `aria-keyshortcuts`, shipped together with the handler, never one without the other. Broadcast Preview has 1/2/3, G and Esc; Approvals has A, R, Esc, J and K.
 - **Loading / Disabled:** spinner and `aria-busy`; disabled at 50% opacity.
 - **Label:** the key's content sits in an inline-flex, `--space-2`-gapped, `white-space: nowrap` span (`.key > span`), so an icon and label never wrap apart.
 
@@ -346,7 +369,7 @@ The fourth official's board, repurposed: what went out (red) and what replaced i
 The two panels shrink to fit a narrow rail (`repeat(2, minmax(0, 1fr))`, `min-width: 0`, and the readout SVG at `max-width: 100%; height: auto`), so a long OUT or IN text scales down rather than overflowing. On Match Live the rail ("Corrections") lists every correction, newest first (empty, a 13px ink-2 sentence says what will appear there); each caption gives the summary (14px ink-1), "N published items corrected." (or "No published item rested on it.") in ink-2, and "Issued hh:mm:ss UTC" in tabular figures. When a corrected item is on the page the summary is a link to it (underline in hairline-strong, `currentColor` on hover), and the item it reaches is outlined (see Wire item, `:target`).
 
 ### Verdict line
-One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable.
+One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute (see Layout).
 
 ### Match keys (Match Live)
 One square-cut key per match in a `nav` labelled "Matches": 36px tall, 12px side padding, panel-2 face with strong hairline edge and the key bevel, 13px weight 500 ink-2, club codes ("ARD v KES") in tabular figures with full names for screen readers. Hover and current (`aria-current="page"`) go panel-3 and ink-1; current drops the bevel, like a pressed key. A running match adds a 6px red lamp and "LIVE" as an 11px uppercase label in ink-1; a finished one a quiet "FT" in ink-3; otherwise nothing.
@@ -403,6 +426,7 @@ The visible shortcut on a small key (`.key-cap`): 18px tall, 18px minimum width,
 One partner's broadcast as its viewers would see it, in a panel-1 housing with a hairline edge.
 - **Bar:** the mode as an 11px uppercase label led by a 10px tally ("Program", lit red with the specular highlight when a lower third or strap is on air; "Preview" when a rundown row is chosen, never lit); the partner name (13px ink-1) with "Language · locale" in 11px ink-3; the 2px-dot LED match clock (00:00 before kick-off) at the right.
 - **Stage:** a 16:9 frame in a panel-0 surround padded 12px, authored at 1920 by 1080; `--u: calc(100cqw / 1920)` is one authored pixel at the shown width, so every graphic scales with the frame. The feed is a placeholder pitch (faint 18% white lines on dark green); there is no video. The stage is `role="img"`; the rundown is its text equivalent.
+- **Stage label:** the stage's spoken label defaults to the rundown pointer; a screen may pass its own (`stageLabel`), as the Approvals desk does to say the words are on the desk as text.
 - **Held:** in preview, a lower third pending approval carries an amber "Pending approval · held off air" label at the top centre.
 - **Safe areas** (G): action safe at 90% (dashed, 45% white) and title safe at 80% (dotted, 35% white). They differ by dash pattern, not hue: colour is reserved for state. Graphics sit inside title safe.
 
@@ -419,6 +443,15 @@ The monitor's accessible equivalent: a table, one row per moment and correction,
 - **Cells:** each partner cell is a button that puts that partner on the monitor and previews that row; the moment cell previews the row for the current partner (`aria-pressed`). A cell shows the shared status lamp, the AI tag when the version carries a disclosure, and the partner's words in ink-2 in its own `lang`; "Not sent" in ink-3 when that partner has no version.
 - **States** (the shared lamp, read at the match clock): Queued (not yet due), On air, Published (aired), Pending approval (held), Dropped (rejected).
 - **Selected row:** panel-2 with a 2px board-white inset rule on the left.
+
+### Ticket (Approvals)
+One call-sheet entry: a full-width button on panel-1 with a hairline edge, 8px by 12px padding, 2px radius. A head line of 11px uppercase labels: the partner code in ink-1, the moment kind (12px Lucide icon and label) in ink-3, and at the right the match minute it has waited since in amber, tabular (waiting is a state, so the time carries the amber); beneath, the partner's words in 13px ink-2 in their own `lang`. Hover goes panel-2. The current ticket (`aria-current="true"`) is panel-2 with a strong hairline edge, a 2px board-white inset rule on the left and ink-1 text.
+
+### Reject form (Approvals)
+Opened by R on the desk: a panel-1 panel padded 16px with a strong hairline edge. The label "Reason for rejecting" (11px uppercase, ink-2); a full-width 36px input on panel-0 with the focus ring, focused on open, limited to one line without links; an error, when the reason fails, as `role="alert"` ink-1 text led by an 8px red lamp (the input `aria-invalid` and described by it); then the keys: "Send rejection" (danger key) and "Esc Cancel" (default key, `aria-keyshortcuts="Escape"`). Esc in the input cancels too.
+
+### Decisions log (Approvals)
+The audit trail beneath the floor, headed "Decisions", newest first; empty, "No decisions yet this match." in ink-3. A data table: decided (studio time, `Europe/London`, hh:mm, matching the top-bar clock), partner, the item's headline in its own `lang`, the decision as text ("Approved" or "Rejected", never colour alone), "Now" with the shared status lamp read at the match clock (Queued, On air, Published, Pending approval, Dropped), the editor followed by " · duty editor (demo identity)" in ink-3, and the reason. On phones each row becomes a card of labelled lines (`6rem | 1fr`, labels from `data-label` in 11px uppercase ink-3, empty cells hidden); the table keeps explicit roles (`table`, `rowgroup`, `row`, `cell`) so its semantics survive the restyle.
 
 ## Do's and Don'ts
 
@@ -437,6 +470,8 @@ The monitor's accessible equivalent: a table, one row per moment and correction,
 - **Do** label replay mode, synthetic data and AI content.
 - **Do** give every keyboard shortcut a visible key cap and `aria-keyshortcuts`.
 - **Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows.
+- **Do** name the duty editor as a demo identity wherever a decision names an editor; this demo has no sign-in.
+- **Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.
 
 ### Don't:
 - **Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).
