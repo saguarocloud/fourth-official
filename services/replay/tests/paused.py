@@ -11,6 +11,10 @@ from fourth_official_replay import Matchday, Partners, ReplayConfig
 from fourth_official_replay.replay import Sleep
 from test_partners import no_wait, partners, template_only
 
+# How long a test waits for the replay to reach a state: generous, as a CI runner tracing coverage
+# across parallel workers can be many times slower than a laptop.
+WAIT = 60.0
+
 
 class Paused:
     def __init__(
@@ -47,6 +51,6 @@ class Paused:
         return [e for e in latest.values() if e.state == "pending_approval"]
 
     async def until_held(self) -> None:
-        with anyio.fail_after(10):
+        with anyio.fail_after(WAIT):
             while not self.held():
-                await anyio.sleep(0)
+                await anyio.sleep(0.01)
