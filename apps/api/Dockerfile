@@ -26,4 +26,6 @@ ENV PATH="/app/.venv/bin:$PATH" \
     APP_VERSION=${APP_VERSION}
 USER 10001
 EXPOSE 8000
+# Forwarded headers are not trusted yet: nothing uses the client IP or builds absolute URLs. When
+# something does, trust only the Container Apps ingress rather than "*".
 CMD ["uvicorn", "--factory", "fourth_official_api.main:app_from_env", "--host", "0.0.0.0", "--port", "8000", "--no-server-header"]

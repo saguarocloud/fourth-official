@@ -200,6 +200,8 @@ def test_container_logs_flow_without_shared_keys(compiled: CompiledTemplate) -> 
     (diagnostics,) = compiled.of_type("Microsoft.Insights/diagnosticSettings")
 
     assert env.properties["appLogsConfiguration"]["destination"] == "azure-monitor"
+    # Dedicated tables (ContainerAppConsoleLogs, ...), not the shared AzureDiagnostics table.
+    assert diagnostics.properties["logAnalyticsDestinationType"] == "Dedicated"
     assert workspace.properties["features"]["disableLocalAuth"] is True
     categories = {log["category"] for log in diagnostics.properties["logs"] if log["enabled"]}
     assert categories == {"ContainerAppConsoleLogs", "ContainerAppSystemLogs"}

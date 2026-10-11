@@ -24,7 +24,19 @@ echo "postprovision: configuring GitHub environment '$ENV_NAME' on $REPO"
 
 # PUT replaces the environment's protection settings, so carry over reviewers and wait timer
 # that an admin may have configured in the GitHub UI.
-current="$(gh api "$ENV_API" 2>/dev/null || echo '{}')"
+# Only a 404 (new environment) may start from empty settings; any other failure stops the hook
+# rather than silently wiping protection rules.
+errors="$(mktemp)"
+trap 'rm -f "$errors"' EXIT
+if ! current="$(gh api "$ENV_API" 2>"$errors")"; then
+  if grep -q "HTTP 404" "$errors"; then
+    current='{}'
+  else
+    cat "$errors" >&2
+    echo "postprovision: could not read environment '$ENV_NAME'; refusing to overwrite it" >&2
+    exit 1
+  fi
+fi
 jq -n --argjson current "$current" '{
   wait_timer: ([$current.protection_rules[]? | select(.type == "wait_timer") | .wait_timer][0] // 0),
   prevent_self_review: ([$current.protection_rules[]? | select(.type == "required_reviewers") | .prevent_self_review][0] // false),

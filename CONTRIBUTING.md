@@ -23,6 +23,9 @@ tracked item in `docs/PLAN.md`):
 
 - Python: ruff, mypy `--strict`, pytest (warnings are errors), coverage of at least 80%.
 - TypeScript: strict mode, ESLint with zero warnings, Prettier, Vitest, coverage of at least 80%.
+- Containers: CI scans both images with Trivy and fails on fixable critical or high
+  vulnerabilities. A new advisory against a pinned base image can therefore turn CI red without a
+  code change; fix it by taking the patched digest (Dependabot proposes them weekly).
 - Infrastructure: Bicep lint with zero warnings; policy tests in `infra/tests` guard cost and
   security rules (scale to zero, no admin credentials, least-privilege roles).
 - Commits: one-line conventional commit subjects (`feat:`, `fix:`, `chore:` …).

@@ -86,13 +86,7 @@ jobs:
           uv sync --all-packages --locked
           az bicep install --version "$BICEP_VERSION"
       - name: Lint Bicep (warnings fail the build)
-        run: |
-          az bicep lint --file infra/main.bicep --diagnostics-format sarif > bicep-lint.sarif
-          findings="$(jq '[.runs[].results[] | select(.level == "warning" or .level == "error")]' bicep-lint.sarif)"
-          if [[ "$(jq length <<<"$findings")" != "0" ]]; then
-            jq -r '.[] | "\(.level): \(.message.text) (\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine))"' <<<"$findings"
-            exit 1
-          fi
+        run: scripts/lint-bicep.sh
       - name: Policy tests
         run: uv run pytest infra/tests --no-cov
 

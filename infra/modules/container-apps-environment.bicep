@@ -33,6 +33,8 @@ resource logs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   scope: environment
   properties: {
     workspaceId: workspace.id
+    // Resource-specific tables (ContainerAppConsoleLogs, ContainerAppSystemLogs), not AzureDiagnostics.
+    logAnalyticsDestinationType: 'Dedicated'
     logs: [
       { category: 'ContainerAppConsoleLogs', enabled: true }
       { category: 'ContainerAppSystemLogs', enabled: true }

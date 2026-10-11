@@ -29,7 +29,8 @@ jobs:
       name: dev
       url: ${{ vars.SERVICE_WEB_URI }}
     # Values come from the environment (written by infra/hooks/postprovision.sh) and are only ever
-    # referenced as shell variables, never interpolated into scripts.
+    # referenced as shell variables, never interpolated into scripts. Azure identifiers are scoped
+    # to the steps that need them.
     env:
       AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
       AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
@@ -37,12 +38,13 @@ jobs:
       AZURE_CONTAINER_REGISTRY_ENDPOINT: ${{ vars.AZURE_CONTAINER_REGISTRY_ENDPOINT }}
       SERVICE_API_URI: ${{ vars.SERVICE_API_URI }}
       SERVICE_WEB_URI: ${{ vars.SERVICE_WEB_URI }}
-      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       APP_VERSION: ${{ github.sha }}
     steps:
       - name: Check environment configuration
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           missing=""
           for name in AZURE_ENV_NAME AZURE_LOCATION AZURE_RESOURCE_GROUP AZURE_CONTAINER_REGISTRY_ENDPOINT \
@@ -63,6 +65,9 @@ jobs:
           version: 1.35.1
 
       - name: Sign in with workload identity federation
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         run: >
           azd auth login
           --client-id "$AZURE_CLIENT_ID"
@@ -70,6 +75,8 @@ jobs:
           --federated-credential-provider github
 
       - name: Recreate the azd environment from provisioned values
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: |
           azd env new "$AZURE_ENV_NAME" --subscription "$AZURE_SUBSCRIPTION_ID" --location "$AZURE_LOCATION" --no-prompt
           azd env set AZURE_RESOURCE_GROUP "$AZURE_RESOURCE_GROUP"

@@ -17,7 +17,7 @@ check-web:
 	cd apps/web && npm run lint && npm run format:check && npm run typecheck && npm run coverage
 
 check-infra:
-	az bicep lint --file infra/main.bicep
+	scripts/lint-bicep.sh
 	uv run pytest infra/tests --no-cov
 
 smoke-containers:

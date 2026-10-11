@@ -17,6 +17,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Observability: wire Application Insights into both apps with OpenTelemetry and Entra ID auth (local auth is disabled)
 - [ ] API: explicit CORS allow-list when the web app starts calling it; decide whether public `/docs` stays on for judges
 - [ ] Supply chain: SBOM and image signing in the deploy workflow
+- [ ] Rate limiting on public endpoints (API throttling; consider Front Door/WAF for the demo week)
+- [ ] Authentication: Entra ID sign-in and app roles for admin functions; public Viewer mode stays read-only
 - [ ] Open decisions settled: names and collision check, team, Teams route, brand, languages
 - [x] Dev environment provisioned via `azd provision` (budget $100/month)
 - [ ] Upgrade subscription to pay-as-you-go (before the credit expires around Nov 6)

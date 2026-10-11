@@ -42,10 +42,18 @@ def test_provision_hook_reads_only_template_outputs(compiled: CompiledTemplate) 
     assert consumed <= set(compiled.template["outputs"])
 
 
-def test_deploy_workflow_reads_only_variables_the_hook_writes() -> None:
+def test_deploy_workflow_reads_only_what_the_hook_publishes() -> None:
     hook = (REPO / "infra/hooks/postprovision.sh").read_text()
-    workflow_vars = _consumed_names(REPO / ".github/workflows/deploy.yml", r"vars\.([A-Z0-9_]+)")
+    workflow = (REPO / ".github/workflows/deploy.yml").read_text()
+    listed = re.search(r'GITHUB_VARIABLES="([^"]+)"', hook)
+    assert listed, "hook must list the variables it publishes in GITHUB_VARIABLES"
+    published_vars = set(listed.group(1).split())
+    published_secrets = set(re.findall(r"gh secret set ([A-Z0-9_]+)", hook))
 
-    assert workflow_vars
-    for name in workflow_vars:
-        assert re.search(rf"\b{name}\b", hook), f"{name} is read by deploy.yml but never written"
+    read_vars = set(re.findall(r"vars\.([A-Z0-9_]+)", workflow))
+    read_secrets = set(re.findall(r"secrets\.([A-Z0-9_]+)", workflow))
+
+    assert read_vars
+    assert read_secrets
+    assert read_vars <= published_vars
+    assert read_secrets <= published_secrets
