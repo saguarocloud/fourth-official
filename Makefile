@@ -1,11 +1,11 @@
 # Local entry points. CI runs the same commands (.github/workflows/ci.yml).
-.PHONY: install check check-python check-web test fmt
+.PHONY: install check check-python check-web check-infra smoke-containers test fmt
 
 install:
 	uv sync --all-packages
 	cd apps/web && npm ci
 
-check: check-python check-web
+check: check-python check-web check-infra
 
 check-python:
 	uv run ruff check .
@@ -15,6 +15,16 @@ check-python:
 
 check-web:
 	cd apps/web && npm run lint && npm run format:check && npm run typecheck && npm run coverage
+
+check-infra:
+	scripts/lint-bicep.sh
+	uv run pytest infra/tests --no-cov
+
+smoke-containers:
+	docker build -f apps/api/Dockerfile --build-arg APP_VERSION=local -t fo-api:local .
+	docker build -f apps/web/Dockerfile --build-arg APP_VERSION=local -t fo-web:local apps/web
+	scripts/smoke-container.sh fo-api:local 8000 fourth-official-api local
+	scripts/smoke-container.sh fo-web:local 3000 fourth-official-web local
 
 test:
 	uv run pytest

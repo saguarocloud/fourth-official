@@ -17,7 +17,9 @@ dev = [
   "mypy>=2.4",
   "pytest>=9.1",
   "pytest-cov>=7.1",
+  "pyyaml>=6.0.3",
   "ruff>=0.17",
+  "types-pyyaml>=6.0.12.20260906",
 ]
 
 # --- Lint and format ---------------------------------------------------------
@@ -51,13 +53,15 @@ ban-relative-imports = "all"
 python_version = "3.12"
 strict = true
 warn_unreachable = true
-mypy_path = ["apps/api/src"]
-files = ["apps/api/src", "apps/api/tests"]
+mypy_path = ["apps/api/src", "infra/tests"]
+files = ["apps/api/src", "apps/api/tests", "infra/tests"]
 
 # --- Tests and coverage ------------------------------------------------------
 [tool.pytest.ini_options]
 addopts = "-ra --strict-markers --strict-config --import-mode=importlib"
 testpaths = ["apps/api/tests"]
+# Infrastructure tests need the Azure CLI with Bicep; run them with `make check-infra`.
+pythonpath = ["infra/tests"]
 markers = ["integration: needs emulators or Azure; excluded from the default run"]
 xfail_strict = true
 filterwarnings = ["error"]

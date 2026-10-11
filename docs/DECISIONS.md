@@ -61,15 +61,27 @@ One entry per decision: context, options, choice, consequences. Newest last.
 
 ## ADR-004: Bicep + azd; infrastructure provisioned locally, applications deployed by GitHub Actions
 
-**Date:** 2026-10-10 · **Status:** Accepted (implementation lands with the infrastructure pull request)
+**Date:** 2026-10-10 · **Status:** Accepted, implemented 2026-10-11
 
 **Context.** We want a Microsoft-native toolchain (Pulumi was considered and set aside), a one-command `azd up` for judges, and least privilege for automation.
 
 **Choice.**
 - Infrastructure as code: **Bicep**, driven by the **Azure Developer CLI (`azd`)**.
 - **`azd provision` runs locally**, by a subscription Owner. Provisioning also creates the GitHub Actions deploy identity: a user-assigned managed identity with a **federated credential** (workload identity federation) for the GitHub `dev` environment. No client secret exists anywhere.
-- **GitHub Actions only runs `azd deploy`**: it builds images, pushes them to the registry and updates the Container Apps. Its identity holds **AcrPush** and **Container Apps Contributor** on the app resource group, and nothing that can create resources or grant roles.
+- **GitHub Actions only runs `azd deploy`**: it builds images, pushes them to the registry and releases new revisions. Its identity holds **AcrPush** (registry), **Container Apps Contributor** (each app, not the resource group), **Managed Identity Operator** (the apps' runtime identity only, because a revision update re-asserts it) and **Reader** (resource group, so azd can find the apps). Nothing it holds can create resources or grant roles.
 - Container registry: **Azure Container Registry, Basic tier**, with the admin user disabled. Container Apps pull with their own managed identity (AcrPull).
 - Budget: $100/month on the subscription, with alerts at 25/50/75/100%.
 
-**Consequences.** Infrastructure changes are reviewed in pull requests but applied by a person, which suits a small team and a fixed deadline. Application releases are fully automated on every merge to `main`.
+**Implementation notes.**
+- `infra/main.bicep` (subscription scope) creates the resource group, Log Analytics (30-day retention, 0.5 GB/day ingestion cap), workspace-based Application Insights (local auth disabled), ACR Basic, the Container Apps environment (Consumption profile only), the `api` and `web` apps, both identities, and the budget.
+- **Container apps scale to zero** (`minReplicas: 0`, HTTP concurrency rule), so idle time costs nothing. The trade-off is a cold start of a few seconds on the first request; revisit for the judging week if needed.
+- Apps pull from ACR with a dedicated user-assigned identity holding only AcrPull. No registry passwords or app secrets exist.
+- Until the first `azd deploy`, apps run a public placeholder image. `fetch-container-image.bicep` keeps the deployed image when provisioning re-runs.
+- The deploy identity and budget are optional (`GITHUB_DEPLOY_REPOSITORY`, `BUDGET_CONTACT_EMAIL`), so anyone can run `azd up` in their own subscription without them.
+- Container logs reach Log Analytics through Azure Monitor diagnostic settings; the workspace has shared-key access disabled, so no workspace key appears anywhere.
+- `infra/hooks/preprovision.sh` detects which apps already exist (by their `azd-service-name` tag), so re-provisioning keeps the deployed images; azd does not refresh that flag itself.
+- `infra/hooks/postprovision.sh` writes the GitHub environment's secrets (client, tenant and subscription IDs: identifiers, not credentials) and variables after provisioning, preserves any reviewers configured in GitHub, and leaves `main` as the only branch allowed to deploy.
+- Base images and the placeholder image are pinned by digest; Dependabot updates them. CI scans both images with Trivy and fails on fixable critical or high vulnerabilities.
+- **Policy tests** (`infra/tests`) compile the Bicep and assert the rules above: scale to zero, no admin user, managed-identity pulls, HTTPS only, health probes, exact role sets for both identities and the narrowest scope for every role, no Owner/Contributor/role-granting roles anywhere, keyless logging, a federated credential scoped to one GitHub environment, budget thresholds, no secret-like outputs, and the wiring between `azure.yaml`, the Bicep outputs, the hooks and the deploy workflow.
+
+**Consequences.** Infrastructure changes are reviewed in pull requests but applied by a person (`azd provision --preview`, then `azd provision`), which suits a small team and a fixed deadline. Application releases are fully automated on every merge to `main`, followed by smoke tests that check the live version matches the commit.

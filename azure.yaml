@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
+name: fourth-official
+metadata:
+  template: fourth-official@0.1.0
+infra:
+  provider: bicep
+  path: infra
+services:
+  api:
+    project: ./apps/api
+    language: py
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      # The uv workspace lockfile lives at the repository root.
+      context: ../..
+      # APP_VERSION is the git SHA in CI. Locally it may be empty; the apps then report "dev".
+      buildArgs:
+        - APP_VERSION=${APP_VERSION}
+  web:
+    project: ./apps/web
+    language: js
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      context: .
+      buildArgs:
+        - APP_VERSION=${APP_VERSION}
+hooks:
+  preprovision:
+    posix:
+      shell: sh
+      run: ./infra/hooks/preprovision.sh
+      interactive: false
+      continueOnError: false
+  postprovision:
+    posix:
+      shell: sh
+      run: ./infra/hooks/postprovision.sh
+      interactive: false
+      continueOnError: false

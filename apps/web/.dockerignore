@@ -1,0 +1,10 @@
+node_modules
+.next
+coverage
+Dockerfile
+.dockerignore
+**/*.test.ts
+**/*.test.tsx
+.env*
+*.pem
+*.key

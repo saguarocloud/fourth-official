@@ -10,15 +10,19 @@ Running checklist. Update daily. Times are Mexico City.
 - [x] GitHub repository created and public: `saguarocloud/fourth-official`; `main` protected, PRs only (ADR-002)
 - [x] Stack chosen: Python 3.12 + uv, Next.js + TypeScript (ADR-003)
 - [x] Deployment model chosen: Bicep + azd, infra local, apps via GitHub Actions with workload identity federation (ADR-004)
-- [ ] Tooling and CI pull request (api and web skeletons, quality gates)
-- [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow)
+- [x] Tooling and CI pull request (api and web skeletons, quality gates) (#1)
+- [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow) (#3)
 - [ ] Design system pull request (impeccable)
-- [ ] Security headers on web and api (CSP, frame options, referrer policy)
+- [ ] Security headers on web and api (CSP, HSTS, frame-ancestors, referrer and permissions policy)
+- [ ] Observability: wire Application Insights into both apps with OpenTelemetry and Entra ID auth (local auth is disabled)
+- [ ] API: explicit CORS allow-list when the web app starts calling it; decide whether public `/docs` stays on for judges
+- [ ] Supply chain: SBOM and image signing in the deploy workflow
+- [ ] Rate limiting on public endpoints (API throttling; consider Front Door/WAF for the demo week)
+- [ ] Authentication: Entra ID sign-in and app roles for admin functions; public Viewer mode stays read-only
 - [ ] Open decisions settled: names and collision check, team, Teams route, brand, languages
-- [ ] Budget ($100/month) and resource groups provisioned via `azd provision`
+- [x] Dev environment provisioned via `azd provision` (budget $100/month)
 - [ ] Upgrade subscription to pay-as-you-go (before the credit expires around Nov 6)
 - [ ] Foundry quota request for a stronger `quality` model
-- [ ] `azd auth login` for the tenant
 - [ ] Simulator v0 emitting events
 - [ ] Placeholder project on Innovation Studio (neutral title); teammates joined and registered (by Oct 20, 1:00 pm)
 - [ ] Email hackathon support: partner credits (§4.12), how to declare a category

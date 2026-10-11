@@ -24,9 +24,21 @@ make fmt       # auto-format and fix lint where safe
 |---|---|
 | `apps/api` | FastAPI gateway (Python 3.12) |
 | `apps/web` | Next.js web app (TypeScript) |
+| `infra/` | Bicep for Azure, with policy tests (`infra/tests`) |
+| `scripts/` | Container and deployment smoke tests |
 | `docs/` | Plan and architecture decisions |
 
-All changes go through pull requests; `main` is protected and must stay green.
+All changes go through pull requests; `main` is protected and must stay green. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Deploy to Azure
+
+Prerequisites: [Azure Developer CLI](https://aka.ms/azd), Docker, an Azure subscription.
+
+```bash
+azd up    # provisions everything in infra/ and deploys both apps
+```
+
+The apps scale to zero when idle. In this repository, infrastructure is provisioned by a person and every merge to `main` deploys the apps through GitHub Actions with workload identity federation (no stored credentials). See [ADR-004](docs/DECISIONS.md).
 
 ## Licence
 
