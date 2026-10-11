@@ -54,67 +54,76 @@ describe("CorrectionsCenter", () => {
     );
   });
 
-  it("opens on the latest correction, with its board, summary and every item it reached", async () => {
+  it("opens on the correction that reached the most, with its board, summary and items", async () => {
     await played();
-
-    expect(
-      screen.getByRole("heading", { level: 2, name: /credited to Idris Briceño/ }),
-    ).toBeInTheDocument();
-    expect(screen.getByLabelText("Out: HCY 19")).toBeInTheDocument();
-    // Tribuna's version was held, never published: the board counts what went out.
-    expect(screen.getByText("2 published items corrected.")).toBeInTheDocument();
-    const summary = screen.getByRole("region", { name: "Impact" });
-    expect(summary).toHaveTextContent("3 items · 3 partners · 3 languages");
-    const boards = within(screen.getByRole("list", { name: "Items corrected" })).getAllByRole(
-      "listitem",
-    );
-    expect(boards).toHaveLength(3);
-    expect(boards[0]).toHaveTextContent("Northlight Sport");
-    expect(boards[0]).toHaveTextContent("Amended");
-    expect(boards[2]).toHaveTextContent("Pulled off air");
-  });
-
-  it("shows what went out and what came in, in each partner's language", async () => {
-    await played();
-    const [northlight, rheinblick] = within(
-      screen.getByRole("list", { name: "Items corrected" }),
-    ).getAllByRole("listitem");
-
-    expect(within(northlight!).getByRole("group", { name: "Out" })).toHaveTextContent(
-      "Niklas Navarro-Gil",
-    );
-    expect(within(northlight!).getByRole("group", { name: "In" })).toHaveTextContent(
-      "Idris Briceño",
-    );
-    expect(
-      within(rheinblick!).getByRole("group", { name: "In" }).querySelector("[lang='de-DE']"),
-    ).not.toBeNull();
-  });
-
-  it("switches to another correction from its key", async () => {
-    await played();
-
-    fireEvent.click(screen.getByRole("button", { name: /^Ruled out/ }));
 
     expect(
       screen.getByRole("heading", { level: 2, name: /ruled out for offside/ }),
     ).toBeInTheDocument();
+    expect(screen.getByLabelText("Out: 2-0")).toBeInTheDocument();
+    // The held version was never published: the board counts what was on air.
+    expect(screen.getByText("2 published items corrected.")).toBeInTheDocument();
     expect(
-      within(screen.getByRole("list", { name: "Items corrected" }))
-        .getAllByRole("listitem")
-        .every((b) => b.textContent?.includes("Pulled off air")),
-    ).toBe(true);
+      screen.getByText(/3 partner items \(2 on air, 1 held\) · 3 partners · 3 languages · \d+ ms/),
+    ).toBeInTheDocument();
+    const boards = within(screen.getByRole("list", { name: "Items corrected" })).getAllByRole(
+      "listitem",
+    );
+    expect(boards).toHaveLength(3);
+    expect(screen.getByRole("heading", { level: 3, name: "Northlight Sport" })).toBeInTheDocument();
+    expect(boards.map((b) => within(b).getByRole("group", { name: /^In:/ }).textContent)).toEqual([
+      "InPulled off air",
+      "InPulled off air",
+      "InWithdrawn before air",
+    ]);
   });
 
-  it("draws the impact from the event to every partner, and replays it", async () => {
+  it("shows what went out and what came in, in each partner's language", async () => {
+    await played();
+    fireEvent.click(screen.getByRole("button", { name: /^Amended/ }));
+
+    const out = screen.getByRole("group", { name: "Out: Northlight Sport" });
+    const into = screen.getByRole("group", { name: "In: Northlight Sport" });
+    expect(out).toHaveTextContent("Niklas Navarro-Gil");
+    expect(out).toHaveTextContent("(replaced)");
+    expect(into).toHaveTextContent("Idris Briceño");
+    expect(
+      screen.getByRole("group", { name: "In: Rheinblick Sport" }).querySelector("[lang='de-DE']"),
+    ).not.toBeNull();
+  });
+
+  it("draws the impact in a producer's words, and replays it", async () => {
     await played();
     const strip = screen.getByRole("img", {
-      name: /m42-e2044 reached 1 insight and 3 partner items/,
+      name: "Harbour City goal at 67' ruled out for offside: reached 1 insight and 3 partner items",
     });
     expect(strip.querySelectorAll("[data-node='item']")).toHaveLength(3);
+    expect(strip).toHaveTextContent("2-0 → 1-0");
+    expect(strip).toHaveTextContent("Goal 67'");
+    expect(strip).toHaveTextContent("Northlight Sport · en-GB");
 
-    fireEvent.click(screen.getByRole("button", { name: /Replay/ }));
-    expect(document.querySelector("[data-replay]")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: "Replay" }));
+    expect(document.querySelector(".impact[data-replay]")).not.toBeNull();
+    expect(screen.getByRole("heading", { level: 3, name: "Northlight Sport" })).toHaveFocus();
+  });
+
+  it("starts afresh on another match", async () => {
+    const view = await played();
+    fireEvent.click(screen.getByRole("button", { name: /^Amended/ }));
+
+    search.value = new URLSearchParams("match=m43");
+    view.rerender(<CorrectionsCenter />);
+    await screen.findByText("Kingsbridge Athletic v Ashford Vale · Meridian League");
+    search.value = new URLSearchParams("match=m42");
+    view.rerender(<CorrectionsCenter />);
+    await screen.findByText("Harbour City v Northgate FC · Meridian League");
+    act(() => {
+      for (const entry of FEED) stream().emit(entry.kind, entry);
+    });
+
+    expect(
+      screen.getByRole("heading", { level: 2, name: /ruled out for offside/ }),
+    ).toBeInTheDocument();
   });
 
   it("says when a match has had no corrections", async () => {

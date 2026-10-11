@@ -8,6 +8,8 @@ interface CorrectionBoardProps {
   readonly locale?: string;
   /** Where the corrected item is on the page, when it is shown. */
   readonly href?: string;
+  /** Only the board and its impact: for a page that states the summary and times itself. */
+  readonly brief?: boolean;
 }
 
 /** A correction on the fourth official's board: what went out (red) and what came in (green). */
@@ -16,6 +18,7 @@ export function CorrectionBoard({
   itemsCorrected,
   locale = "en-GB",
   href,
+  brief = false,
 }: CorrectionBoardProps) {
   const issued = new Date(correction.correction.issuedAt).toLocaleTimeString(locale, {
     hour: "2-digit",
@@ -46,7 +49,7 @@ export function CorrectionBoard({
         </div>
       </div>
       <figcaption className="sub-board__caption">
-        {href ? (
+        {brief ? null : href ? (
           <a className="sub-board__summary" href={href}>
             {correction.summary}
           </a>
@@ -58,7 +61,7 @@ export function CorrectionBoard({
             ? "No published item rested on it."
             : `${itemsCorrected} published ${itemsCorrected === 1 ? "item" : "items"} corrected.`}
         </span>
-        <span className="sub-board__when tabular">{`Issued ${issued} UTC`}</span>
+        {!brief && <span className="sub-board__when tabular">{`Issued ${issued} UTC`}</span>}
       </figcaption>
     </figure>
   );

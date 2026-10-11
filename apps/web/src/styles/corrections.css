@@ -12,7 +12,13 @@
 .corrections__keys {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.corrections__keys .panel-heading {
+  margin-bottom: 0;
 }
 
 .corrections__keys .key[aria-pressed="true"] {
@@ -83,11 +89,17 @@
   gap: var(--space-3);
 }
 
+/* On a phone the fan keeps a readable size and scrolls sideways; the boards are its text. */
+.impact__frame {
+  overflow-x: auto;
+  margin-bottom: var(--space-5);
+}
+
 .impact {
   display: block;
   width: 100%;
+  min-width: 640px;
   height: auto;
-  margin-bottom: var(--space-5);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-key);
   background: var(--panel-0);
@@ -160,6 +172,7 @@
 }
 
 .change__partner {
+  font-size: var(--text-md);
   font-weight: 600;
   color: var(--ink-1);
 }
@@ -252,6 +265,12 @@
   animation-delay: 620ms;
 }
 
+/* Replayed: the partner items in the fan light with the boards, on the same beat. */
+.impact[data-replay] [data-node="item"],
+.impact[data-replay] .impact__edge[data-action] {
+  animation: change-light-up 420ms var(--ease-out) 260ms both;
+}
+
 @keyframes change-light-up {
   from {
     opacity: 0.15;
@@ -281,7 +300,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .change__panel[data-side="in"] > * {
+  .change__panel[data-side="in"] > *,
+  .impact[data-replay] [data-node="item"],
+  .impact[data-replay] .impact__edge[data-action] {
     animation: none;
   }
 }

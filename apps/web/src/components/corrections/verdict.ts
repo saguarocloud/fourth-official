@@ -1,11 +1,9 @@
 import type { Verdict } from "@/components/broadcast/verdict";
 import type { Incident } from "@/domain/corrections";
+import { plural } from "@/lib/plural";
 
-function plural(n: number, one: string, many: string): string {
-  return `${n} ${n === 1 ? one : many}`;
-}
-
-/** The one line a producer reads first: how many corrections, and what they reached. */
+/** The one line a producer reads first: how many corrections, what they reached, and anything
+ * still waiting for an editor. */
 export function correctionsVerdict(
   incidents: readonly Incident[],
   failed: boolean,
@@ -24,8 +22,11 @@ export function correctionsVerdict(
   const actions = incidents.flatMap((i) => i.changes.map((c) => c.action));
   const partners = new Set(actions.map((a) => a.tenantId)).size;
   const languages = new Set(actions.map((a) => a.locale)).size;
+  const held = actions.filter((a) => a.action === "escalated").length;
+  const waiting =
+    held > 0 ? `; ${plural(held, "new version", "new versions")} held for an editor` : "";
   return {
-    tone: "green",
-    text: `${plural(incidents.length, "correction", "corrections")} this match: ${plural(actions.length, "partner item", "partner items")} corrected across ${plural(partners, "partner", "partners")} and ${plural(languages, "language", "languages")}.`,
+    tone: held > 0 ? "amber" : "green",
+    text: `${plural(incidents.length, "correction", "corrections")} this match: ${plural(actions.length, "partner item", "partner items")} corrected across ${plural(partners, "partner", "partners")} and ${plural(languages, "language", "languages")}${waiting}.`,
   };
 }

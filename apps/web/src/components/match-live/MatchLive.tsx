@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 
 import { AppShell } from "@/components/shell/AppShell";
 import type { CorrectionEntry } from "@/contracts/feed";
-import { isMatchId } from "@/lib/matchId";
+import { FEATURED_MATCH, isMatchId } from "@/lib/matchId";
 import { liveVerdict, type LiveItem, type RunState } from "@/domain/live";
 
 import { CorrectionBoard } from "./CorrectionBoard";
@@ -16,8 +16,6 @@ import { StartMatchday } from "./StartMatchday";
 import { useLiveFeed } from "./useLiveFeed";
 import { useMatches, useRunKey } from "@/components/matchday/useMatchday";
 
-const FEATURED = "m42";
-
 function linkTo(item: LiveItem | undefined): string | undefined {
   return item ? `#moment-${item.moment.momentId}` : undefined;
 }
@@ -26,9 +24,9 @@ export function MatchLive() {
   const params = useSearchParams();
   const { matches, availability, failed, refresh } = useMatches();
   const param = params.get("match");
-  const asked = param !== null && isMatchId(param) ? param : FEATURED;
+  const asked = param !== null && isMatchId(param) ? param : FEATURED_MATCH;
   const current =
-    matches?.find((m) => m.matchId === asked) ?? matches?.find((m) => m.matchId === FEATURED);
+    matches?.find((m) => m.matchId === asked) ?? matches?.find((m) => m.matchId === FEATURED_MATCH);
   const matchId = current?.matchId ?? asked;
   const state: RunState = current?.state ?? "idle";
   const runKey = useRunKey(matchId, current?.state ?? null);

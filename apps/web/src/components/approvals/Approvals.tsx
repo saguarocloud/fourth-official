@@ -9,14 +9,13 @@ import { useMatches, useRunKey } from "@/components/matchday/useMatchday";
 import { useTenants } from "@/components/matchday/useTenants";
 import { AppShell } from "@/components/shell/AppShell";
 import { applyBroadcast, type BroadcastState, emptyBroadcast } from "@/domain/broadcast";
-import { isMatchId } from "@/lib/matchId";
+import { FEATURED_MATCH, isMatchId } from "@/lib/matchId";
 
 import { ApprovalsFloor } from "./ApprovalsFloor";
 import type { Phase } from "./verdict";
 
 export { SETTLE_MS } from "./ApprovalsFloor";
 
-const FEATURED = "m42";
 const BROADCAST: Folding<BroadcastState> = { empty: emptyBroadcast, apply: applyBroadcast };
 
 /** The Approvals screen: which match, and its feed. The floor below is keyed by match, so
@@ -26,9 +25,9 @@ export function Approvals() {
   const { matches, failed } = useMatches({ availability: false });
   const tenants = useTenants();
   const param = params.get("match");
-  const asked = param !== null && isMatchId(param) ? param : FEATURED;
+  const asked = param !== null && isMatchId(param) ? param : FEATURED_MATCH;
   const current =
-    matches?.find((m) => m.matchId === asked) ?? matches?.find((m) => m.matchId === FEATURED);
+    matches?.find((m) => m.matchId === asked) ?? matches?.find((m) => m.matchId === FEATURED_MATCH);
   const matchId = current?.matchId ?? asked;
   const runKey = useRunKey(matchId, current?.state ?? null);
   const { view, connection, generation } = useFeedStream(matchId, runKey, BROADCAST);
