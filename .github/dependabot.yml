@@ -10,9 +10,23 @@ updates:
     schedule: { interval: weekly }
     groups:
       web: { patterns: ["*"] }
+    ignore:
+      # @types/node tracks the Node.js runtime (24 LTS), not the newest Node.js.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # eslint-config-next does not yet load under ESLint 10; TypeScript 7 is a new compiler.
+      # Both majors are taken deliberately, with their own pull request.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
   - package-ecosystem: docker
     directories: [/apps/api, /apps/web]
     schedule: { interval: weekly }
+    ignore:
+      # Production images stay on Node.js LTS; odd-numbered releases never become LTS.
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
