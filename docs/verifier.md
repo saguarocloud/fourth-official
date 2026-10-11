@@ -70,7 +70,7 @@ Spanish and German have no lowercase word allowlist, because a localised insight
 
 `verify_localized(localized, canonical, moment, facts, blocked=...)` decides whether a partner's version may air:
 - **Same claims** (`CLAIMS_CHANGED`): the localised insight is a version of the canonical one, with the same claims in order and the same types and evidence. The Localizer writes text only; code copies the rest.
-- **Same facts** (`REFERENCES_CHANGED`): each claim names exactly the canonical claim's references, in any order, because word order changes in translation. A fact added, dropped or repeated is refused. The headline may drop a fact, never add one.
+- **Same facts in the same roles** (`REFERENCES_CHANGED`): each claim names exactly the canonical claim's references. References of different kinds may move, because word order changes in translation. References of one kind keep their order, so two clubs, a scorer and an assist, or a before and after value can never swap. A fact added, dropped or repeated is refused. The headline may only drop one of the canonical headline's own facts. It may never add or repeat one, even a fact a claim names.
 - **The language's checks:** `verify()` in the partner's language.
 - **The partner's blocked topics** (`BLOCKED_TOPIC`): from its policy.
 - **The graphic** (`TOO_LONG`): rendered in the partner's locale, the headline fits in 120 characters and each claim in 200, the lower third's limits.

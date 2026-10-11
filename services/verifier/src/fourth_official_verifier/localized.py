@@ -1,13 +1,14 @@
 """A partner's version of a verified insight: the same claims and facts in new words.
 
 A Localizer only rewrites text, so the checks here are structural: the claims, their types and
-evidence are the canonical insight's; each claim names exactly the canonical facts (in any order:
-word order changes in translation); the headline may drop a fact, never add one. Then the text is
+evidence are the canonical insight's; each claim names exactly the canonical facts, in their roles
+(references of different kinds may move, as word order changes in translation, but two clubs, a
+scorer and an assist, or a before and after value keep their order); the headline may drop one of
+the canonical headline's facts, never add one. Then the text is
 checked as any claim is, in the partner's language, against the partner's blocked topics, and
 against the length of the graphic it airs in.
 """
 
-from collections import Counter
 from collections.abc import Callable, Iterator, Sequence
 
 from fourth_official_contracts import (
@@ -34,6 +35,31 @@ def _finding(claim_id: str | None, code: FindingCode, detail: str) -> Finding:
     return Finding(claim_id=claim_id, code=code, detail=detail[:200])
 
 
+def _by_kind(text: str) -> dict[str, list[str]]:
+    """Each kind of reference in the order the text names them: who leads whom, before and after."""
+    found: dict[str, list[str]] = {}
+    for kind, argument in claim_references(text):
+        found.setdefault(kind, []).append(argument)
+    return found
+
+
+def _is_subsequence(part: list[str], whole: list[str]) -> bool:
+    remaining = iter(whole)
+    return all(item in remaining for item in part)
+
+
+def _keeps(mine: str, theirs: str, *, may_drop: bool) -> bool:
+    """Whether `mine` names `theirs`'s facts in their roles. References of different kinds may
+    move (word order changes in translation); references of one kind keep their order, so two
+    clubs, a scorer and an assist, or a before and after value never swap."""
+    have, want = _by_kind(mine), _by_kind(theirs)
+    if not set(have) <= set(want) or (not may_drop and set(have) != set(want)):
+        return False
+    if may_drop:
+        return all(_is_subsequence(have[k], want[k]) for k in have)
+    return all(have[k] == want[k] for k in want)
+
+
 def _structure(localized: LocalizedInsight, canonical: Insight) -> Iterator[Finding]:
     if localized.insight_id != canonical.insight_id:
         yield _finding(None, "CLAIMS_CHANGED", "this is not a version of the canonical insight")
@@ -41,17 +67,20 @@ def _structure(localized: LocalizedInsight, canonical: Insight) -> Iterator[Find
     if [c.claim_id for c in localized.claims] != [c.claim_id for c in canonical.claims]:
         yield _finding(None, "CLAIMS_CHANGED", "keep exactly the canonical claims, in order")
         return
-    every = Counter(r for c in canonical.claims for r in claim_references(c.text))
-    every.update(claim_references(canonical.headline))
     for mine, theirs in zip(localized.claims, canonical.claims, strict=True):
         if (mine.type, mine.evidence) != (theirs.type, theirs.evidence):
             yield _finding(mine.claim_id, "CLAIMS_CHANGED", "keep the claim's type and evidence")
-        if Counter(claim_references(mine.text)) != Counter(claim_references(theirs.text)):
+        if not _keeps(mine.text, theirs.text, may_drop=False):
             yield _finding(
-                mine.claim_id, "REFERENCES_CHANGED", "keep exactly the references of the claim"
+                mine.claim_id,
+                "REFERENCES_CHANGED",
+                "keep exactly the claim's references, each kind in its order",
             )
-    if not set(claim_references(localized.headline)) <= set(every):
-        yield _finding(None, "REFERENCES_CHANGED", "the headline names a fact no claim does")
+    # The headline may leave a fact out, never add or repeat one.
+    if not _keeps(localized.headline, canonical.headline, may_drop=True):
+        yield _finding(
+            None, "REFERENCES_CHANGED", "the headline may only drop the canonical headline's facts"
+        )
 
 
 def _blocked(localized: LocalizedInsight, blocked: BlockedTopics) -> Iterator[Finding]:

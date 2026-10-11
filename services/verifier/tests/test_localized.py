@@ -169,3 +169,37 @@ def test_a_spanish_goal_template_reads_in_spanish() -> None:
 
     assert localized.headline == "Gol de {{club:HCY}}"
     assert "marca para {{club:HCY}}" in localized.claims[0].text
+
+
+# --- Review round -----------------------------------------------------------------------------
+
+
+def test_facts_of_one_kind_keep_their_roles() -> None:
+    # The canonical claim has HCY leading NGT: the localised claim may not swap them.
+    two = dict(CANONICAL)
+    two["claims"] = [
+        {
+            **CANONICAL["claims"][0],
+            "text": "{{club:HCY}} lead {{club:NGT}} at {{minute:12}}: {{score}}.",
+        },
+        CANONICAL["claims"][1],
+    ]
+    flipped = localized_wire(
+        two,
+        "tribuna-austral",
+        "Gol de {{club:HCY}}",
+        "{{club:NGT}} cae ante {{club:HCY}} en el {{minute:12}}: {{score}}.",
+        GOOD_ES[2],
+    )
+    localized = parse_localized_insight(flipped)
+    verdict = verify_localized(
+        localized, parse_insight(two), GOAL_MOMENT, FACTS, blocked=lambda text: []
+    )
+
+    assert "REFERENCES_CHANGED" in [f.code for f in verdict.findings]
+
+
+def test_a_headline_may_only_drop_the_canonical_headline_s_facts() -> None:
+    # The canonical headline names only HCY; a claim names a player, but the headline may not.
+    assert "REFERENCES_CHANGED" in codes(spanish("Gol de {{player:HCY-09}}", *GOOD_ES[1:]))
+    assert "REFERENCES_CHANGED" in codes(spanish("{{club:HCY}} {{club:HCY}}", *GOOD_ES[1:]))

@@ -44,6 +44,7 @@ PHRASES: dict[Locale, dict[str, str]] = {
         "chance.close": "{player} goes close for {club} at {minute}.",
         "red.headline": "{club} down a player",
         "red": "{player} is sent off at {minute}, leaving {club} a player short.",
+        "red.second": "{player} is sent off at {minute}, leaving {club} a player short.",
         "var.headline": "VAR rules out a {club} goal",
         "var": "VAR rules out the {club} goal from {target} for {reason}.",
         "collapse.headline": "{club} ease off the press",
@@ -62,6 +63,9 @@ PHRASES: dict[Locale, dict[str, str]] = {
         "chance.close": "{player} roza el gol para {club} en el {minute}.",
         "red.headline": "{club} con un jugador menos",
         "red": "{player} es expulsado en el {minute} y {club} se queda con un jugador menos.",
+        "red.second": (
+            "{player} es expulsado en el {minute} y {club} se queda con un jugador menos."
+        ),
         "var.headline": "El VAR anula un gol de {club}",
         "var": "El VAR anula el gol de {club} del {target} por {reason}.",
         "collapse.headline": "{club} baja la presión",
@@ -73,15 +77,19 @@ PHRASES: dict[Locale, dict[str, str]] = {
     },
     "de-DE": {
         "goal.headline": "Tor für {club}",
-        "goal": "{scorer} trifft in der {minute} für {club} zum {score}.",
+        "goal": "{scorer} trifft in Minute {minute} für {club} zum {score}.",
         "assist": "{assist} bereitet das Tor vor.",
         "chance.headline": "Große Chance für {club}",
-        "chance.penalty": "{player} vergibt in der {minute} einen Elfmeter für {club}.",
-        "chance.close": "{player} scheitert in der {minute} knapp für {club}.",
+        "chance.penalty": "{player} vergibt in Minute {minute} einen Elfmeter für {club}.",
+        "chance.close": "{player} scheitert in Minute {minute} knapp für {club}.",
         "red.headline": "{club} in Unterzahl",
-        "red": "{player} sieht in der {minute} Rot, {club} spielt in Unterzahl.",
+        "red": "{player} sieht in Minute {minute} Rot, {club} spielt in Unterzahl.",
+        # A second yellow is "Gelb-Rot" in German, never "Rot".
+        "red.second": "{player} sieht in Minute {minute} Gelb-Rot, {club} spielt in Unterzahl.",
         "var.headline": "Videobeweis nimmt {club} ein Tor",
-        "var": "Der Videobeweis nimmt das Tor von {club} aus der {target} wegen {reason} zurück.",
+        "var": (
+            "Der Videobeweis nimmt das Tor von {club} aus Minute {target} wegen {reason} zurück."
+        ),
         "collapse.headline": "{club} lässt im Pressing nach",
         "collapse": "Die Pressingquote von {club} fällt auf {after} pro Ballkontakt, von {before}.",
         "surge.headline": "{club} erhöht das Pressing",
@@ -97,13 +105,37 @@ REASONS: dict[Locale, dict[str, str]] = {
         "offside": "Abseits",
         "foul": "Foulspiel",
         "handball": "Handspiel",
-        "none": "Videobeweis",
+        "none": "einer Überprüfung",
     },
 }
 METRICS: dict[Locale, dict[str, str]] = {
     "en-GB": {},
-    "es-MX": {"momentum": "impulso", "possession": "posesión", "field_tilt": "dominio territorial"},
-    "de-DE": {"momentum": "Momentum", "possession": "Ballbesitz", "field_tilt": "Feldanteil"},
+    "es-MX": {
+        "possession": "posesión",
+        "field_tilt": "dominio territorial",
+        "passes": "pases",
+        "pass_completion": "precisión de pase",
+        "shots": "remates",
+        "shots_on_target": "remates a puerta",
+        "xg": "xG",
+        "ppda": "PPDA",
+        "pressing_intensity": "intensidad de presión",
+        "momentum": "impulso",
+        "control_chaos": "control del juego",
+    },
+    "de-DE": {
+        "possession": "Ballbesitz",
+        "field_tilt": "Feldanteil",
+        "passes": "Pässe",
+        "pass_completion": "Passquote",
+        "shots": "Schüsse",
+        "shots_on_target": "Schüsse aufs Tor",
+        "xg": "xG",
+        "ppda": "PPDA",
+        "pressing_intensity": "Pressingintensität",
+        "momentum": "Momentum",
+        "control_chaos": "Spielkontrolle",
+    },
 }
 
 
@@ -154,7 +186,8 @@ def _big_chance(moment: Moment, facts: MatchFacts, say: dict[str, str]) -> tuple
 def _red_card(moment: Moment, facts: MatchFacts, say: dict[str, str]) -> tuple[str, list[Line]]:
     card = _event(facts, moment.event_ids[-1], CardEvent)
     club = _club(card.team_id)
-    line = say["red"].format(
+    key = "red.second" if card.card == "second_yellow" else "red"
+    line = say[key].format(
         player=_player(card.player_id), club=club, minute=_minute(card.clock.minute)
     )
     return say["red.headline"].format(club=club), [("stat", line)]

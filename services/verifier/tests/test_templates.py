@@ -2,12 +2,14 @@
 
 from dataclasses import replace
 from functools import cache
+from typing import get_args
 
 import pytest
 
 from fourth_official_contracts import (
     CLUB_NAMES,
     GoalEvent,
+    MetricName,
     MetricSnapshot,
     Moment,
     parse_insight,
@@ -20,6 +22,7 @@ from fourth_official_stats.context import MatchContext
 from fourth_official_stats.prepare import PreparedMatch, prepare
 from fourth_official_stats.snapshots import SnapshotKey, snapshot
 from fourth_official_verifier import MatchFacts, render_insight, template_insight, verify
+from fourth_official_verifier.templates import METRICS, PHRASES, REASONS
 from verifier_fixtures import FACTS, GOAL_MOMENT
 
 
@@ -138,3 +141,14 @@ def test_a_moment_with_no_template_and_no_shift_is_refused() -> None:
 
     with pytest.raises(ValueError, match="no template"):
         template_insight(goal.model_copy(update={"kind": "momentum_swing"}), facts)
+
+
+def test_german_templates_name_the_card_and_read_naturally() -> None:
+    assert "Gelb-Rot" in PHRASES["de-DE"]["red.second"]
+    assert "Videobeweis" not in REASONS["de-DE"]["none"]
+    assert "in Minute {minute}" in PHRASES["de-DE"]["goal"]
+
+
+def test_every_metric_has_a_label_in_spanish_and_german() -> None:
+    for locale in ("es-MX", "de-DE"):
+        assert set(get_args(MetricName)) <= set(METRICS[locale]), locale

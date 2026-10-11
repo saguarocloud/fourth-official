@@ -25,7 +25,7 @@ distanz tiefe breite kette netz latte pfosten winkel ecke bahn außenbahn
 pass pässe zuspiel flanke schuss schüsse abschluss kopfball kopf fuß parade vorlage
 konter umschaltspiel umschalten ballgewinn ballverlust zweikampf zweikämpfe duell foul
 elfmeter strafstoß freistoß eckball einwurf abstoß anstoß abseits karte gelb rot
-platzverweis videobeweis video beweis entscheidung wechsel einwechslung auswechslung
+platzverweis videobeweis video beweis überprüfung entscheidung gelb-rot wechsel einwechslung auswechslung
 nachschuss abpraller fehlpass fehler kontakt kontakte lauf sprint aufbau spielaufbau
 
 # --- Measures and analysis --------------------------------------------------------------------
