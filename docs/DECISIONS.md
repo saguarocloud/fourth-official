@@ -203,3 +203,20 @@ One entry per decision: context, options, choice, consequences. Newest last.
   - nothing uses raw HTML;
   - no script can load from another origin.
 - If the studio ever renders per request, switch to nonces and drop `'unsafe-inline'`.
+
+## ADR-010: Localised text keeps the guarantees, not the English vocabulary
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** Partners read insights in English, Spanish and German. The English Verifier refuses any word outside a curated allowlist, which keeps claims to ordinary football English. Building and maintaining allowlists of the same depth for Spanish and German would slow every partner without adding to what matters. What matters are the guarantees: no number stated by a model, no name written out, nothing about the future, and no fact the evidence does not hold.
+
+**Choice.**
+- **One rule set per language** (`languages.py`): characters, number words, future wording, sentence openers, and which capitalised words may stand anywhere. English keeps its lowercase allowlist; Spanish and German do not.
+- **Names in German** are caught through an allowlist of football nouns and their compounds, because German capitalises every noun.
+- **No added facts** is structural. A localised insight is the canonical insight with new words: the Localizer outputs text only, code copies claim types and evidence, and its references must match the canonical ones.
+- **Numbers are formatted by code** from CLDR data (Babel), in the reader's locale. es-MX writes a decimal point, as CLDR records.
+- **When unsure, refuse.** A refusal costs a retry or a template; a wrong publication costs trust.
+
+**Consequences.**
+- German "wird" is refused even as "becomes". An unfamiliar German compound noun is refused until it is listed. Both lists grow from measured drafts, as the English vocabulary did, never by loosening the rules on numbers and names.
+- Off-topic wording in Spanish or German is not caught by vocabulary. It is screened by the partners' blocked topics now, and later by content safety and the LLM judge.
