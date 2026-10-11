@@ -1,8 +1,9 @@
-"""Checks on the words of a claim, outside its references.
+"""Checks on the words of a claim, outside its references, in the claim's language.
 
-Claim text is ordinary football English: printable ASCII (plus typographic quotes and dashes),
-words from the vocabulary allowlist, capitals only for known terms and a closed set of sentence
-openers, no numbers in any form, no names written out, and no wording about the future.
+Claim text is ordinary football language: printable characters of the language (plus typographic
+quotes and dashes), capitals only for known terms and a closed set of sentence openers, no numbers
+in any form, no names written out, and no wording about the future. English text also uses only
+words from the vocabulary allowlist. The rules for each language are in `languages.py`.
 """
 
 import re
@@ -10,7 +11,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 from fourth_official_contracts import CLUB_NAMES
-from fourth_official_verifier.vocabulary import NUMBER_WORDS, SENTENCE_OPENERS, TERMS, known
+from fourth_official_verifier.languages import ENGLISH, Language, fold
 
 _TOKEN = re.compile(r"\{\{[^{}]*\}\}")
 _TYPOGRAPHIC = str.maketrans(
@@ -27,18 +28,9 @@ _TYPOGRAPHIC = str.maketrans(
         "\u202f": " ",
     }
 )
-_ALLOWED = re.compile(r"^[\x20-\x7e]*$")
 # A number and anything stuck to it ("3", "2-0", "1st", "90th").
 _NUMBERS = re.compile(r"[0-9][0-9A-Za-z]*")
-_WORD = re.compile(r"[A-Za-z][A-Za-z'_-]*")
 _SENTENCE_END = re.compile(r"[.!?;:]\s+|[.!?;:]$|\s-\s")
-# Wording that reaches past the moment an insight is about.
-_FUTURE = re.compile(
-    r"\b(will|would|shall|soon|later|afterwards?|shortly|finally|eventually|next|going to|"
-    r"about to|go on to|goes on to|went on to|full[- ]time|final whistle|final score|"
-    r"in the end)\b",
-    re.IGNORECASE,
-)
 # Stands in for a reference: not a word, not a number, and never the start of a sentence.
 _HOLE = " ⁣ "
 
@@ -53,17 +45,14 @@ class TextProblems:
     future: list[str] = field(default_factory=list)
 
 
-# A reference may take a possessive: "{{club:NGT}}'s press".
-_POSSESSIVE_TOKEN = re.compile(r"\{\{[^{}]*\}\}(?:['\u2019]s\b|s['\u2019])?")
+def _plain(text: str, language: Language) -> str:
+    # A reference may take the language's possessive: "{{club:NGT}}'s", "{{club:NGT}}s".
+    ending = f"(?:{language.possessive})?" if language.possessive else ""
+    return re.sub(r"\{\{[^{}]*\}\}" + ending, _HOLE, text).translate(_TYPOGRAPHIC)
 
 
-def _plain(text: str) -> str:
-    return _POSSESSIVE_TOKEN.sub(_HOLE, text).translate(_TYPOGRAPHIC)
-
-
-# Football phrases that contain a number word but state no count. Only places qualify: phrases
-# about time ("first half", "for the first time") make claims the Verifier cannot check.
-_PLACE_PHRASES = re.compile(r"\bfinal[ -]third\b", re.IGNORECASE)
+def _allowed(language: Language) -> re.Pattern[str]:
+    return re.compile(rf"^[\x20-\x7e{re.escape(language.letters)}]*$")
 
 
 def _name_forms(player_names: Iterable[str]) -> set[str]:
@@ -91,26 +80,35 @@ def _sentence_starts(plain: str) -> set[int]:
     return starts
 
 
-def _is_opener(match: re.Match[str], starts: set[int], plain: str) -> bool:
-    before = plain[: match.start()].rstrip(" \"'(")
+def _is_opener(match: re.Match[str], starts: set[int], plain: str, leading: str) -> bool:
+    before = plain[: match.start()].rstrip(leading)
     return match.start() in starts or len(before) in starts or not before
 
 
 # Phrases that state a count, allowed only where cited evidence states the same: the caller
 # passes them in when it has checked the evidence.
-SECOND_YELLOW = re.compile(r"\bsecond[ -]yellow\b", re.IGNORECASE)
+SECOND_YELLOW: dict[str, re.Pattern[str]] = {
+    "en-GB": re.compile(r"\bsecond[ -]yellow\b", re.IGNORECASE),
+    "es-MX": re.compile(r"\bsegunda (?:tarjeta )?amarilla\b", re.IGNORECASE),
+    "de-DE": re.compile(r"\bzweiten? gelben?(?: karte)?\b", re.IGNORECASE),
+}
 
 
 def check_text(
-    text: str, player_names: Iterable[str], *, evidenced: Iterable[re.Pattern[str]] = ()
+    text: str,
+    player_names: Iterable[str],
+    *,
+    evidenced: Iterable[re.Pattern[str]] = (),
+    language: Language = ENGLISH,
 ) -> TextProblems:
-    """Everything wrong with the words of a claim or headline. `evidenced` phrases are accepted
-    because the evidence the text cites states them."""
-    plain = _plain(text)
-    if not _ALLOWED.match(plain.replace(_HOLE, " ")):
+    """Everything wrong with the words of a claim or headline in `language`. `evidenced` phrases
+    are accepted because the evidence the text cites states them."""
+    plain = _plain(text, language)
+    if not _allowed(language).match(plain.replace(_HOLE, " ")):
         return TextProblems(unsupported=True)
     plain, raw = _strip_names(plain, _name_forms(player_names))
-    plain = _PLACE_PHRASES.sub(_HOLE, plain)
+    if language.place_phrases is not None:
+        plain = language.place_phrases.sub(_HOLE, plain)
     for phrase in evidenced:
         plain = phrase.sub(_HOLE, plain)
     numbers = _NUMBERS.findall(plain)
@@ -118,17 +116,20 @@ def check_text(
     names: list[str] = []
     unknown: list[str] = []
     starts = _sentence_starts(plain)
-    for match in _WORD.finditer(plain):
+    for match in language.word.finditer(plain):
         word = match.group(0).strip("'-")
         lower = word.lower()
-        if lower in NUMBER_WORDS or any(part in NUMBER_WORDS for part in lower.split("-")):
+        if language.states_number(word):
             numbers.append(word)
-        elif word in TERMS:
+        elif language.capitalised(word):
             continue
         elif word[0].isupper():
-            if not (_is_opener(match, starts, plain) and lower in SENTENCE_OPENERS):
+            opener = _is_opener(match, starts, plain, language.leading)
+            if not (opener and fold(word) in language.openers):
                 names.append(word)
-        elif not known(lower):
+        elif language.known is not None and not language.known(lower):
             unknown.append(word)
-    future = [m.group(0) for m in _FUTURE.finditer(plain)]
+    if language.number_phrases is not None:
+        numbers += language.number_phrases.findall(fold(plain))
+    future = language.future_in(plain)
     return TextProblems(False, numbers, raw, names, unknown, future)

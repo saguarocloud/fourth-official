@@ -101,3 +101,34 @@ def claim(
 
 def insight(*claims: dict[str, Any], headline: str = "{{club:HCY}} take the lead") -> Insight:
     return parse_insight(insight_wire(*claims, headline=headline))
+
+
+LOCALES = {"tribuna-austral": "es-MX", "rheinblick-sport": "de-DE", "northlight-sport": "en-GB"}
+
+
+def localized_wire(
+    canonical: dict[str, Any], tenant: str, headline: str, *texts: str
+) -> dict[str, Any]:
+    """The canonical insight in a partner's words: same claims and evidence, new text."""
+    claims = [
+        {**claim, "text": text} for claim, text in zip(canonical["claims"], texts, strict=True)
+    ]
+    return {
+        "itemId": f"it-{tenant}-{canonical['insightId']}-v1",
+        "tenantId": tenant,
+        "locale": LOCALES[tenant],
+        "insightId": canonical["insightId"],
+        "matchId": canonical["matchId"],
+        "momentId": canonical["momentId"],
+        "asOfSeq": canonical["asOfSeq"],
+        "version": 1,
+        "headline": headline,
+        "claims": claims,
+        "provenance": {
+            "agent": "localizer",
+            "promptVersion": "v1.0",
+            "model": "fast",
+            "producedBy": "model",
+        },
+        "policyVersion": 1,
+    }
