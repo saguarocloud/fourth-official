@@ -31,6 +31,10 @@ Running checklist. Update daily. Times are Mexico City.
 
 - [x] Match event and correction contracts (ADR-005) (#7)
 - [ ] TypeScript types generated from the contract schemas when the web consumes events
+- [x] Simulator engine: squads, styles, possession-chain match engine, realism checks (docs/simulator.md)
+- [ ] Simulator storylines, ground truth and scheduled corrections; fixed demo matchday
+- [ ] Simulator 5 Hz tracking frames
+- [ ] Event Hubs publisher and infrastructure
 
 - [ ] Simulator → Event Hubs → stats → Moment Detector → Analyst ⇄ Verifier → one tenant → Match Live UI, deployed with `azd up`
 - [ ] Attend Reactor livestream (Oct 14, 10:00)

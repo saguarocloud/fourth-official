@@ -10,6 +10,7 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
 COPY packages/contracts/pyproject.toml packages/contracts/pyproject.toml
+COPY services/simulator/pyproject.toml services/simulator/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package fourth-official-api --no-install-workspace
 COPY apps/api apps/api

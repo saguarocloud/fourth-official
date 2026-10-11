@@ -1,0 +1,62 @@
+# Famous current and past footballers. Generated names must never match these, and their surnames
+# are kept out of the name pools entirely. Extend freely; the tests enforce both rules.
+Alan Shearer
+Alexis Mac Allister
+Alisson Becker
+Andrés Iniesta
+Andy Robertson
+Antoine Griezmann
+Bernardo Silva
+Bruno Fernandes
+Bukayo Saka
+Cesc Fàbregas
+Cole Palmer
+Cristiano Ronaldo
+David Beckham
+Declan Rice
+Didier Drogba
+Diego Maradona
+Dennis Bergkamp
+Eden Hazard
+Erling Haaland
+Frank Lampard
+Gabriel Jesus
+Gareth Bale
+Harry Kane
+Heung-min Son
+Jack Grealish
+Jamie Vardy
+Jordan Henderson
+Jude Bellingham
+Karim Benzema
+Kevin De Bruyne
+Kylian Mbappé
+Lionel Messi
+Luis Suárez
+Luka Modrić
+Marcus Rashford
+Martin Ødegaard
+Mesut Özil
+Mohamed Salah
+N'Golo Kanté
+Neymar Silva
+Paul Pogba
+Pelé Nascimento
+Phil Foden
+Raheem Sterling
+Rio Ferdinand
+Robert Lewandowski
+Rodri Hernández
+Roy Keane
+Ruben Dias
+Ryan Giggs
+Sadio Mané
+Sergio Agüero
+Sergio Ramos
+Steven Gerrard
+Thierry Henry
+Trent Alexander-Arnold
+Virgil van Dijk
+Wayne Rooney
+Xabi Alonso
+Zinedine Zidane
