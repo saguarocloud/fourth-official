@@ -36,5 +36,22 @@ export function streamSlots(perClient: number): StreamSlots {
 export function clientOf(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
   const last = forwarded?.split(",").at(-1)?.trim();
-  return last || "direct";
+  return last ? network(last) : "direct";
+}
+
+const HEXTETS = 8;
+const PREFIX_HEXTETS = 4;
+
+/** An IPv6 address counted by its /64: one subscriber is usually handed a whole /64, so counting
+ * single addresses would let one client take a fresh share per address. IPv4 is kept as it is. */
+function network(address: string): string {
+  const bare = address.replace(/^\[|\]$/g, "").toLowerCase();
+  if (!bare.includes(":")) return bare;
+  const [head = "", tail] = bare.split("::");
+  const front = head ? head.split(":") : [];
+  const back = tail ? tail.split(":") : [];
+  const zeros =
+    tail === undefined ? [] : Array<string>(HEXTETS - front.length - back.length).fill("0");
+  const prefix = [...front, ...zeros, ...back].slice(0, PREFIX_HEXTETS);
+  return `${prefix.map((h) => h.replace(/^0+(?=.)/, "")).join(":")}::/64`;
 }

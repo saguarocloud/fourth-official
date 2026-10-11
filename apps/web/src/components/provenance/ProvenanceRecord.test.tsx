@@ -2,17 +2,26 @@ import { render, screen, within } from "@testing-library/react";
 import axe from "axe-core";
 import { describe, expect, it } from "vitest";
 
-import { ANSWERS, ON_AIR_ID, HELD_ID, RETRACTED_ID, AMENDED_ID } from "./testing";
+import { ANSWERS, DEVELOPMENT, ON_AIR_ID, HELD_ID, RETRACTED_ID, AMENDED_ID } from "./testing";
 import { ProvenanceRecord } from "./ProvenanceRecord";
 
 describe("ProvenanceRecord", () => {
   it("leads with the seal: signed and unchanged, by which key", () => {
     render(<ProvenanceRecord answer={ANSWERS[ON_AIR_ID]!} />);
 
-    const seal = screen.getByRole("status", { name: "Verification" });
+    const seal = screen.getByRole("region", { name: "Verification" });
     expect(seal).toHaveTextContent("Signed and unchanged");
-    expect(seal).toHaveTextContent("A local development key (HS256)");
+    expect(seal).toHaveTextContent("The studio's key in Azure Key Vault (ES256)");
     expect(seal).toHaveTextContent("Issued by Meridian League Studios");
+    expect(seal).toHaveAttribute("data-tone", "verified");
+  });
+
+  it("marks a record signed with a development key as such, never green", () => {
+    render(<ProvenanceRecord answer={DEVELOPMENT[ON_AIR_ID]!} />);
+
+    const seal = screen.getByRole("region", { name: "Verification" });
+    expect(seal).toHaveTextContent("Unchanged, signed with a development key");
+    expect(seal).toHaveAttribute("data-tone", "development");
   });
 
   it("sets the item's words in its own language, with the label it carried", () => {
@@ -71,10 +80,10 @@ describe("ProvenanceRecord", () => {
     };
     render(<ProvenanceRecord answer={answer} />);
 
-    const seal = screen.getByRole("status", { name: "Verification" });
+    const seal = screen.getByRole("region", { name: "Verification" });
     expect(seal).toHaveTextContent("Does not verify");
     expect(seal).toHaveTextContent("the signature does not match");
-    expect(seal).toHaveAttribute("data-valid", "false");
+    expect(seal).toHaveAttribute("data-tone", "failed");
     expect(screen.getByRole("heading", { level: 2 })).toBeInTheDocument();
   });
 
@@ -88,7 +97,7 @@ describe("ProvenanceRecord", () => {
       />,
     );
 
-    expect(screen.getByRole("status", { name: "Verification" })).toHaveTextContent(
+    expect(screen.getByRole("region", { name: "Verification" })).toHaveTextContent(
       "the stored record no longer reads",
     );
     expect(screen.queryByRole("heading", { level: 2 })).toBeNull();

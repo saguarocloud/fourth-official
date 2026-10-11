@@ -1,8 +1,15 @@
-import { ShieldAlert, ShieldCheck } from "lucide-react";
+import { ShieldAlert, ShieldCheck, ShieldX, type LucideIcon } from "lucide-react";
+import { useId } from "react";
 
 import type { ProvenanceRecord as Record, SignedProvenance } from "@/contracts/provenance";
 import { PARTNERS } from "@/domain/broadcast";
-import { lifeOf, type ProvenanceAnswer, sealOf, signerOf } from "@/domain/provenance";
+import {
+  lifeOf,
+  type ProvenanceAnswer,
+  type SealTone,
+  sealOf,
+  signerOf,
+} from "@/domain/provenance";
 import { type ItemState, StatusLamp } from "@/components/ui/StatusLamp";
 
 // The record's states, in the shared lamp vocabulary: a rejected item was dropped.
@@ -14,6 +21,12 @@ const LAMP: Readonly<{ [S in Record["state"]]: ItemState }> = {
   amended: "amended",
 };
 
+const SEAL_ICONS: Readonly<{ [T in SealTone]: LucideIcon }> = {
+  verified: ShieldCheck,
+  development: ShieldAlert,
+  failed: ShieldX,
+};
+
 function partnerName(tenantId: string): string {
   return PARTNERS.find((p) => p.id === tenantId)?.name ?? tenantId;
 }
@@ -21,23 +34,23 @@ function partnerName(tenantId: string): string {
 function Seal({ answer }: { readonly answer: ProvenanceAnswer }) {
   const seal = sealOf(answer);
   const signed = answer.provenance;
-  const Icon = seal.valid ? ShieldCheck : ShieldAlert;
+  const Icon = SEAL_ICONS[seal.tone];
   return (
-    <div role="status" aria-label="Verification" className="seal" data-valid={seal.valid}>
+    <section aria-label="Verification" className="seal" data-tone={seal.tone}>
       <Icon aria-hidden="true" className="seal__icon" strokeWidth={1.5} />
       <div className="seal__text">
         <p className="seal__title">{seal.title}</p>
         {seal.detail && <p className="seal__detail">{seal.detail}</p>}
         {signed && (
           <p className="seal__by">
-            {signerOf(signed)} · Issued by {signed.record.issuer} at{" "}
+            {signerOf(signed)} · Issued by {signed.record.issuer}, signed at{" "}
             <time dateTime={signed.record.issuedAt}>
               {signed.record.issuedAt.slice(11, 19)} UTC
             </time>
           </p>
         )}
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -67,12 +80,13 @@ function Claims({ record }: { readonly record: Record }) {
 }
 
 function Life({ record }: { readonly record: Record }) {
+  const heading = useId();
   return (
-    <section aria-labelledby="life-heading" className="record__life">
-      <h3 id="life-heading" className="panel-heading">
+    <section aria-labelledby={heading} className="record__life">
+      <h3 id={heading} className="panel-heading">
         Its life
       </h3>
-      <ol aria-labelledby="life-heading" className="life">
+      <ol aria-labelledby={heading} className="life">
         {lifeOf(record).map((step) => (
           <li key={step.label} className="life__step" data-tone={step.tone}>
             <span aria-hidden="true" className="life__mark" />
@@ -87,9 +101,10 @@ function Life({ record }: { readonly record: Record }) {
 
 function Facts({ signed }: { readonly signed: SignedProvenance }) {
   const { record } = signed;
+  const heading = useId();
   return (
-    <section aria-labelledby="facts-heading" className="record__facts">
-      <h3 id="facts-heading" className="panel-heading">
+    <section aria-labelledby={heading} className="record__facts">
+      <h3 id={heading} className="panel-heading">
         The record
       </h3>
       <dl className="facts">
@@ -115,14 +130,14 @@ function Facts({ signed }: { readonly signed: SignedProvenance }) {
 export function ProvenanceRecord({ answer }: { readonly answer: ProvenanceAnswer }) {
   const signed = answer.provenance;
   return (
-    <article className="record" aria-label="Provenance record">
+    <article id="record" className="record" aria-label="Provenance record" tabIndex={-1}>
       <Seal answer={answer} />
       {signed && (
         <>
           <header className="record__head">
             <span className="record__partner">{partnerName(signed.record.tenantId)}</span>
             <span className="record__locale">{signed.record.locale}</span>
-            <span className="record__version">Version {signed.record.version}</span>
+            <span className="record__version">Version {signed.record.version}, as signed</span>
             <StatusLamp state={LAMP[signed.record.state]} />
             {signed.record.disclosure?.label && (
               <span lang={signed.record.locale} className="record__label">

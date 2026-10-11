@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useMemo } from "react";
@@ -50,15 +50,17 @@ interface PickerProps {
 function Picker({ matchId, items, view, current }: PickerProps) {
   const now = view.clock ? instant(view.clock.clock) : null;
   return (
-    <nav aria-label="Items on record" className="picker">
+    <nav aria-labelledby="picker-heading" className="picker">
+      <h2 id="picker-heading" className="panel-heading picker__heading">
+        Items on record · {items.length}
+      </h2>
       <ul>
         {items.map((item) => (
           <li key={item.overlay.itemId}>
             <Link
-              href={`/provenance?match=${matchId}&item=${item.overlay.itemId}`}
+              href={`/provenance?match=${matchId}&item=${item.overlay.itemId}#record`}
               className="picker__item"
               aria-current={item.overlay.itemId === current ? "page" : undefined}
-              scroll={false}
             >
               <span className="picker__code">{codeOf(item.tenantId)}</span>
               <span lang={item.overlay.locale} className="picker__headline">
@@ -99,7 +101,7 @@ function RecordPane({ itemId, lookup, retry }: RecordPaneProps) {
           <p className="provenance__public">
             <Link href={`/verify/${itemId}`} className="provenance__public-link">
               Open the public verification page
-              <ArrowUpRight aria-hidden="true" strokeWidth={1.75} />
+              <ArrowRight aria-hidden="true" strokeWidth={1.75} />
             </Link>
           </p>
         </>

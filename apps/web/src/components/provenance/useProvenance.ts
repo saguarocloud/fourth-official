@@ -27,7 +27,9 @@ async function lookUp(itemId: string, signal: AbortSignal): Promise<Lookup> {
   });
   if (!response.ok) return FAILED[response.status] ?? { status: "unavailable" };
   const answer = parseAnswer(await response.json());
-  return answer ? { status: "ready", answer } : { status: "unavailable" };
+  // A record of any other item than the one asked for is no answer for this one.
+  const ofAnother = answer?.provenance && answer.provenance.record.itemId !== itemId;
+  return answer && !ofAnother ? { status: "ready", answer } : { status: "unavailable" };
 }
 
 interface Settled {

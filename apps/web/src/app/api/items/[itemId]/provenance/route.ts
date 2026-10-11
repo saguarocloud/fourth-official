@@ -11,7 +11,8 @@ const limit = rateLimit({ perWindow: READS_PER_MINUTE, windowMs: 60_000 });
 const PASSED = new Set([200, 404, 429, 503]);
 
 /** An item's signed provenance record and its check, from the match API (ADR-013). Public, as
- * the Verify page is: the API limits reads per client, so the client's address is passed on. */
+ * the Verify page is, so each visitor is limited here: the API's ingress appends this app's own
+ * address, so the API sees the web app as one caller, with a higher ceiling of its own. */
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ itemId: string }> },
@@ -20,8 +21,7 @@ export async function GET(
   if (!isItemId(itemId)) {
     return Response.json({ detail: "No such item." }, { status: 404, headers: NO_STORE });
   }
-  const client = clientOf(request);
-  const wait = limit.take(client);
+  const wait = limit.take(clientOf(request));
   if (wait > 0) {
     return Response.json(
       { detail: "Too many reads from here. Wait a moment and try again." },
@@ -30,7 +30,6 @@ export async function GET(
   }
   try {
     const upstream = await fetch(`${apiBase()}/api/items/${itemId}/provenance`, {
-      headers: { "X-Forwarded-For": client },
       cache: "no-store",
       redirect: "error",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),

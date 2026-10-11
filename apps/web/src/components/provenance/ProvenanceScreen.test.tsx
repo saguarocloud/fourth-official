@@ -59,13 +59,13 @@ describe("ProvenanceScreen", () => {
     serve(byId);
     await played();
 
-    const items = within(screen.getByRole("navigation", { name: "Items on record" })).getAllByRole(
+    const items = within(screen.getByRole("navigation", { name: /^Items on record/ })).getAllByRole(
       "link",
     );
     expect(items.length).toBeGreaterThan(10);
     expect(items[0]).toHaveAttribute(
       "href",
-      expect.stringContaining("/provenance?match=m42&item="),
+      expect.stringMatching(/^\/provenance\?match=m42&item=it-[\w-]+#record$/),
     );
   });
 
@@ -73,9 +73,16 @@ describe("ProvenanceScreen", () => {
     serve(byId);
     await played();
 
-    const nav = screen.getByRole("navigation", { name: "Items on record" });
+    const nav = screen.getByRole("navigation", { name: /^Items on record/ });
     expect(nav).not.toHaveTextContent("{{");
     expect(nav).toHaveTextContent("Gol de Harbour City");
+  });
+
+  it("heads the list with how many items are on record", async () => {
+    serve(byId);
+    await played();
+
+    expect(screen.getByRole("heading", { name: /^Items on record · \d+$/ })).toBeInTheDocument();
   });
 
   it("opens the newest item's record when none is asked for", async () => {
@@ -83,7 +90,7 @@ describe("ProvenanceScreen", () => {
     await played();
 
     const current = within(
-      screen.getByRole("navigation", { name: "Items on record" }),
+      screen.getByRole("navigation", { name: /^Items on record/ }),
     ).getAllByRole("link")[0]!;
     expect(current).toHaveAttribute("aria-current", "page");
   });
@@ -95,7 +102,7 @@ describe("ProvenanceScreen", () => {
 
     expect(await screen.findByText("Signed and unchanged")).toBeInTheDocument();
     expect(screen.getByRole("status", { name: "Provenance verdict" })).toHaveTextContent(
-      "This record is signed and unchanged",
+      "partner items on record for this match. This one is signed and unchanged.",
     );
     expect(screen.getByRole("link", { name: /public verification page/i })).toHaveAttribute(
       "href",

@@ -1,4 +1,5 @@
 import type { Verdict } from "@/components/broadcast/verdict";
+import { sealOf } from "@/domain/provenance";
 import { plural } from "@/lib/plural";
 
 import type { Lookup } from "./useProvenance";
@@ -22,16 +23,21 @@ export function provenanceVerdict(
   }
   const onRecord = `${plural(items, "partner item", "partner items")} on record`;
   switch (lookup.status) {
-    case "ready":
-      return lookup.answer.verification.valid
-        ? {
-            tone: "green",
-            text: `This record is signed and unchanged. ${onRecord} for this match.`,
-          }
+    case "ready": {
+      const seal = sealOf(lookup.answer);
+      if (seal.tone === "failed") {
+        return {
+          tone: "red",
+          text: `This record does not verify: ${seal.detail?.replace(/\.?$/, ".")}`,
+        };
+      }
+      return seal.tone === "verified"
+        ? { tone: "green", text: `${onRecord} for this match. This one is signed and unchanged.` }
         : {
-            tone: "red",
-            text: `This record does not verify: ${lookup.answer.verification.reason ?? "it could not be checked"}.`,
+            tone: "amber",
+            text: `${onRecord} for this match. This one is unchanged but signed with a development key.`,
           };
+    }
     case "missing":
       return { tone: "amber", text: `This item has no signed record yet. ${onRecord}.` };
     case "busy":

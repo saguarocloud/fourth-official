@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { ANSWERS, ON_AIR_ID } from "./testing";
+import { ANSWERS, HELD_ID, ON_AIR_ID } from "./testing";
 import { useProvenance } from "./useProvenance";
 
 function serve(...responses: Response[]) {
@@ -47,6 +47,13 @@ describe("useProvenance", () => {
 
   it("refuses an answer that is not shaped as a record", async () => {
     serve(Response.json({ provenance: "forged", verification: { valid: true, reason: null } }));
+    const { result } = renderHook(() => useProvenance(ON_AIR_ID));
+
+    await waitFor(() => expect(result.current.lookup).toEqual({ status: "unavailable" }));
+  });
+
+  it("refuses a record of another item than the one asked for", async () => {
+    serve(Response.json(ANSWERS[HELD_ID]));
     const { result } = renderHook(() => useProvenance(ON_AIR_ID));
 
     await waitFor(() => expect(result.current.lookup).toEqual({ status: "unavailable" }));

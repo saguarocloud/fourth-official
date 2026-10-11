@@ -17,6 +17,19 @@ describe("rateLimit", () => {
     expect(limit.take("a")).toBe(0);
   });
 
+  it("holds at most so many clients, and makes a newcomer wait when it is full", () => {
+    let now = 0;
+    const limit = rateLimit({ perWindow: 5, windowMs: 1000, maxClients: 3, now: () => now });
+    for (const client of ["a", "b", "c"]) expect(limit.take(client)).toBe(0);
+
+    expect(limit.take("d")).toBe(1);
+    expect(limit.take("a")).toBe(0);
+    expect(limit.size()).toBe(3);
+    now = 1000;
+    expect(limit.take("d")).toBe(0);
+    expect(limit.size()).toBe(1);
+  });
+
   it("forgets clients whose window has passed", () => {
     let now = 0;
     const limit = rateLimit({ perWindow: 1, windowMs: 1000, now: () => now });

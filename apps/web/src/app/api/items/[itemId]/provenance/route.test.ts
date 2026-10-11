@@ -26,8 +26,9 @@ describe("GET an item's provenance", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(await response.json()).toEqual(body);
+    // The API's ingress appends the web app's own address; a forwarded visitor address would be
+    // ignored, so none is sent.
     expect(fetch).toHaveBeenCalledWith(`http://127.0.0.1:8000/api/items/${ITEM}/provenance`, {
-      headers: { "X-Forwarded-For": "203.0.113.4" },
       cache: "no-store",
       redirect: "error",
       signal: expect.any(AbortSignal),

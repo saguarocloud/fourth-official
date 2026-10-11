@@ -20,25 +20,29 @@ export function Verify({ itemId }: { readonly itemId: string }) {
   return (
     <div data-theme="paper" className="paper">
       <header className="paper__masthead">
-        <BrandMark />
-        <p className="paper__studio">
-          Meridian League Studios <span className="paper__product">· Fourth Official</span>
-        </p>
+        <div className="paper__masthead-inner">
+          <BrandMark />
+          <p className="paper__studio">
+            Meridian League Studios <span className="paper__product">· Fourth Official</span>
+          </p>
+        </div>
       </header>
-      <main id="main" className="paper__main">
-        <h1 className="paper__title">Is this graphic what the studio published?</h1>
-        {lookup.status === "ready" ? (
-          <ProvenanceRecord answer={lookup.answer} />
-        ) : (
-          <div className="provenance__note" data-status={lookup.status}>
-            <p>{NOTES[lookup.status]}</p>
-            {(lookup.status === "busy" || lookup.status === "unavailable") && (
-              <button type="button" className="key" data-size="sm" onClick={retry}>
-                <span>Try again</span>
-              </button>
-            )}
-          </div>
-        )}
+      <main id="main" className="paper__main" tabIndex={-1}>
+        <h1 className="paper__title">The studio&apos;s record of this graphic</h1>
+        <div aria-live="polite" className="paper__result">
+          {lookup.status === "ready" ? (
+            <ProvenanceRecord answer={lookup.answer} />
+          ) : (
+            <div className="provenance__note" data-status={lookup.status}>
+              <p>{NOTES[lookup.status]}</p>
+              {(lookup.status === "busy" || lookup.status === "unavailable") && (
+                <button type="button" className="key" data-size="sm" onClick={retry}>
+                  <span>Try again</span>
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <section aria-labelledby="how-heading" className="paper__how">
           <h2 id="how-heading">How this check works</h2>
           <p>
@@ -47,6 +51,11 @@ export function Verify({ itemId }: { readonly itemId: string }) {
             studio&apos;s key; the seal names the key. This page asks the studio&apos;s service to
             check the signature against the record as it is stored now: change one word and the
             signature no longer matches.
+          </p>
+          <p>
+            It shows what the studio published under this item&apos;s id; compare it with the
+            graphic you hold. A graphic can be copied beside a genuine id, so the words must match
+            too.
           </p>
         </section>
       </main>

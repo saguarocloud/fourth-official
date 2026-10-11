@@ -33,11 +33,15 @@ const STATES: readonly State[] = ["on_air", "pending_approval", "rejected", "ret
 
 type Fields = Record<string, unknown>;
 
+// The API writes times as ISO 8601 in UTC, to the millisecond; the time of day is read from them.
+const UTC_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,6})?Z$/;
+
 const isObject = (value: unknown): value is Fields =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === "string";
 const isStrings = (value: unknown): value is string[] =>
   Array.isArray(value) && value.every(isString);
+const isTime = (value: unknown): value is string => isString(value) && UTC_TIME.test(value);
 const isOneOf = <T extends string>(value: unknown, allowed: readonly T[]): value is T =>
   isString(value) && (allowed as readonly string[]).includes(value);
 
@@ -72,13 +76,19 @@ function isAttempt(value: unknown): boolean {
   );
 }
 
+// A rejection always carries its reason; an approval never does (ADR-011).
 function isApproval(value: unknown): boolean {
+  if (!isObject(value) || !isString(value.editor) || !isTime(value.decidedAt)) return false;
+  if (value.decision === "rejected") return isString(value.reason);
+  return value.decision === "approved" && (value.reason === undefined || value.reason === null);
+}
+
+function isDisclosure(value: unknown): boolean {
   return (
     isObject(value) &&
-    isOneOf(value.decision, ["approved", "rejected"] as const) &&
-    isString(value.editor) &&
-    isString(value.decidedAt) &&
-    (value.reason === undefined || value.reason === null || isString(value.reason))
+    (value.label === null || isString(value.label)) &&
+    isString(value.mode) &&
+    isString(value.reason)
   );
 }
 
@@ -86,16 +96,10 @@ function isRecord(value: unknown): value is ProvenanceRecord {
   if (!isObject(value)) return false;
   const { claims, attempts } = value;
   return (
-    [
-      "itemId",
-      "insightId",
-      "matchId",
-      "tenantId",
-      "locale",
-      "headline",
-      "issuer",
-      "issuedAt",
-    ].every((key) => isString(value[key])) &&
+    ["itemId", "insightId", "matchId", "tenantId", "locale", "headline", "issuer"].every((key) =>
+      isString(value[key]),
+    ) &&
+    isTime(value.issuedAt) &&
     isOneOf(value.state, STATES) &&
     Number.isInteger(value.version) &&
     Number.isInteger(value.feedEntry) &&
@@ -109,7 +113,7 @@ function isRecord(value: unknown): value is ProvenanceRecord {
     isAuthor(value.localized) &&
     (value.canonical === null || isAuthor(value.canonical)) &&
     (value.approval === null || isApproval(value.approval)) &&
-    (value.disclosure === null || isObject(value.disclosure))
+    (value.disclosure === null || isDisclosure(value.disclosure))
   );
 }
 
@@ -129,7 +133,8 @@ export function parseAnswer(value: unknown): ProvenanceAnswer | null {
   if (!isObject(value) || !isObject(value.verification)) return null;
   const { valid, reason } = value.verification;
   if (typeof valid !== "boolean" || !(reason === null || isString(reason))) return null;
-  if (value.provenance !== null && !isSigned(value.provenance)) return null;
+  // A verdict of valid with no record behind it is no answer: nothing was verified.
+  if (value.provenance === null ? valid : !isSigned(value.provenance)) return null;
   return value as unknown as ProvenanceAnswer;
 }
 
@@ -140,20 +145,31 @@ export function authorOf(author: Provenance): string {
     : `${author.model}, as the ${author.agent} agent, prompt ${author.promptVersion}`;
 }
 
+/** Verified under the studio's key; intact but signed by a development key; or not verified. */
+export type SealTone = "verified" | "development" | "failed";
+
 export interface Seal {
-  readonly valid: boolean;
+  readonly tone: SealTone;
   readonly title: string;
   readonly detail: string | null;
 }
 
-/** The verdict at the top of a record. */
+/** The verdict at the top of a record. Only the studio's production key (ES256) earns the green
+ * seal: a local HMAC key proves nothing to anyone outside the studio. */
 export function sealOf(answer: ProvenanceAnswer): Seal {
-  return answer.verification.valid
-    ? { valid: true, title: "Signed and unchanged", detail: null }
+  if (!answer.verification.valid) {
+    return {
+      tone: "failed",
+      title: "Does not verify",
+      detail: answer.verification.reason ?? "The record could not be checked.",
+    };
+  }
+  return answer.provenance?.algorithm === "ES256"
+    ? { tone: "verified", title: "Signed and unchanged", detail: null }
     : {
-        valid: false,
-        title: "Does not verify",
-        detail: answer.verification.reason ?? "The record could not be checked.",
+        tone: "development",
+        title: "Unchanged, signed with a development key",
+        detail: "The signature holds, but a local key signed it, not the studio's production key.",
       };
 }
 
@@ -164,7 +180,9 @@ export function signerOf(signed: SignedProvenance): string {
     : "A local development key (HS256)";
 }
 
-export type StepTone = "done" | "held" | "pulled";
+/** A step's lamp, in the state vocabulary: a plain step is unlit; where the item ended is lit in
+ * that state's colour. */
+export type StepTone = "step" | "aired" | "held" | "dropped" | "retracted" | "amended";
 
 /** One moment in an item's life, as its record tells it. */
 export interface LifeStep {
@@ -193,7 +211,7 @@ function checked(record: ProvenanceRecord): LifeStep {
   return {
     label: "Checked",
     detail: refused.length > 0 ? `${detail}; refused before: ${refused.join(", ")}` : detail,
-    tone: "done",
+    tone: "step",
   };
 }
 
@@ -202,8 +220,8 @@ function decided(record: ProvenanceRecord): LifeStep[] {
   if (approval === null) return [];
   const by = `By ${approval.editor} at ${utcTime(approval.decidedAt)}`;
   return approval.decision === "approved"
-    ? [{ label: "Approved", detail: by, tone: "done" }]
-    : [{ label: "Rejected", detail: `${by}: “${approval.reason ?? ""}”`, tone: "pulled" }];
+    ? [{ label: "Approved", detail: by, tone: "step" }]
+    : [{ label: "Rejected", detail: `${by}: “${approval.reason ?? ""}”`, tone: "dropped" }];
 }
 
 function ending(record: ProvenanceRecord): LifeStep {
@@ -212,7 +230,7 @@ function ending(record: ProvenanceRecord): LifeStep {
       return {
         label: "On air",
         detail: record.approval ? "Aired as approved" : "Aired under the partner's policy",
-        tone: "done",
+        tone: "aired",
       };
     case "pending_approval":
       return {
@@ -221,18 +239,18 @@ function ending(record: ProvenanceRecord): LifeStep {
         tone: "held",
       };
     case "rejected":
-      return { label: "Kept off air", detail: "Never aired", tone: "pulled" };
+      return { label: "Kept off air", detail: "Never aired", tone: "dropped" };
     case "retracted":
       return {
         label: "Pulled",
         detail: `Pulled by ${byCorrections(record.corrections)}`,
-        tone: "pulled",
+        tone: "retracted",
       };
     case "amended":
       return {
         label: "Replaced",
         detail: `Superseded by a corrected version after ${byCorrections(record.corrections)}`,
-        tone: "pulled",
+        tone: "amended",
       };
   }
 }
@@ -244,7 +262,7 @@ export function lifeOf(record: ProvenanceRecord): LifeStep[] {
   const written: LifeStep = {
     label: "Written",
     detail: `${authorOf(author)} · insight ${record.insightId}`,
-    tone: "done",
+    tone: "step",
   };
   const remade: LifeStep[] =
     record.supersedes === null
@@ -253,13 +271,13 @@ export function lifeOf(record: ProvenanceRecord): LifeStep[] {
           {
             label: "Remade",
             detail: `Version ${record.version}, replacing ${record.supersedes} after a correction`,
-            tone: "done",
+            tone: "step",
           },
         ];
   const localised: LifeStep = {
     label: "Localised",
     detail: `${record.locale}, by ${lowerFirst(authorOf(record.localized))}`,
-    tone: "done",
+    tone: "step",
   };
   return [written, ...remade, checked(record), localised, ...decided(record), ending(record)];
 }

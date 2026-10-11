@@ -21,7 +21,7 @@ describe("Verify", () => {
     expect(container.querySelector("[data-theme='paper']")).not.toBeNull();
     expect(screen.queryByRole("navigation", { name: /screens/i })).toBeNull();
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
-      "Is this graphic what the studio published?",
+      "The studio's record of this graphic",
     );
     expect(await screen.findByText("Signed and unchanged")).toBeInTheDocument();
   });
@@ -43,6 +43,23 @@ describe("Verify", () => {
       screen.getByText(/change one word and the signature no longer matches/i),
     ).toBeInTheDocument();
     expect(screen.getByText(/signs that record with the studio's key/)).toBeInTheDocument();
+  });
+
+  it("says what the check proves and what it does not", () => {
+    serve(Response.json(ANSWERS[ON_AIR_ID]));
+    render(<Verify itemId={ON_AIR_ID} />);
+
+    expect(screen.getByText(/compare it with the graphic you hold/i)).toBeInTheDocument();
+  });
+
+  it("announces the result when it arrives", async () => {
+    serve(Response.json(ANSWERS[ON_AIR_ID]));
+    const { container } = render(<Verify itemId={ON_AIR_ID} />);
+
+    const live = container.querySelector("[aria-live='polite']");
+    expect(live).toHaveTextContent("Checking the record.");
+    await screen.findByText("Signed and unchanged");
+    expect(live).toHaveTextContent("Signed and unchanged");
   });
 
   it("says plainly when there is no such record", async () => {

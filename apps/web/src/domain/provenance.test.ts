@@ -42,6 +42,51 @@ describe("parseAnswer", () => {
   });
 
   it.each([
+    [
+      "a verdict of valid with no record behind it",
+      { provenance: null, verification: { valid: true, reason: null } },
+    ],
+    [
+      "a label that is not text",
+      {
+        ...ON_AIR,
+        provenance: {
+          ...ON_AIR.provenance,
+          record: {
+            ...recordOf(ON_AIR),
+            disclosure: { label: { x: 1 }, mode: "label-all", reason: "ai_generated" },
+          },
+        },
+      },
+    ],
+    [
+      "an issue time that is not a time",
+      {
+        ...ON_AIR,
+        provenance: {
+          ...ON_AIR.provenance,
+          record: { ...recordOf(ON_AIR), issuedAt: "yesterday" },
+        },
+      },
+    ],
+    [
+      "a rejection with no reason",
+      {
+        ...ON_AIR,
+        provenance: {
+          ...ON_AIR.provenance,
+          record: {
+            ...recordOf(ON_AIR),
+            approval: {
+              decision: "rejected",
+              editor: "T. Ibarra",
+              decidedAt: "2026-10-11T15:04:00.000Z",
+              reason: null,
+            },
+          },
+        },
+      },
+    ],
     ["nothing", null],
     ["a string", "valid"],
     ["no verification", { provenance: ON_AIR.provenance }],
@@ -99,8 +144,21 @@ describe("authorOf", () => {
 });
 
 describe("sealOf", () => {
-  it("says a record is signed and unchanged when the check holds", () => {
-    expect(sealOf(ON_AIR)).toEqual({ valid: true, title: "Signed and unchanged", detail: null });
+  it("says a record is signed and unchanged when the check holds under the studio's key", () => {
+    const signed = { ...ON_AIR.provenance!, algorithm: "ES256" as const };
+    expect(sealOf({ ...ON_AIR, provenance: signed })).toEqual({
+      tone: "verified",
+      title: "Signed and unchanged",
+      detail: null,
+    });
+  });
+
+  it("never lets a development key pass for the studio's", () => {
+    expect(sealOf(ON_AIR)).toEqual({
+      tone: "development",
+      title: "Unchanged, signed with a development key",
+      detail: "The signature holds, but a local key signed it, not the studio's production key.",
+    });
   });
 
   it("says a record does not verify, and why", () => {
@@ -109,7 +167,7 @@ describe("sealOf", () => {
       verification: { valid: false, reason: "the signature does not match" },
     };
     expect(sealOf(failed)).toEqual({
-      valid: false,
+      tone: "failed",
       title: "Does not verify",
       detail: "the signature does not match",
     });
@@ -139,10 +197,10 @@ describe("signerOf", () => {
 describe("lifeOf", () => {
   it("tells an on-air item's life: written, checked, localised, aired", () => {
     expect(lifeOf(recordOf(ON_AIR)).map((s) => [s.label, s.tone])).toEqual([
-      ["Written", "done"],
-      ["Checked", "done"],
-      ["Localised", "done"],
-      ["On air", "done"],
+      ["Written", "step"],
+      ["Checked", "step"],
+      ["Localised", "step"],
+      ["On air", "aired"],
     ]);
   });
 
@@ -206,8 +264,8 @@ describe("lifeOf", () => {
       },
     });
     expect(lifeOf(record).slice(-2)).toEqual([
-      { label: "Approved", detail: "By T. Ibarra at 15:04:00 UTC", tone: "done" },
-      { label: "On air", detail: "Aired as approved", tone: "done" },
+      { label: "Approved", detail: "By T. Ibarra at 15:04:00 UTC", tone: "step" },
+      { label: "On air", detail: "Aired as approved", tone: "aired" },
     ]);
   });
 
@@ -222,8 +280,12 @@ describe("lifeOf", () => {
       },
     });
     expect(lifeOf(record).slice(-2)).toEqual([
-      { label: "Rejected", detail: "By T. Ibarra at 15:04:00 UTC: “Not our tone”", tone: "pulled" },
-      { label: "Kept off air", detail: "Never aired", tone: "pulled" },
+      {
+        label: "Rejected",
+        detail: "By T. Ibarra at 15:04:00 UTC: “Not our tone”",
+        tone: "dropped",
+      },
+      { label: "Kept off air", detail: "Never aired", tone: "dropped" },
     ]);
   });
 
@@ -231,7 +293,7 @@ describe("lifeOf", () => {
     expect(lifeOf(recordOf(RETRACTED)).at(-1)).toEqual({
       label: "Pulled",
       detail: "Pulled by correction c-m42-01",
-      tone: "pulled",
+      tone: "retracted",
     });
   });
 
@@ -240,7 +302,7 @@ describe("lifeOf", () => {
     expect(lifeOf(record).at(-1)).toEqual({
       label: "Replaced",
       detail: "Superseded by a corrected version after correction c-m42-02",
-      tone: "pulled",
+      tone: "amended",
     });
   });
 
@@ -257,7 +319,7 @@ describe("lifeOf", () => {
       label: "Remade",
       detail:
         "Version 2, replacing it-northlight-sport-in-m42-goal-HCY-s2044-a1-v1 after a correction",
-      tone: "done",
+      tone: "step",
     });
   });
 
