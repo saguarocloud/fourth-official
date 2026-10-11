@@ -1,5 +1,6 @@
 """A small match with known facts, and a valid insight about its first goal."""
 
+import copy
 from typing import Any
 
 from events import pass_, pressure, shot
@@ -111,7 +112,8 @@ def localized_wire(
 ) -> dict[str, Any]:
     """The canonical insight in a partner's words: same claims and evidence, new text."""
     claims = [
-        {**claim, "text": text} for claim, text in zip(canonical["claims"], texts, strict=True)
+        {**copy.deepcopy(claim), "text": text}
+        for claim, text in zip(canonical["claims"], texts, strict=True)
     ]
     return {
         "itemId": f"it-{tenant}-{canonical['insightId']}-v1",

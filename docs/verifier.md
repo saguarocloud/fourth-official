@@ -49,7 +49,7 @@ Tests guarantee that no word in the vocabulary or the openers matches a part of 
 
 ## Template fallback
 
-When no model insight passes after its retries (and after the fallback model), `template_insight(moment, facts)` builds a plain insight from the moment's own evidence. Each moment kind has one template, written only with references, so templates pass verification by construction. A test checks this for every moment on the demo matchday. Templates avoid number words ("ten men", "five minutes"), because the Verifier rightly treats those as numbers.
+When no model insight passes after its retries (and after the fallback model), `template_insight(moment, facts)` builds a plain insight from the moment's own evidence. `template_localized(...)` does the same in a partner's language, from the same phrasebook (`PHRASES` in `templates.py`): English, Spanish and German phrasing of the same references. A test checks every demo moment in all three languages. Each moment kind has one template, written only with references, so templates pass verification by construction. A test checks this for every moment on the demo matchday. Templates avoid number words ("ten men", "five minutes"), because the Verifier rightly treats those as numbers.
 
 An insight explaining a VAR overturn may cite the goal it ruled out even after the `EVENT_VOIDED` correction has landed. Any other insight citing that goal fails with `VOIDED_EVIDENCE`, which is how the correction cascade finds published items to fix.
 
@@ -66,7 +66,14 @@ Every language keeps the same guarantees:
 - **Printable characters of the language only:** accents, ñ, ¡¿ in Spanish; umlauts, ß and „…“ quotation marks in German.
 - **"Second yellow":** accepted in every language only where the cited card was a second yellow for the player named ("segunda amarilla", "zweite Gelbe Karte").
 
-Spanish and German have no lowercase word allowlist, because a localised insight may not add facts at all. Its claims, evidence and references must match the canonical English insight, and that check comes with the Localizer.
+Spanish and German have no lowercase word allowlist, because a localised insight may not add facts at all.
+
+`verify_localized(localized, canonical, moment, facts, blocked=...)` decides whether a partner's version may air:
+- **Same claims** (`CLAIMS_CHANGED`): the localised insight is a version of the canonical one, with the same claims in order and the same types and evidence. The Localizer writes text only; code copies the rest.
+- **Same facts** (`REFERENCES_CHANGED`): each claim names exactly the canonical claim's references, in any order, because word order changes in translation. A fact added, dropped or repeated is refused. The headline may drop a fact, never add one.
+- **The language's checks:** `verify()` in the partner's language.
+- **The partner's blocked topics** (`BLOCKED_TOPIC`): from its policy.
+- **The graphic** (`TOO_LONG`): rendered in the partner's locale, the headline fits in 120 characters and each claim in 200, the lower third's limits.
 
 Number words are matched by pattern as well as by list, because both languages build numerals freely. The patterns are applied after folding case, accents and ß, so "dieciseis" and "dreissig" are caught too:
 - Spanish: compounds ("veinticuatro", "quinientos"), ordinals including fused forms ("decimoquinto"), and counts ("cuarteto", "un par").

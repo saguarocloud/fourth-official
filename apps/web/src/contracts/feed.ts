@@ -84,6 +84,10 @@ export type Findings = (
   | "FUTURE_MINUTE"
   | "VOIDED_EVIDENCE"
   | "SUPERSEDED_EVIDENCE"
+  | "CLAIMS_CHANGED"
+  | "REFERENCES_CHANGED"
+  | "BLOCKED_TOPIC"
+  | "TOO_LONG"
 )[];
 export type Model = string;
 export type Number = number;
@@ -143,7 +147,11 @@ export type Code =
   | "FUTURE_EVIDENCE"
   | "FUTURE_MINUTE"
   | "VOIDED_EVIDENCE"
-  | "SUPERSEDED_EVIDENCE";
+  | "SUPERSEDED_EVIDENCE"
+  | "CLAIMS_CHANGED"
+  | "REFERENCES_CHANGED"
+  | "BLOCKED_TOPIC"
+  | "TOO_LONG";
 export type Detail = string;
 /**
  * @maxItems 64
