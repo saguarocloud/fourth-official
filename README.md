@@ -24,8 +24,9 @@ make fmt       # auto-format and fix lint where safe
 |---|---|
 | `apps/api` | FastAPI gateway (Python 3.12) |
 | `apps/web` | Next.js web app (TypeScript) |
-| `packages/contracts` | Match event and correction contracts (Pydantic, exported to JSON Schema) |
+| `packages/contracts` | Match event, correction and metric snapshot contracts (Pydantic, exported to JSON Schema) |
 | `services/simulator` | Deterministic synthetic match simulator ([docs](docs/simulator.md)) |
+| `services/stats-engine` | Deterministic metrics with traceable evidence ([definitions](docs/metrics.md)) |
 | `infra/` | Bicep for Azure, with policy tests (`infra/tests`) |
 | `scripts/` | Container and deployment smoke tests |
 | `docs/` | Plan and architecture decisions |

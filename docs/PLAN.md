@@ -35,6 +35,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Simulator storylines, ground truth and scheduled corrections; fixed demo matchday
 - [ ] Simulator 5 Hz tracking frames
 - [ ] Event Hubs publisher and infrastructure
+- [x] Stats engine: metrics with evidence, snapshots and windows (docs/metrics.md)
+- [ ] Stats engine: restate snapshots when corrections change their events
 
 - [ ] Simulator → Event Hubs → stats → Moment Detector → Analyst ⇄ Verifier → one tenant → Match Live UI, deployed with `azd up`
 - [ ] Attend Reactor livestream (Oct 14, 10:00)

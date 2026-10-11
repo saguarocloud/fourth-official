@@ -11,6 +11,7 @@ from typing import Any
 
 from fourth_official_contracts.corrections import CORRECTION_ADAPTER
 from fourth_official_contracts.events import MATCH_EVENT_ADAPTER
+from fourth_official_contracts.metrics import METRIC_SNAPSHOT_ADAPTER
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 SCHEMA_ID_BASE = "https://github.com/saguarocloud/fourth-official/schemas/"
@@ -32,6 +33,11 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             MATCH_EVENT_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "match-event.schema.json",
             "MatchEvent",
+        ),
+        "metric-snapshot.schema.json": _with_header(
+            METRIC_SNAPSHOT_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "metric-snapshot.schema.json",
+            "MetricSnapshot",
         ),
         "correction.schema.json": _with_header(
             CORRECTION_ADAPTER.json_schema(by_alias=True, mode="validation"),
