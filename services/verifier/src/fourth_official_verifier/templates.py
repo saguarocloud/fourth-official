@@ -266,11 +266,11 @@ def template_localized(
     """A plain, verifiable version of the moment's insight in the partner's language: the last
     resort when no localised draft passes."""
     locale = TENANT_LOCALES[tenant_id]
-    headline, lines = _phrased(moment, facts, locale)  # type: ignore[arg-type]
+    headline, lines = _phrased(moment, facts, locale)
     return LocalizedInsight(
         item_id=item_id_for(tenant_id, insight_id, version=version),
         tenant_id=tenant_id,
-        locale=locale,  # type: ignore[arg-type]
+        locale=locale,
         insight_id=insight_id,
         match_id=moment.match_id,
         moment_id=moment.moment_id,
