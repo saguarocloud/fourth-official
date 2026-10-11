@@ -6,7 +6,7 @@ interface MatchSwitcherProps {
   readonly matches: readonly MatchSummary[];
   readonly current: string;
   /** The screen the keys switch matches on. */
-  readonly path?: "/match" | "/preview" | "/approvals";
+  readonly path?: "/match" | "/preview" | "/approvals" | "/corrections";
 }
 
 /** The matchday's matches, one key each; the current one is lit. */
