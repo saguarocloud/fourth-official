@@ -13,6 +13,7 @@ CONTRIBUTOR = "b24988ac-6180-42a0-ab88-20f7382dd24c"
 USER_ACCESS_ADMINISTRATOR = "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
 RBAC_ADMINISTRATOR = "f58310d9-a9f6-439a-9e8d-f62e7b41a168"
 MANAGED_IDENTITY_OPERATOR = "f1a07417-d97a-45cb-824c-7a7467783830"
+AZURE_AI_USER = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
 GUID = re.compile(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}")
 
 
@@ -130,6 +131,12 @@ def test_no_broad_or_role_granting_roles_anywhere(compiled: CompiledTemplate) ->
 
 def test_role_assignments_declare_service_principal_type(compiled: CompiledTemplate) -> None:
     for assignment in compiled.of_type("Microsoft.Authorization/roleAssignments"):
+        if assignment.properties["principalType"] == "User":
+            # The only person-held role: the developer may call the models, nothing else.
+            assert "foundry" in assignment.module
+            assert AZURE_AI_USER in str(assignment.properties["roleDefinitionId"])
+            assert "developerPrincipalId" in str(assignment.properties["principalId"])
+            continue
         assert assignment.properties["principalType"] == "ServicePrincipal", assignment.module
 
 
@@ -193,6 +200,7 @@ EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
         "Microsoft.App/managedEnvironments'",
     ),
     MANAGED_IDENTITY_OPERATOR: ("Microsoft.ManagedIdentity/userAssignedIdentities'",),
+    AZURE_AI_USER: ("Microsoft.CognitiveServices/accounts'",),
     READER: None,
 }
 
@@ -223,3 +231,36 @@ def test_container_logs_flow_without_shared_keys(compiled: CompiledTemplate) -> 
     categories = {log["category"] for log in diagnostics.properties["logs"] if log["enabled"]}
     assert categories == {"ContainerAppConsoleLogs", "ContainerAppSystemLogs"}
     assert "listKeys" not in compiled.text()
+
+
+# --- Microsoft Foundry ------------------------------------------------------------------------
+
+
+def test_foundry_is_keyless(compiled: CompiledTemplate) -> None:
+    (account,) = compiled.of_type("Microsoft.CognitiveServices/accounts")
+
+    assert account.body["kind"] == "AIServices"
+    assert account.properties["disableLocalAuth"] is True
+
+
+def test_models_are_pay_per_token_and_never_upgrade_themselves(compiled: CompiledTemplate) -> None:
+    (deployments,) = compiled.of_type("Microsoft.CognitiveServices/accounts/deployments")
+    (module,) = [m for m in compiled.modules if m.name == "foundry"]
+    declared = module.parameters["deployments"]
+
+    assert deployments.body["sku"]["name"] == "GlobalStandard"
+    assert deployments.properties["versionUpgradeOption"] == "NoAutoUpgrade"
+    assert {d["name"] for d in declared} == {"fast", "fallback"}
+    assert all(d["version"] for d in declared)
+    # Capacity is a rate limit, not a reservation, but keep it modest.
+    assert sum(d["capacity"] for d in declared) <= 200
+
+
+def test_agents_identity_can_only_use_models(compiled: CompiledTemplate) -> None:
+    roles = {
+        GUID.findall(str(a.properties["roleDefinitionId"]))[0]
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if "foundry" in a.module
+    }
+
+    assert roles == {AZURE_AI_USER}

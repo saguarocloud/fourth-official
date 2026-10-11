@@ -140,3 +140,23 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - The vocabulary and opener lists are deliberately strict. An unusual word costs a retry, never a wrong publication; the Analyst's prompt asks for plain football English.
 - Localisation must keep the reference set unchanged; the post-localisation check compares it.
 - Whether a claim is *supported* by its evidence (no extra assertions) remains a judgement, and belongs to the LLM judge layer that runs after the deterministic checks.
+
+---
+
+## ADR-007: Models on Microsoft Foundry, keyless, behind aliases
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** The Analyst needs a model, and a different fallback model. Our subscription has GlobalStandard quota for gpt-5-mini (500K TPM) and gpt-4.1-mini (200K TPM) in East US 2. o4-mini is deprecating and refuses new deployments. Larger models have no quota yet; a request is pending.
+
+**Choice.**
+- **Account:** one Foundry account (`AIServices`) with one project, provisioned in Bicep (`infra/modules/foundry.bicep`).
+- **Deployments:** pay-per-token **GlobalStandard**, so there is no reserved capacity.
+- **Aliases:** each deployment is named for its alias, `fast` (gpt-5-mini) and `fallback` (gpt-4.1-mini). Code and provenance only ever use the alias, so swapping a model is a one-line Bicep change reviewed in a pull request.
+- **Pinned versions:** `NoAutoUpgrade`.
+- **Keyless:** `disableLocalAuth: true`. Agent workers run as a dedicated `id-agents-*` identity whose only role is Azure AI User on the account. The shared app identity still only pulls images.
+- **Developer access:** the developer running `azd` gets the same Azure AI User role, so live smoke tests run from a laptop. It is the only role held by a person, and a policy test pins it.
+
+**Consequences.**
+- The fallback is a different model family, so a systematic failure of one model is less likely to repeat.
+- When quota for a stronger model arrives, it becomes the `fast` or a new `quality` deployment without code changes.

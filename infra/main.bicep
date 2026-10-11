@@ -32,6 +32,9 @@ param apiExists bool = false
 @description('Set by azd: true once the web app exists, so provisioning keeps its deployed image.')
 param webExists bool = false
 
+@description('Object ID of the developer running azd (set by azd); may call the models locally.')
+param developerPrincipalId string = ''
+
 var tags = {
   'azd-env-name': environmentName
   project: 'fourth-official'
@@ -120,6 +123,24 @@ module web 'modules/container-app.bicep' = {
   }
 }
 
+module foundry 'modules/foundry.bicep' = {
+  name: 'foundry'
+  scope: resourceGroup
+  params: {
+    name: 'ais-${token}'
+    projectName: 'proj-fourth-official'
+    agentsIdentityName: 'id-agents-${token}'
+    location: location
+    tags: tags
+    developerPrincipalId: developerPrincipalId
+    // Code refers to models by alias (fast, fallback); the deployment name is the alias.
+    deployments: [
+      { name: 'fast', model: 'gpt-5-mini', version: '2025-08-07', capacity: 100 }
+      { name: 'fallback', model: 'gpt-4.1-mini', version: '2025-04-14', capacity: 50 }
+    ]
+  }
+}
+
 module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubRepository) && !empty(githubSubjectPrefix)) {
   name: 'deploy-identity'
   scope: resourceGroup
@@ -157,3 +178,5 @@ output SERVICE_API_NAME string = api.outputs.name
 output SERVICE_API_URI string = api.outputs.uri
 output SERVICE_WEB_NAME string = web.outputs.name
 output SERVICE_WEB_URI string = web.outputs.uri
+output FOUNDRY_PROJECT_ENDPOINT string = foundry.outputs.projectEndpoint
+output AGENTS_IDENTITY_CLIENT_ID string = foundry.outputs.agentsIdentityClientId
