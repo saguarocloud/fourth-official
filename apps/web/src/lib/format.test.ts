@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const NBSP = "\u00a0";
 
 import {
+  footballMinute,
   formatCost,
   formatLatency,
   formatMatchClock,
@@ -91,5 +92,20 @@ describe("formatPercent", () => {
 
   it("rejects ratios outside 0..1", () => {
     expect(() => formatPercent(1.2, "en-GB")).toThrow(RangeError);
+  });
+});
+
+describe("footballMinute", () => {
+  it("counts the first minute as 1", () => {
+    expect(footballMinute(0)).toBe(1);
+  });
+
+  it("turns elapsed time at the end of a half into added time", () => {
+    expect(formatMatchMinute(footballMinute(45), 1)).toBe("45+1'");
+    expect(formatMatchMinute(footballMinute(44), 1)).toBe("45'");
+  });
+
+  it("rejects negative elapsed minutes", () => {
+    expect(() => footballMinute(-1)).toThrow(RangeError);
   });
 });

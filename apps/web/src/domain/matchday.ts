@@ -53,6 +53,7 @@ export interface ActivityEntry {
   /** Monotonic order across the matchday; higher is newer. */
   readonly sequence: number;
   readonly matchId: string;
+  /** Football minute as broadcast (68:03 elapsed is the 69th minute). */
   readonly minute: number;
   readonly period: 1 | 2;
   readonly partnerId: PartnerId | null;

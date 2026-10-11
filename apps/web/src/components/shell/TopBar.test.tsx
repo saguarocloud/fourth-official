@@ -40,6 +40,19 @@ describe("TopBar", () => {
     expect(screen.getByText("Outside SLO")).toBeInTheDocument();
   });
 
+  it("does not claim an SLO state when nothing is live", () => {
+    render(
+      <TopBar
+        summary={{ ...summary, liveMatches: 0, p95LatencyMs: null }}
+        studio="S"
+        replay={false}
+      />,
+    );
+
+    expect(screen.getByText("No live matches")).toBeInTheDocument();
+    expect(screen.queryByText("Within SLO")).toBeNull();
+  });
+
   it("shows cost so far to the cent", () => {
     render(<TopBar summary={summary} studio="S" replay={false} />);
 

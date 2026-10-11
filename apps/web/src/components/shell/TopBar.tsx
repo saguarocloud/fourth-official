@@ -44,7 +44,11 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
                 ? "No live matches"
                 : formatLatency(summary.p95LatencyMs, locale)}
             </span>
-            <span className="top-bar__slo">{summary.withinSlo ? "Within SLO" : "Outside SLO"}</span>
+            {summary.p95LatencyMs !== null && (
+              <span className="top-bar__slo">
+                {summary.withinSlo ? "Within SLO" : "Outside SLO"}
+              </span>
+            )}
           </dd>
         </div>
         <div data-attention={summary.pendingApprovals > 0 || undefined}>

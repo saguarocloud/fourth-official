@@ -23,9 +23,9 @@ export function ActivityFeed({ entries, partners }: ActivityFeedProps) {
         <ol className="activity__list">
           {newestFirst.map((entry) => (
             <li key={entry.id} className="activity__item" data-state={entry.state}>
-              <time className="activity__time">
+              <span className="activity__time">
                 {formatMatchMinute(entry.minute, entry.period)}
-              </time>
+              </span>
               <p className="activity__text">{entry.text}</p>
               <p className="activity__meta">
                 <StatusLamp state={entry.state} />

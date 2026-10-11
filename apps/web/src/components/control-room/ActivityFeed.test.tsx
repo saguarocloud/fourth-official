@@ -21,7 +21,9 @@ describe("ActivityFeed", () => {
     const item = screen.getByRole("listitem");
 
     expect(within(item).getByText(entry.text)).toBeInTheDocument();
-    expect(item.querySelector("time")).not.toBeNull();
+    // A football minute is not a valid <time> value, so it is plain text.
+    expect(item.querySelector("time")).toBeNull();
+    expect(within(item).getByText(/^\d+(\+\d+)?'$/)).toBeInTheDocument();
   });
 
   it("explains what will appear before anything has happened", () => {

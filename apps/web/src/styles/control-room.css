@@ -47,6 +47,9 @@
 .verdict[data-tone="red"] .verdict__lamp {
   background: var(--led-red);
 }
+.verdict[data-tone="neutral"] .verdict__lamp {
+  background: var(--ink-3);
+}
 
 /* Match wall ---------------------------------------------------------------------------------- */
 .match-wall {

@@ -31,6 +31,24 @@ describe("LiveClock", () => {
   });
 });
 
+describe("LiveClock alignment", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("ticks on the wall-clock second, not a second after mount", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-10-24T14:07:09.600Z"));
+    render(<LiveClock />);
+
+    act(() => {
+      vi.advanceTimersByTime(400);
+    });
+
+    expect(screen.getByRole("img", { name: "Studio time 15:07:10" })).toBeInTheDocument();
+  });
+});
+
 describe("LiveClock lifecycle", () => {
   afterEach(() => {
     vi.useRealTimers();
