@@ -2,7 +2,7 @@
 
 import re
 
-from arm import CompiledTemplate
+from arm import CompiledTemplate, Resource
 
 ACR_PUSH = "8311e382-0749-4cb8-b61a-304f252e45ec"
 ACR_PULL = "7f951dda-4ed3-4680-a7ca-43fe172d538d"
@@ -129,15 +129,31 @@ def test_no_broad_or_role_granting_roles_anywhere(compiled: CompiledTemplate) ->
         assert role not in text
 
 
+def _is_developer_assignment(assignment: Resource) -> bool:
+    return "developerPrincipalId" in str(assignment.properties["principalId"])
+
+
 def test_role_assignments_declare_service_principal_type(compiled: CompiledTemplate) -> None:
     for assignment in compiled.of_type("Microsoft.Authorization/roleAssignments"):
-        if assignment.properties["principalType"] == "User":
-            # The only person-held role: the developer may call the models, nothing else.
-            assert "foundry" in assignment.module
-            assert AZURE_AI_USER in str(assignment.properties["roleDefinitionId"])
-            assert "developerPrincipalId" in str(assignment.properties["principalId"])
-            continue
-        assert assignment.properties["principalType"] == "ServicePrincipal", assignment.module
+        if not _is_developer_assignment(assignment):
+            assert assignment.properties["principalType"] == "ServicePrincipal", assignment.module
+
+
+def test_the_only_role_a_person_can_hold_is_using_models_on_the_foundry_account(
+    compiled: CompiledTemplate,
+) -> None:
+    (developer,) = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if _is_developer_assignment(a)
+    ]
+
+    assert "foundry" in developer.module
+    assert GUID.findall(str(developer.properties["roleDefinitionId"])) == [AZURE_AI_USER]
+    # Granted only when a developer is named, and only on the account.
+    assert "empty(parameters('developerPrincipalId'))" in str(developer.body["condition"])
+    assert "Microsoft.CognitiveServices/accounts'" in str(developer.body["scope"])
+    assert "developerPrincipalType" in str(developer.properties["principalType"])
 
 
 def test_github_federated_credential_is_scoped_to_one_environment(

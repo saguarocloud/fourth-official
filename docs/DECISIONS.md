@@ -154,8 +154,11 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - **Deployments:** pay-per-token **GlobalStandard**, so there is no reserved capacity.
 - **Aliases:** each deployment is named for its alias, `fast` (gpt-5-mini) and `fallback` (gpt-4.1-mini). Code and provenance only ever use the alias, so swapping a model is a one-line Bicep change reviewed in a pull request.
 - **Pinned versions:** `NoAutoUpgrade`.
-- **Keyless:** `disableLocalAuth: true`. Agent workers run as a dedicated `id-agents-*` identity whose only role is Azure AI User on the account. The shared app identity still only pulls images.
-- **Developer access:** the developer running `azd` gets the same Azure AI User role, so live smoke tests run from a laptop. It is the only role held by a person, and a policy test pins it.
+- **Keyless:** `disableLocalAuth: true`. Agent workers will run as a dedicated `id-agents-*` identity whose only role is Azure AI User (shown as "Foundry User") on the account. The shared app identity still only pulls images.
+- **Why that role:** Azure AI User grants data-plane access to the account and its projects. Calling models through the project endpoint with Agent Framework needs it. A model-only role (Cognitive Services OpenAI User) is narrower, but doesn't cover project operations or a later move to the Foundry Agent Service. It has no control-plane write rights, and key listing is inert while local auth is off.
+- **Developer access:** the person running `azd` (`AZURE_PRINCIPAL_ID`) gets the same role, so live smoke tests run from a laptop. A policy test pins that this is the only assignment not to a service principal: it uses that role only, on the account only, and is granted only when a developer is named.
+- **Network:** the endpoint is publicly reachable but useless without an Entra token and the role. IP allowlisting would need stable egress IPs for the container apps, and private endpoints cost more than this project warrants. Both are deliberately left for later.
+- **Spending:** spend is bounded by each deployment's TPM limit (150K in total, capped at 200K by a test) and by the resource group's budget alerts.
 
 **Consequences.**
 - The fallback is a different model family, so a systematic failure of one model is less likely to repeat.

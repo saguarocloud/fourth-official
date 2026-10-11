@@ -32,8 +32,12 @@ param apiExists bool = false
 @description('Set by azd: true once the web app exists, so provisioning keeps its deployed image.')
 param webExists bool = false
 
-@description('Object ID of the developer running azd (set by azd); may call the models locally.')
+@description('Object ID of the person running azd (azd sets AZURE_PRINCIPAL_ID); may call the models locally.')
 param developerPrincipalId string = ''
+
+@description('Principal type of AZURE_PRINCIPAL_ID: User for a person, ServicePrincipal if provisioning runs as one.')
+@allowed(['User', 'ServicePrincipal'])
+param developerPrincipalType string = 'User'
 
 var tags = {
   'azd-env-name': environmentName
@@ -133,6 +137,7 @@ module foundry 'modules/foundry.bicep' = {
     location: location
     tags: tags
     developerPrincipalId: developerPrincipalId
+    developerPrincipalType: developerPrincipalType
     // Code refers to models by alias (fast, fallback); the deployment name is the alias.
     deployments: [
       { name: 'fast', model: 'gpt-5-mini', version: '2025-08-07', capacity: 100 }
