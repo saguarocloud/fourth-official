@@ -1,6 +1,7 @@
 """Cross-file contracts: azure.yaml, the Bicep, the provision hook and the deploy workflow agree."""
 
 import re
+import tomllib
 from pathlib import Path
 
 import yaml
@@ -67,8 +68,6 @@ def test_main_parameters_read_the_prefix_the_preprovision_hook_writes() -> None:
 
 def test_api_image_copies_every_workspace_manifest() -> None:
     # uv validates the whole workspace lockfile, so the image needs every member's pyproject.
-    import tomllib
-
     members = tomllib.loads((REPO / "pyproject.toml").read_text())["tool"]["uv"]["workspace"][
         "members"
     ]
