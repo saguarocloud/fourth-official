@@ -15,12 +15,9 @@ from azure.storage.blob.aio import ContainerClient
 from pydantic import ValidationError
 
 from fourth_official_contracts import SignedProvenance, parse_signed_provenance
+from fourth_official_provenance.store import UnreadableRecordError
 
 PREFIX = "records/"
-
-
-class UnreadableRecordError(ValueError):
-    """A stored record that no longer parses: changed after it was written."""
 
 
 class KeyVaultSigner:

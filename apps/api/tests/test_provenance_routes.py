@@ -8,12 +8,13 @@ import pytest
 from fastapi.testclient import TestClient
 
 from fourth_official_api.main import create_app
-from fourth_official_api.provenance import Issuer
+from fourth_official_api.provenance import READS_PER_MINUTE, Issuer
 from fourth_official_api.settings import Settings
 from fourth_official_contracts import TenantItemEntry
 from fourth_official_match_data import demo_store
 from fourth_official_provenance import InMemoryStore, LocalSigner
 from fourth_official_replay import Matchday, ReplayConfig
+from provenance_fixtures import FEED as FEED_M42
 from test_partners import no_wait, partners, template_only
 
 STUDIO = {"X-Requested-By": "fourth-official"}
@@ -118,3 +119,107 @@ def test_a_graphic_no_agent_wrote_and_an_unknown_item_have_no_record(
     assert client.get(f"/api/items/{bug.overlay.item_id}/provenance").status_code == 404
     assert client.get("/api/items/it-northlight-sport-in-m42-x-v1/provenance").status_code == 404
     assert client.get("/api/items/<script>/provenance").status_code == 422
+
+
+# --- Trust: what a blob writer without the key can and cannot do ------------------------------
+
+
+def test_a_genuine_record_stored_under_another_item_does_not_verify(
+    played: tuple[TestClient, Matchday, InMemoryStore],
+) -> None:
+    client, day, store = played
+    a, b = narrative(day, "northlight-sport"), narrative(day, "rheinblick-sport")
+    assert client.portal is not None
+    genuine = client.portal.call(store.get, a.overlay.item_id)
+    assert genuine is not None
+    store._records[b.overlay.item_id] = genuine
+
+    body = client.get(f"/api/items/{b.overlay.item_id}/provenance").json()
+
+    assert body["verification"] == {
+        "valid": False,
+        "reason": "the record stored here is of another item",
+    }
+
+
+def test_an_earlier_genuine_issue_restored_over_a_later_one_does_not_verify(
+    played: tuple[TestClient, Matchday, InMemoryStore],
+) -> None:
+    client, day, store = played
+    pulled = next(
+        e
+        for e in day.feed("m42").entries
+        if isinstance(e, TenantItemEntry) and e.state == "retracted"
+    )
+    earlier = next(
+        e
+        for e in day.feed("m42").entries
+        if isinstance(e, TenantItemEntry) and e.overlay.item_id == pulled.overlay.item_id
+    )
+    assert client.portal is not None
+    issuer: Issuer = client.app.state.provenance  # type: ignore[attr-defined]
+    old = client.portal.call(issuer.issue, earlier, day.feed("m42").entries, False)
+    assert old is not None
+    client.portal.call(store.put, old)
+
+    body = client.get(f"/api/items/{pulled.overlay.item_id}/provenance").json()
+
+    assert body["verification"] == {
+        "valid": False,
+        "reason": "a later issue of this record exists; this one is out of date",
+    }
+
+
+def test_reading_is_rate_limited(played: tuple[TestClient, Matchday, InMemoryStore]) -> None:
+    client, day, _ = played
+    item = narrative(day, "northlight-sport")
+    where = f"/api/items/{item.overlay.item_id}/provenance"
+    headers = {"X-Forwarded-For": "203.0.113.7"}
+
+    answers = [client.get(where, headers=headers).status_code for _ in range(READS_PER_MINUTE + 1)]
+
+    assert answers[:-1] == [200] * READS_PER_MINUTE
+    assert answers[-1] == 429
+
+
+# --- Robustness ----------------------------------------------------------------------------------
+
+
+class Flaky:
+    """A signer that fails its first `failures` calls, then signs."""
+
+    algorithm = "HS256"
+
+    def __init__(self, failures: int) -> None:
+        self._inner = LocalSigner(b"k" * 32)
+        self.key_id = self._inner.key_id
+        self.failures = failures
+
+    async def sign(self, digest: bytes) -> bytes:
+        if self.failures > 0:
+            self.failures -= 1
+            raise RuntimeError("vault busy")
+        return await self._inner.sign(digest)
+
+    async def verify(self, digest: bytes, signature: bytes) -> bool:
+        return await self._inner.verify(digest, signature)
+
+
+def test_a_record_that_fails_to_sign_is_retried_until_it_is_issued() -> None:
+    store = InMemoryStore()
+    issuer = Issuer(Flaky(failures=2), store, backoff=(0.0, 0.0, 0.0))  # type: ignore[arg-type]
+    item = next(e for e in FEED_M42 if isinstance(e, TenantItemEntry) and e.localized is not None)
+
+    signed = anyio.run(issuer.issue, item, FEED_M42, True)
+
+    assert signed is not None
+    assert anyio.run(store.get, item.overlay.item_id) == signed
+
+
+def test_a_record_that_never_signs_leaves_the_feed_not_caught_up() -> None:
+    store = InMemoryStore()
+    issuer = Issuer(Flaky(failures=99), store, backoff=(0.0,))  # type: ignore[arg-type]
+    item = next(e for e in FEED_M42 if isinstance(e, TenantItemEntry) and e.localized is not None)
+
+    assert anyio.run(issuer.issue, item, FEED_M42, True) is None
+    assert issuer.failing == {item.overlay.item_id}

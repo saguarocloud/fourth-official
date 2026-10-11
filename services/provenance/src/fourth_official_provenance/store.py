@@ -5,6 +5,10 @@ from typing import Protocol
 from fourth_official_contracts import SignedProvenance
 
 
+class UnreadableRecordError(ValueError):
+    """A stored record that no longer parses: changed after it was written."""
+
+
 class ProvenanceStore(Protocol):
     async def put(self, signed: SignedProvenance) -> None: ...
 

@@ -325,12 +325,17 @@ def test_only_the_api_identity_writes_the_ledger_and_the_records(
         if STORAGE_BLOB_DATA_CONTRIBUTOR in str(a.properties["roleDefinitionId"])
     ]
 
-    # One grant per container, each scoped to its container, never to the account.
+    # One grant per container, each scoped to its container, never to the account: the ledger to
+    # the agents identity, the records to the signer identity.
     assert len(grants) == 2
+    principals = {str(g.properties["principalId"]) for g in grants}
+    assert any("writerPrincipalId" in p for p in principals)
+    assert any("recordsWriterPrincipalId" in p for p in principals)
     for grant in grants:
         assert "storage" in grant.module
-        assert "writerPrincipalId" in str(grant.properties["principalId"])
         assert "containers" in str(grant.body.get("scope", ""))
+    (storage_module,) = [m for m in compiled.modules if m.name == "storage"]
+    assert "signerPrincipalId" in str(storage_module.parameters["recordsWriterPrincipalId"])
     (storage,) = [m for m in compiled.modules if m.name == "storage"]
     assert "agentsIdentityPrincipalId" in str(storage.parameters["writerPrincipalId"])
 
@@ -358,6 +363,7 @@ def test_the_api_runs_the_analyst_with_a_durable_ledger_and_a_small_daily_allowa
         "MATCHDAY_RUNS_PER_DAY",
         "PROVENANCE_KEY_ID",
         "PROVENANCE_CONTAINER_URL",
+        "PROVENANCE_CLIENT_ID",
     }
     assert env["MATCHDAY_RUNS_PER_DAY"] == "6"
     assert ".internal." in env["MATCH_DATA_URL"]
@@ -387,8 +393,8 @@ def test_the_deploy_identity_may_assign_exactly_the_identities_the_apps_run_as(
     ]
     (deploy,) = [m for m in compiled.modules if m.name == "deploy-identity"]
 
-    assert len(grants) == 2
-    assert {"appIdentityName", "agentsIdentityName"} <= set(deploy.parameters)
+    assert len(grants) == 3
+    assert {"appIdentityName", "agentsIdentityName", "signerIdentityName"} <= set(deploy.parameters)
 
 
 def test_the_ledger_survives_a_bad_write_or_delete(compiled: CompiledTemplate) -> None:
@@ -409,6 +415,8 @@ def test_the_signing_key_lives_in_a_standard_rbac_vault(compiled: CompiledTempla
     assert vault.properties["enableRbacAuthorization"] is True
     assert vault.properties.get("accessPolicies", []) == []
     assert vault.properties["enableSoftDelete"] is True
+    # Nobody can delete and purge the key that every record's signature depends on.
+    assert vault.properties["enablePurgeProtection"] is True
 
 
 def test_the_signing_key_is_ec_p256_and_can_only_sign_and_verify(
@@ -429,7 +437,10 @@ def test_only_the_api_identity_uses_the_key_and_only_that_key(compiled: Compiled
     ]
 
     assert "keys" in str(grant.body.get("scope", ""))
-    (vault,) = [m for m in compiled.modules if m.name == "key-vault"]
-    assert "agentsIdentityPrincipalId" in str(vault.parameters["signerPrincipalId"])
+    # A signer identity of its own: not the one that talks to the models.
+    assert "signerIdentityName" in str(grant.properties["principalId"])
+    (api,) = [m for m in compiled.modules if m.name == "api"]
+    assert "signerIdentityId" in str(api.parameters["additionalIdentityIds"])
     env = _env(compiled, "api")
-    assert "keyUriWithVersion" in env["PROVENANCE_KEY_ID"] or "keyId" in env["PROVENANCE_KEY_ID"]
+    assert "signerClientId" in env["PROVENANCE_CLIENT_ID"]
+    assert "keyUriWithVersion" in env["PROVENANCE_KEY_ID"]

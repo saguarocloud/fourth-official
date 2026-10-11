@@ -186,7 +186,8 @@ RECORDS = "https://stabc123.blob.core.windows.net/provenance"
 def test_provenance_comes_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("PROVENANCE_KEY_ID", KEY_ID)
     monkeypatch.setenv("PROVENANCE_CONTAINER_URL", RECORDS)
-    monkeypatch.setenv("AZURE_CLIENT_ID", "client-1")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "agents")
+    monkeypatch.setenv("PROVENANCE_CLIENT_ID", "client-1")
 
     provenance = Settings.from_env().provenance
 

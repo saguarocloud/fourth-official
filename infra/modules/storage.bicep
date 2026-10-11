@@ -1,6 +1,6 @@
 // The matchday's start ledger (ADR-008) and the signed provenance records (ADR-013): one keyless
-// Standard LRS account, a private container for each, and one identity allowed to read and write
-// blobs in those two containers only.
+// Standard LRS account, a private container for each, and for each one identity allowed to read
+// and write blobs in that container only.
 
 @minLength(3)
 @maxLength(24)
@@ -14,8 +14,11 @@ param containerName string = 'matchday'
 @description('Container that holds the signed provenance records.')
 param provenanceContainerName string = 'provenance'
 
-@description('Principal ID of the identity that claims matchday starts and issues records (the API).')
+@description('Principal ID of the identity that claims matchday starts (the API).')
 param writerPrincipalId string
+
+@description('Principal ID of the identity that keeps provenance records (the API signer).')
+param recordsWriterPrincipalId string
 
 resource account 'Microsoft.Storage/storageAccounts@2025-01-01' = {
   name: name
@@ -72,12 +75,12 @@ resource provenance 'Microsoft.Storage/storageAccounts/blobServices/containers@2
 }
 
 resource writerCanKeepRecords 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(provenance.id, writerPrincipalId, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  name: guid(provenance.id, recordsWriterPrincipalId, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
   scope: provenance
   properties: {
     // Storage Blob Data Contributor
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-    principalId: writerPrincipalId
+    principalId: recordsWriterPrincipalId
     principalType: 'ServicePrincipal'
   }
 }

@@ -144,7 +144,8 @@ def _provenance_from_env() -> ProvenanceSettings | None:
     return ProvenanceSettings(
         key_id=key_id,
         container_url=container,
-        client_id=os.environ.get("AZURE_CLIENT_ID", "").strip(),
+        # The signer identity: the API's own for signing, never the one that talks to the models.
+        client_id=os.environ.get("PROVENANCE_CLIENT_ID", "").strip(),
     )
 
 

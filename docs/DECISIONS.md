@@ -292,16 +292,20 @@ One entry per decision: context, options, choice, consequences. Newest last.
   - the disclosure and the editor's decision;
   - what it supersedes;
   - the corrections that reached it.
-- **Signed over canonical bytes.** The record's wire form (keys sorted, no spaces, UTF-8) is hashed with SHA-256, and the hash is signed. In Azure the studio's Key Vault key signs: EC P-256, ES256, keyless through the API's managed identity, which may use that key and nothing else. The private key never leaves the vault. In development and tests an HMAC key held by the process signs (HS256).
-- **Kept in Blob Storage.** A private `provenance` container holds one blob per item, with the latest issue. Blob versioning (already on) keeps every earlier issue, and soft delete covers a delete.
-- **Checked when read.** `GET /api/items/{id}/provenance` returns the stored record and a fresh check of it:
-  - the key named is the studio's;
-  - the hash of the stored record matches;
-  - the signature verifies.
 
-  A changed record, a forged signature or another key each says so in words. Records are public by design, as the Verify page is, and carry nothing the partner feeds do not.
+  Signing and storing are retried with backoff. An item that still fails stays pending and is retried as the feed is followed, and the feed does not count as caught up until it succeeds.
+- **Signed over canonical bytes.** The record's wire form (keys sorted, no spaces, UTF-8) is hashed with SHA-256, and the hash is signed with the studio's Key Vault key: EC P-256, ES256. Verification pins the algorithm and the key version before any signature check, so a record cannot choose its own verifier. In development and tests an HMAC key held by the process signs (HS256). A deployment that writes with models refuses to start without the vault key.
+- **An identity of its own.** The API signs and keeps records as a signer identity. That identity holds Key Vault Crypto User on the one key and Blob Data Contributor on the records' container, and nothing else. It is not the identity that talks to the models. The vault uses RBAC only and has purge protection, so nobody can delete and purge the key the signatures depend on.
+- **Kept in Blob Storage.** A private `provenance` container holds one blob per item, with the latest issue. Blob versioning keeps every earlier issue, and soft delete covers a delete.
+- **Checked when read.** `GET /api/items/{id}/provenance` returns the stored record and its check:
+  - the record is of the item asked for, so a genuine record moved over another item fails;
+  - it is the latest issue the API made, so an earlier genuine issue restored over a later one fails;
+  - the hash of the stored record matches, and the signature verifies.
+
+  Each failure says why, in words. Reads are limited per client, and verdicts are cached per record and signature. Records are public by design, as the Verify page is, and carry nothing the partner feeds do not.
 
 **Consequences.**
-- Key Vault Standard costs well under a cent a match at these volumes; it is in the plan's service list (§10.4).
-- A record carries the key version that signed it, so rotating the key does not falsely invalidate old records. Checking an old version needs that version kept.
-- A record issued while signing or storage failed is missing, and the failure is logged. Reading it then says there is no provenance, never that it is valid.
+- Someone who can write the records' container but does not hold the key cannot change a record's content or move it unnoticed. Detecting an earlier issue relies on the API's memory of the latest issue, which a restart clears. Until a record is re-issued, a rolled-back record then verifies. Chaining each issue to the previous one would close that gap.
+- Key Vault Standard costs well under a cent a match at these volumes, and Key Vault is in the plan's service list (§10.4). EC verification runs in the API process once the public key is fetched, so reads do not reach the vault.
+- Records name the key version that signed them. After a rotation, records signed by the old version report "signed with another key" until that version is added to the trusted versions. This fails closed.
+- Purge protection cannot be turned off. A torn-down vault's name stays taken for the 7-day retention period.

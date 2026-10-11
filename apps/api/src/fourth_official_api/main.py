@@ -82,6 +82,12 @@ def create_app(
                     raise RuntimeError(
                         "the Analyst needs a durable start ledger; none is configured"
                     )
+                if settings.foundry and provenance is None and settings.provenance is None:
+                    # Model-written items are signed with the studio's vault key, never a key
+                    # that lives as long as the process (ADR-013).
+                    raise RuntimeError(
+                        "model-written items need the studio's signing key; none is set"
+                    )
                 explainer = (
                     await stack.enter_async_context(foundry_explainer(settings.foundry))
                     if settings.foundry

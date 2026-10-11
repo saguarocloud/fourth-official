@@ -9,7 +9,7 @@ from fourth_official_provenance.signing import (
     sign_record,
     verify_signed,
 )
-from fourth_official_provenance.store import InMemoryStore, ProvenanceStore
+from fourth_official_provenance.store import InMemoryStore, ProvenanceStore, UnreadableRecordError
 
 __all__ = [
     "ISSUER",
@@ -17,6 +17,7 @@ __all__ = [
     "LocalSigner",
     "ProvenanceStore",
     "Signer",
+    "UnreadableRecordError",
     "Verification",
     "record_for",
     "sign_record",
