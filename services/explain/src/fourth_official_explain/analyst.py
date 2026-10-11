@@ -51,6 +51,8 @@ def request_message(request: DraftRequest) -> str:
             "The events just before it (JSON):",
             json.dumps([e.to_wire() for e in request.briefing.lead_up], sort_keys=True),
         ]
+    if request.previous is not None:
+        lines += ["Your previous draft (JSON):", request.previous.model_dump_json()]
     if request.feedback:
         lines.append("The Verifier refused your previous draft. Fix exactly these findings:")
         lines += [f"- {f.code}: {f.detail}" for f in request.feedback]

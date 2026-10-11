@@ -53,6 +53,8 @@ class DraftRequest:
     # What the Verifier found wrong with the previous draft, if any.
     feedback: tuple[Finding, ...] = ()
     briefing: Briefing | None = None
+    # The draft that feedback is about, so a retry fixes it rather than starting over.
+    previous: InsightDraft | None = None
 
 
 def brief(moment: Moment, facts: MatchFacts) -> Briefing:
@@ -135,10 +137,15 @@ async def explain(
     for drafter in drafters:
         provenance = drafter.provenance
         feedback: tuple[Finding, ...] = ()
+        previous: InsightDraft | None = None
         for _ in range(1 + retries):
             number = len(attempts) + 1
             request = DraftRequest(
-                moment=moment, attempt=number, feedback=feedback, briefing=briefing
+                moment=moment,
+                attempt=number,
+                feedback=feedback,
+                briefing=briefing,
+                previous=previous,
             )
             try:
                 # A timeout in the same task: MCP sessions must close in the task that opened them.
@@ -170,7 +177,7 @@ async def explain(
                 attempts.append(Attempt(number, provenance.agent, provenance.model, "passed"))
                 return Explanation(moment, insight, verdict, tuple(attempts))
             attempts.append(Attempt(number, provenance.agent, provenance.model, "failed", codes))
-            feedback = verdict.findings
+            feedback, previous = verdict.findings, draft
     return _template(moment, facts, attempts)
 
 
