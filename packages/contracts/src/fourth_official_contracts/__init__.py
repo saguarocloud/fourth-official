@@ -135,6 +135,13 @@ from fourth_official_contracts.primitives import (
     club_of,
     match_of,
 )
+from fourth_official_contracts.provenance import (
+    ProvenanceClaim,
+    ProvenanceRecord,
+    SignedProvenance,
+    canonical_bytes,
+    parse_signed_provenance,
+)
 from fourth_official_contracts.tenants import (
     NARRATIVE_KINDS,
     TENANT_POLICY_ADAPTER,
@@ -244,6 +251,8 @@ __all__ = [
     "PossessionChangeEvent",
     "PressureEvent",
     "Provenance",
+    "ProvenanceClaim",
+    "ProvenanceRecord",
     "ReferenceKind",
     "RenderedInsight",
     "SaveEvent",
@@ -251,6 +260,7 @@ __all__ = [
     "ScoreBug",
     "SetPieceEvent",
     "ShotEvent",
+    "SignedProvenance",
     "SnapshotIdParts",
     "StatCard",
     "StatRow",
@@ -268,6 +278,7 @@ __all__ = [
     "VarDecisionEvent",
     "Verdict",
     "WireModel",
+    "canonical_bytes",
     "claim_references",
     "club_of",
     "insight_id_for",
@@ -288,6 +299,7 @@ __all__ = [
     "parse_moment",
     "parse_moment_json",
     "parse_overlay_spec",
+    "parse_signed_provenance",
     "parse_tenant_policy",
     "parse_verdict",
     "snapshot_id_for",

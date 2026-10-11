@@ -9,7 +9,10 @@ import { compile } from "json-schema-to-typescript";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schemas = join(here, "../../../packages/contracts/schemas");
-export const CONTRACTS = [{ schema: "feed-entry.schema.json", output: "feed.ts" }];
+export const CONTRACTS = [
+  { schema: "feed-entry.schema.json", output: "feed.ts" },
+  { schema: "signed-provenance.schema.json", output: "provenance.ts" },
+];
 export const BANNER =
   "/* Generated from packages/contracts/schemas by `npm run contracts`. Do not edit. */";
 

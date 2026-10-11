@@ -11,6 +11,7 @@ COPY pyproject.toml uv.lock ./
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
 COPY packages/contracts/pyproject.toml packages/contracts/pyproject.toml
 COPY services/broadcast/pyproject.toml services/broadcast/pyproject.toml
+COPY services/provenance/pyproject.toml services/provenance/pyproject.toml
 COPY services/explain/pyproject.toml services/explain/pyproject.toml
 COPY services/match-data/pyproject.toml services/match-data/pyproject.toml
 COPY services/moments/pyproject.toml services/moments/pyproject.toml

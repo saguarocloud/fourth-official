@@ -1,5 +1,6 @@
 """FastAPI application factory."""
 
+import asyncio
 from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Literal
@@ -15,11 +16,14 @@ from fourth_official_api.explainers import (
     template_explainer,
 )
 from fourth_official_api.matchday_routes import matchday_router
+from fourth_official_api.provenance import Issuer, provenance_router
 from fourth_official_api.security import SecurityHeaders
 from fourth_official_api.settings import Settings
 from fourth_official_api.start_ledger import blob_start_ledger
 from fourth_official_match_data import MatchStore, demo_store
 from fourth_official_policy import bundled_store
+from fourth_official_provenance import InMemoryStore, LocalSigner
+from fourth_official_provenance.azure import azure_provenance
 from fourth_official_replay import Matchday, ReplayConfig, StartLedger
 
 SERVICE_NAME = "fourth-official-api"
@@ -50,7 +54,11 @@ def _summaries(store: MatchStore) -> dict[str, dict[str, str]]:
 
 
 def create_app(
-    settings: Settings, *, matchday: Matchday | None = None, ledger: StartLedger | None = None
+    settings: Settings,
+    *,
+    matchday: Matchday | None = None,
+    ledger: StartLedger | None = None,
+    provenance: Issuer | None = None,
 ) -> FastAPI:
     """Build the API with explicit settings, so tests never depend on process environment. A
     given `matchday` is used as is; otherwise one is built at startup with the Analyst on Foundry
@@ -93,9 +101,33 @@ def create_app(
                     partners=partners_for(policies, localizer),
                 )
             app.state.matchday = day
+            issuer = provenance
+            if issuer is None:
+                if settings.provenance is not None:
+                    signer, records = await stack.enter_async_context(
+                        azure_provenance(
+                            settings.provenance.key_id,
+                            settings.provenance.container_url,
+                            settings.provenance.client_id,
+                        )
+                    )
+                    issuer = Issuer(signer, records)
+                else:
+                    # Development: a key that lives as long as the process, records in memory.
+                    issuer = Issuer(LocalSigner(), InMemoryStore())
+            app.state.provenance = issuer
+            followers = [
+                asyncio.create_task(
+                    issuer.follow(day.feed(match_id)), name=f"provenance-{match_id}"
+                )
+                for match_id in store.match_ids()
+            ]
             try:
                 yield
             finally:
+                for follower in followers:
+                    follower.cancel()
+                await asyncio.gather(*followers, return_exceptions=True)
                 await day.stop()
 
     app = FastAPI(title="Fourth Official API", version=settings.version, lifespan=lifespan)
@@ -108,6 +140,7 @@ def create_app(
 
     app.include_router(matchday_router(_summaries(store)))
     app.include_router(decision_router())
+    app.include_router(provenance_router())
     docs = [path for path in (app.docs_url, app.redoc_url) if path is not None]
     app.add_middleware(SecurityHeaders, docs_paths=docs)
     return app

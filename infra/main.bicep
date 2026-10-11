@@ -133,6 +133,17 @@ module storage 'modules/storage.bicep' = {
   }
 }
 
+module keyVault 'modules/key-vault.bicep' = {
+  name: 'key-vault'
+  scope: resourceGroup
+  params: {
+    name: 'kv-fo-${token}'
+    location: location
+    tags: tags
+    signerPrincipalId: foundry.outputs.agentsIdentityPrincipalId
+  }
+}
+
 module api 'modules/container-app.bicep' = {
   name: 'api'
   scope: resourceGroup
@@ -159,6 +170,9 @@ module api 'modules/container-app.bicep' = {
       { name: 'START_LEDGER_URL', value: storage.outputs.startLedgerUrl }
       // At most 6 runs a day keeps the worst case of model spend well inside the budget.
       { name: 'MATCHDAY_RUNS_PER_DAY', value: '6' }
+      // Every narrative item is issued a record signed with the vault key (ADR-013).
+      { name: 'PROVENANCE_KEY_ID', value: keyVault.outputs.keyUriWithVersion }
+      { name: 'PROVENANCE_CONTAINER_URL', value: storage.outputs.provenanceContainerUrl }
     ]
   }
 }

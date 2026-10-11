@@ -46,6 +46,16 @@ class FoundrySettings:
 
 
 @dataclass(frozen=True, slots=True)
+class ProvenanceSettings:
+    """The studio's signing key (a Key Vault key version) and where signed records are kept."""
+
+    key_id: str
+    container_url: str
+    # The client ID of the app's managed identity (empty: the developer's own credential).
+    client_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     """Immutable runtime configuration for the API."""
 
@@ -58,6 +68,8 @@ class Settings:
     start_ledger: StartLedgerSettings | None = None
     # How many matchday runs may start in any 24 hours: the ceiling on model spend per day.
     runs_per_day: int = DEFAULT_RUNS_PER_DAY
+    # None: records are signed with a key that lives as long as the process, and kept in memory.
+    provenance: ProvenanceSettings | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -70,6 +82,7 @@ class Settings:
             replay_speed=_speed_from_env(),
             start_ledger=_ledger_from_env(),
             runs_per_day=_runs_from_env(),
+            provenance=_provenance_from_env(),
         )
 
 
@@ -109,6 +122,30 @@ def _ledger_from_env() -> StartLedgerSettings | None:
     if not START_LEDGER_URL.fullmatch(url):
         raise ValueError("START_LEDGER_URL must be a blob URL in Azure Storage, without a query")
     return StartLedgerSettings(url=url, client_id=os.environ.get("AZURE_CLIENT_ID", "").strip())
+
+
+KEY_VERSION_ID = re.compile(
+    r"https://[a-z0-9-]{3,24}\.vault\.azure\.net/keys/[A-Za-z0-9-]{1,127}/[0-9a-f]{32}"
+)
+CONTAINER_URL = re.compile(
+    r"https://[a-z0-9]{3,24}\.blob\.core\.windows\.net/[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])"
+)
+
+
+def _provenance_from_env() -> ProvenanceSettings | None:
+    key_id = os.environ.get("PROVENANCE_KEY_ID", "").strip()
+    container = os.environ.get("PROVENANCE_CONTAINER_URL", "").strip()
+    if not key_id and not container:
+        return None
+    if not KEY_VERSION_ID.fullmatch(key_id):
+        raise ValueError("PROVENANCE_KEY_ID must be a Key Vault key, with its version")
+    if not CONTAINER_URL.fullmatch(container):
+        raise ValueError("PROVENANCE_CONTAINER_URL must be a container in Azure Storage, no query")
+    return ProvenanceSettings(
+        key_id=key_id,
+        container_url=container,
+        client_id=os.environ.get("AZURE_CLIENT_ID", "").strip(),
+    )
 
 
 def _runs_from_env() -> int:

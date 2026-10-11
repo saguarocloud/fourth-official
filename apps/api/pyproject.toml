@@ -9,6 +9,7 @@ dependencies = [
   "fourth-official-explain",
   "fourth-official-match-data",
   "fourth-official-policy",
+  "fourth-official-provenance",
   "fourth-official-replay",
   "fourth-official-verifier",
   "azure-identity>=1.25,<2",
@@ -19,6 +20,7 @@ dependencies = [
 [tool.uv.sources]
 fourth-official-contracts = { workspace = true }
 fourth-official-policy = { workspace = true }
+fourth-official-provenance = { workspace = true }
 fourth-official-explain = { workspace = true }
 fourth-official-match-data = { workspace = true }
 fourth-official-replay = { workspace = true }

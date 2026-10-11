@@ -276,3 +276,32 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - Regeneration uses the partner's template, not the model. It is deterministic and verifies by construction, but it is plainer than the original words. Model regeneration with re-verification can follow.
 - Metric restatements (`METRIC_RESTATED`) are not handled yet. Snapshots stay as computed.
 - Wall-clock timing makes a replay non-reproducible, so the desk's clocks are injectable. The recorded fixtures use fixed clocks.
+
+## ADR-013: Provenance records signed by a Key Vault key
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** Every item a partner airs should be checkable. Anyone holding a record should be able to see what was said, on what evidence, who and what wrote it, how it was disclosed, who approved it and which corrections reached it, and should be able to tell if the record was changed since the studio issued it.
+
+**Choice.**
+- **A record per partner item version.** The API follows each match feed and issues a record for every narrative item's latest entry. The record is re-issued when the item's state changes (approved, pulled, amended) and when a correction report names it. It holds:
+  - the item and its version;
+  - the words as aired, each claim with its evidence;
+  - the canonical insight's and the partner version's provenance (agent, prompt version, model alias, model or template);
+  - every attempt;
+  - the disclosure and the editor's decision;
+  - what it supersedes;
+  - the corrections that reached it.
+- **Signed over canonical bytes.** The record's wire form (keys sorted, no spaces, UTF-8) is hashed with SHA-256, and the hash is signed. In Azure the studio's Key Vault key signs: EC P-256, ES256, keyless through the API's managed identity, which may use that key and nothing else. The private key never leaves the vault. In development and tests an HMAC key held by the process signs (HS256).
+- **Kept in Blob Storage.** A private `provenance` container holds one blob per item, with the latest issue. Blob versioning (already on) keeps every earlier issue, and soft delete covers a delete.
+- **Checked when read.** `GET /api/items/{id}/provenance` returns the stored record and a fresh check of it:
+  - the key named is the studio's;
+  - the hash of the stored record matches;
+  - the signature verifies.
+
+  A changed record, a forged signature or another key each says so in words. Records are public by design, as the Verify page is, and carry nothing the partner feeds do not.
+
+**Consequences.**
+- Key Vault Standard costs well under a cent a match at these volumes; it is in the plan's service list (§10.4).
+- A record carries the key version that signed it, so rotating the key does not falsely invalidate old records. Checking an old version needs that version kept.
+- A record issued while signing or storage failed is missing, and the failure is logged. Reading it then says there is no provenance, never that it is valid.
