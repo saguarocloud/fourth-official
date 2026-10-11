@@ -32,6 +32,19 @@ describe("sendDecision", () => {
     );
   });
 
+  it("encodes the item's address", async () => {
+    const fetch = vi.fn<(url: string, init?: RequestInit) => Promise<Response>>(() =>
+      Promise.resolve(Response.json({})),
+    );
+    vi.stubGlobal("fetch", fetch);
+
+    await sendDecision({ ...TARGET, itemId: "it-x y" }, { decision: "approved", generation: 1 });
+
+    expect(fetch.mock.calls[0]![0]).toBe(
+      "/api/tenants/tribuna-austral/matches/m42/items/it-x%20y/decision",
+    );
+  });
+
   it.each([
     [
       409,

@@ -12,19 +12,60 @@ interface TicketsProps {
   readonly moments: Readonly<Record<string, Moment>>;
   readonly current: string | null;
   readonly onChoose: (key: string) => void;
+  readonly onMove: (by: number) => void;
+  /** Full time: nothing more will be held this match. */
+  readonly closed: boolean;
 }
 
 /** What waits for an editor, oldest first: one ticket per item, the one on the desk pressed. */
-export function Tickets({ items, moments, current, onChoose }: TicketsProps) {
+export function Tickets({ items, moments, current, onChoose, onMove, closed }: TicketsProps) {
+  const at = items.findIndex((i) => ticketKey(i) === current);
   return (
     <section className="tickets" aria-labelledby="tickets-heading">
-      <h2 id="tickets-heading" className="panel-heading">
-        Waiting <span className="tickets__count tabular">{items.length}</span>
-      </h2>
+      <div className="tickets__head">
+        <h2 id="tickets-heading" className="panel-heading" tabIndex={-1}>
+          Waiting <span className="tickets__count tabular">{items.length}</span>
+        </h2>
+        {items.length > 1 && (
+          <div className="tickets__move">
+            <button
+              type="button"
+              className="key"
+              data-size="sm"
+              aria-keyshortcuts="K"
+              disabled={at <= 0}
+              onClick={() => onMove(-1)}
+            >
+              <span>
+                <span className="key-cap" aria-hidden="true">
+                  K
+                </span>
+                Previous
+              </span>
+            </button>
+            <button
+              type="button"
+              className="key"
+              data-size="sm"
+              aria-keyshortcuts="J"
+              disabled={at >= items.length - 1}
+              onClick={() => onMove(1)}
+            >
+              <span>
+                <span className="key-cap" aria-hidden="true">
+                  J
+                </span>
+                Next
+              </span>
+            </button>
+          </div>
+        )}
+      </div>
       {items.length === 0 ? (
         <p className="tickets__empty">
-          Nothing waits. Items a partner&apos;s policy holds for an editor appear here as the match
-          runs.
+          {closed
+            ? "Full time. Nothing more will be held this match."
+            : "Nothing waits. Items a partner's policy holds for an editor appear here as the match runs."}
         </p>
       ) : (
         <ul className="tickets__list" aria-label="Waiting">

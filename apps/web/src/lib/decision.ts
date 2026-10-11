@@ -13,12 +13,19 @@ export interface DecisionBody {
 export const REASON_MAX = 200;
 /** Control, format, separator, private-use and unassigned characters: never in a one-line reason. */
 const NOT_ONE_LINE = /[\p{Cc}\p{Cf}\p{Cs}\p{Co}\p{Cn}\p{Zl}\p{Zp}]/u;
+/** A reason is a sentence, not a link: nothing in the shared log points anywhere. */
+const LINK = /(https?:\/\/|www\.)/i;
 const KEYS = new Set(["decision", "generation", "reason"]);
 
 /** A reason the contract accepts: one line of 1 to 200 characters, trimmed; null otherwise. */
 export function cleanReason(text: string): string | null {
   const trimmed = text.trim();
-  if (trimmed.length === 0 || trimmed.length > REASON_MAX || NOT_ONE_LINE.test(trimmed)) {
+  if (
+    trimmed.length === 0 ||
+    trimmed.length > REASON_MAX ||
+    NOT_ONE_LINE.test(trimmed) ||
+    LINK.test(trimmed)
+  ) {
     return null;
   }
   return trimmed;

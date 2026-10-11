@@ -13,7 +13,7 @@ import { FEED } from "@/components/broadcast/testing";
 import { FakeEventSource, MATCHES } from "@/components/match-live/testing";
 import type { TenantItemEntry } from "@/contracts/feed";
 
-import { Approvals } from "./Approvals";
+import { Approvals, SETTLE_MS } from "./Approvals";
 
 const TENANTS = {
   tenants: [
@@ -78,6 +78,7 @@ async function played(matches: unknown = RUNNING) {
     for (const entry of FEED) stream().emit(entry.kind, entry);
   });
   await screen.findByRole("button", { name: /Approve as T\. Ibarra/ });
+  await settle();
   return { view, fetch };
 }
 
@@ -93,6 +94,11 @@ function decided(item: TenantItemEntry, decision: "approved" | "rejected"): Tena
       ...(decision === "rejected" ? { reason: "Not our tone" } : {}),
     },
   } as TenantItemEntry;
+}
+
+/** Wait out the desk's settle time, as an editor reading the item would. */
+async function settle() {
+  await act(() => new Promise((resolve) => setTimeout(resolve, SETTLE_MS + 20)));
 }
 
 const posts = (fetch: ReturnType<typeof serve>) =>
@@ -193,7 +199,7 @@ describe("Approvals", () => {
       screen.getByRole("textbox", { name: "Reason for rejecting" }).closest("form")!,
     );
 
-    expect(screen.getByText("Give a reason of one line.")).toBeInTheDocument();
+    expect(screen.getByText("Give a reason of one line, without links.")).toBeInTheDocument();
     expect(posts(fetch)).toHaveLength(0);
   });
 
@@ -203,7 +209,9 @@ describe("Approvals", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Approve as T\. Ibarra/ }));
 
-    expect(await screen.findByText("This item is not awaiting a decision.")).toBeInTheDocument();
+    expect(
+      await screen.findByText(/^"Gol de Harbour City": This item is not awaiting a decision\.$/),
+    ).toBeInTheDocument();
   });
 
   it("moves through the queue with J and K", async () => {
@@ -256,6 +264,106 @@ describe("Approvals", () => {
     expect(screen.getByRole("status", { name: "Approvals verdict" })).toHaveTextContent(
       "Nothing waits for an editor.",
     );
+  });
+
+  it("puts focus on the queue when the last item is decided", async () => {
+    await played(); // the fixture's held items: decide them all
+    for (const [n, item] of HELD.entries()) {
+      act(() =>
+        stream().emit("tenant_item", { ...decided(item!, "rejected"), entrySeq: NEXT + n }),
+      );
+    }
+
+    expect(screen.getByRole("heading", { name: /Waiting/ })).toHaveFocus();
+  });
+
+  it("ignores a held key: one press, one decision", async () => {
+    const { fetch } = await played();
+
+    fireEvent.keyDown(window, { key: "a" });
+    fireEvent.keyDown(window, { key: "a", repeat: true });
+    fireEvent.keyDown(window, { key: "a", repeat: true });
+
+    await waitFor(() => expect(posts(fetch)).toHaveLength(1));
+  });
+
+  it("moves on at once after a decision, but will not decide the next item unread", async () => {
+    const { fetch } = await played();
+    const tickets = () =>
+      within(screen.getByRole("list", { name: "Waiting" })).getAllByRole("button");
+
+    fireEvent.keyDown(window, { key: "a" });
+    await waitFor(() => expect(tickets()).toHaveLength(HELD.length - 1));
+    fireEvent.keyDown(window, { key: "a" }); // a quick second press lands on an unread item
+    await settle();
+
+    expect(posts(fetch)).toHaveLength(1);
+    expect(screen.getByRole("button", { name: /Approve as T\. Ibarra/ })).toBeEnabled();
+  });
+
+  it("says so when the item on the desk is decided elsewhere, and waits before acting", async () => {
+    const { fetch } = await played();
+    const [first, second] = HELD;
+
+    act(() => stream().emit("tenant_item", decided(first!, "rejected")));
+
+    expect(screen.getByText(/was decided elsewhere/)).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "In English" })).toBeInTheDocument();
+    expect(document.querySelector(".ticket[aria-current='true']")).toHaveTextContent(
+      second!.rendered!.headline,
+    );
+    fireEvent.keyDown(window, { key: "a" });
+    expect(posts(fetch)).toHaveLength(0);
+  });
+
+  it("does not approve while a rejection is being written", async () => {
+    const { fetch } = await played();
+    fireEvent.keyDown(window, { key: "r" });
+    screen.getByRole("textbox", { name: "Reason for rejecting" }).blur();
+
+    fireEvent.keyDown(window, { key: "a" });
+
+    expect(posts(fetch)).toHaveLength(0);
+  });
+
+  it("keeps the typed reason when a rejection is refused", async () => {
+    decisionAnswer = {
+      status: 503,
+      body: { detail: "no room on air this minute; try again shortly" },
+    };
+    await played();
+    fireEvent.keyDown(window, { key: "r" });
+    const reason = screen.getByRole("textbox", { name: "Reason for rejecting" });
+    fireEvent.change(reason, { target: { value: "Not our tone" } });
+
+    fireEvent.submit(reason.closest("form")!);
+
+    expect(
+      await screen.findByText(/No room on air this minute; try again shortly\.$/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Reason for rejecting" })).toHaveValue(
+      "Not our tone",
+    );
+  });
+
+  it("decides nothing until the feed has said which run it is", async () => {
+    serve();
+    render(<Approvals />);
+    await screen.findByText("Harbour City v Northgate FC · Meridian League");
+    act(() => {
+      for (const entry of FEED) stream().emit(entry.kind, entry, "");
+    });
+
+    expect(await screen.findByRole("button", { name: /Approve as T\. Ibarra/ })).toBeDisabled();
+  });
+
+  it("ignores shifted keys and keys while composing text", async () => {
+    const { fetch } = await played();
+
+    fireEvent.keyDown(window, { key: "A", shiftKey: true });
+    fireEvent.keyDown(window, { key: "a", isComposing: true });
+
+    expect(posts(fetch)).toHaveLength(0);
   });
 
   it("has no axe violations", async () => {

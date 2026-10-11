@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { POST } from "./route";
+import { DECISIONS_PER_MINUTE, POST } from "./route";
 
 const PARAMS = {
   tenantId: "tribuna-austral",
@@ -51,9 +51,33 @@ describe("POST a decision", () => {
         headers: { "Content-Type": "application/json", "X-Requested-By": "fourth-official" },
         body: JSON.stringify({ decision: "rejected", generation: 3, reason: "Not our tone" }),
         cache: "no-store",
+        redirect: "error",
         signal: expect.any(AbortSignal),
       },
     );
+  });
+
+  it("refuses a body that says it is too big before reading it", async () => {
+    const fetch = vi.fn();
+    vi.stubGlobal("fetch", fetch);
+
+    expect((await call(BODY, { ...STUDIO, "content-length": "5000" })).status).toBe(413);
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("limits how often one client decides", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => Promise.resolve(Response.json({}))),
+    );
+    const client = { ...STUDIO, "x-forwarded-for": "203.0.113.9" };
+    const answers = [];
+    for (let i = 0; i < DECISIONS_PER_MINUTE + 1; i += 1) answers.push(await call(BODY, client));
+
+    const last = answers.at(-1)!;
+    expect(answers.slice(0, -1).every((r) => r.status === 200)).toBe(true);
+    expect(last.status).toBe(429);
+    expect(Number(last.headers.get("retry-after"))).toBeGreaterThan(0);
   });
 
   it.each([
@@ -92,6 +116,7 @@ describe("POST a decision", () => {
     ["a rejection with no reason", { decision: "rejected", generation: 1 }],
     ["a long reason", { decision: "rejected", generation: 1, reason: "x".repeat(201) }],
     ["two lines", { decision: "rejected", generation: 1, reason: "a\nb" }],
+    ["a link", { decision: "rejected", generation: 1, reason: "see https://example.com" }],
     ["an extra field", { decision: "approved", generation: 1, editor: "Someone" }],
     ["not json", "{"],
     ["too much", JSON.stringify({ ...BODY, pad: "x".repeat(5000) })],

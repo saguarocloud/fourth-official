@@ -12,6 +12,8 @@ interface ProgramMonitorProps {
   readonly mode: "program" | "preview";
   readonly clock: ClockEntry | null;
   readonly guides: boolean;
+  /** What the stage shows, for screen readers; by default, that the rundown lists it. */
+  readonly stageLabel?: string;
 }
 
 /** A pitch drawn in the faintest line: the feed the graphics sit over, never real footage. */
@@ -30,7 +32,14 @@ function Pitch() {
 }
 
 /** One partner's broadcast, as its viewers would see it: the graphics in its own look. */
-export function ProgramMonitor({ partner, program, mode, clock, guides }: ProgramMonitorProps) {
+export function ProgramMonitor({
+  partner,
+  program,
+  mode,
+  clock,
+  guides,
+  stageLabel,
+}: ProgramMonitorProps) {
   const lit = mode === "program" && (program.lowerThird !== null || program.strap !== null);
   const time = clock ? formatMatchClock(clock.clock.minute, clock.clock.second) : "00:00";
   return (
@@ -55,7 +64,10 @@ export function ProgramMonitor({ partner, program, mode, clock, guides }: Progra
             className="monitor__stage"
             data-tenant={partner.id}
             role="img"
-            aria-label={`${partner.name} ${mode === "program" ? "on air now" : "preview"}: the rundown lists the same graphics`}
+            aria-label={
+              stageLabel ??
+              `${partner.name} ${mode === "program" ? "on air now" : "preview"}: the rundown lists the same graphics`
+            }
           >
             <Pitch />
             {program.score && (

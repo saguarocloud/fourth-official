@@ -38,7 +38,7 @@ export async function sendDecision(
   const { tenantId, matchId, itemId } = target;
   try {
     const response = await fetch(
-      `/api/tenants/${tenantId}/matches/${matchId}/items/${itemId}/decision`,
+      `/api/tenants/${encodeURIComponent(tenantId)}/matches/${encodeURIComponent(matchId)}/items/${encodeURIComponent(itemId)}/decision`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json", "X-Requested-By": "fourth-official" },

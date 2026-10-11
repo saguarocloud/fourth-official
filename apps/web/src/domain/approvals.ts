@@ -3,7 +3,7 @@
  * from the match's own feed: a decision is the item's next version on it, so the latest version of
  * each partner's item says where it stands.
  */
-import type { TenantItemEntry } from "@/contracts/feed";
+import type { Approval, TenantItemEntry } from "@/contracts/feed";
 
 import type { BroadcastState } from "./broadcast";
 
@@ -25,10 +25,17 @@ export function waiting(state: BroadcastState): TenantItemEntry[] {
   return latestVersions(state).filter((item) => item.state === "pending_approval");
 }
 
+/** An item an editor has decided on: it carries the decision. */
+export type DecidedItem = TenantItemEntry & { readonly approval: Approval };
+
+function isDecided(item: TenantItemEntry): item is DecidedItem {
+  return item.approval !== null;
+}
+
 /** What editors decided, newest first. */
-export function decisions(state: BroadcastState): TenantItemEntry[] {
+export function decisions(state: BroadcastState): DecidedItem[] {
   return latestVersions(state)
-    .filter((item) => item.approval !== null)
+    .filter(isDecided)
     .sort((a, b) => b.entrySeq - a.entrySeq);
 }
 

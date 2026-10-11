@@ -11,6 +11,7 @@ export async function GET(): Promise<Response> {
   try {
     const upstream = await fetch(`${apiBase()}/api/tenants`, {
       cache: "no-store",
+      redirect: "error",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
     if (!upstream.ok) throw new Error(`match API answered ${upstream.status}`);

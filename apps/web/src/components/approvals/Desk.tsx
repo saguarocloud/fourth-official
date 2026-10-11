@@ -7,13 +7,16 @@ import { correctedSince, englishVersion } from "@/domain/approvals";
 import { type BroadcastState, PARTNERS, preview } from "@/domain/broadcast";
 import { REASON_MAX } from "@/lib/decision";
 
-const KIND_NAMES: Readonly<Record<string, string>> = { insight: "insight", recap: "recap" };
+const CORRECTED_REASON = "A correction changed this item's facts";
 
 export interface DeskActions {
-  readonly closed: boolean;
+  /** Keys and buttons wait: full time, a request in flight, the run not known, or settling. */
+  readonly blocked: boolean;
   readonly busy: boolean;
   readonly rejecting: boolean;
   readonly reasonError: string | null;
+  /** Move focus to the desk when it shows a new item (not on the page's first view). */
+  readonly focusOnShow: boolean;
   readonly onApprove: () => void;
   readonly onReject: () => void;
   readonly onCancel: () => void;
@@ -35,8 +38,8 @@ function Words({ item, label }: { item: TenantItemEntry; label: string }) {
         {item.rendered?.headline}
       </p>
       <ul className="desk__claims">
-        {item.rendered?.claims.map((claim) => (
-          <li key={claim} lang={item.overlay.locale}>
+        {item.rendered?.claims.map((claim, n) => (
+          <li key={n} lang={item.overlay.locale}>
             {claim}
           </li>
         ))}
@@ -45,7 +48,7 @@ function Words({ item, label }: { item: TenantItemEntry; label: string }) {
   );
 }
 
-function Reject({ actions }: { actions: DeskActions }) {
+function Reject({ actions, prefill }: { actions: DeskActions; prefill: string }) {
   const field = useRef<HTMLInputElement>(null);
   useEffect(() => field.current?.focus(), []);
   return (
@@ -60,8 +63,10 @@ function Reject({ actions }: { actions: DeskActions }) {
       <input
         id="reject-reason"
         ref={field}
+        defaultValue={prefill}
         maxLength={REASON_MAX}
         autoComplete="off"
+        readOnly={actions.busy}
         aria-invalid={actions.reasonError !== null}
         aria-describedby={actions.reasonError ? "reject-error" : undefined}
         onKeyDown={(event) => {
@@ -69,13 +74,23 @@ function Reject({ actions }: { actions: DeskActions }) {
         }}
       />
       {actions.reasonError && (
-        <p id="reject-error" className="desk__error">
+        <p id="reject-error" className="desk__error" role="alert">
           {actions.reasonError}
         </p>
       )}
-      <button type="submit" className="key" data-intent="danger" disabled={actions.busy}>
-        <span>Send rejection</span>
-      </button>
+      <div className="desk__reject-keys">
+        <button type="submit" className="key" data-intent="danger" disabled={actions.busy}>
+          <span>Send rejection</span>
+        </button>
+        <button type="button" className="key" aria-keyshortcuts="Escape" onClick={actions.onCancel}>
+          <span>
+            <span className="key-cap" aria-hidden="true">
+              Esc
+            </span>
+            Cancel
+          </span>
+        </button>
+      </div>
     </form>
   );
 }
@@ -83,26 +98,47 @@ function Reject({ actions }: { actions: DeskActions }) {
 /** The held item as it will air on its partner, read against English, with why it waits and the
  * editor's two keys. */
 export function Desk({ item, view, tenant, actions }: DeskProps) {
-  const partner = PARTNERS.find((p) => p.id === item.tenantId) ?? PARTNERS[0]!;
-  const insightId = item.localized?.insightId ?? "";
+  const heading = useRef<HTMLHeadingElement>(null);
+  const rejectKey = useRef<HTMLButtonElement>(null);
+  const wasRejecting = useRef(actions.rejecting);
+  const { focusOnShow, rejecting } = actions;
+  useEffect(() => {
+    if (focusOnShow) heading.current?.focus();
+  }, [focusOnShow]);
+  useEffect(() => {
+    // Putting the reason away returns the editor to the key that opened it.
+    if (wasRejecting.current && !rejecting) rejectKey.current?.focus();
+    wasRejecting.current = rejecting;
+  }, [rejecting]);
+
+  const partner = PARTNERS.find((p) => p.id === item.tenantId);
+  if (partner === undefined) {
+    return (
+      <section className="desk" aria-label="Unknown partner">
+        <p className="desk__unknown">
+          This item belongs to a partner this studio does not know. It cannot be decided here.
+        </p>
+      </section>
+    );
+  }
   const english = englishVersion(view, item);
   const corrected = correctedSince(view, item);
   const evidence = new Set(item.localized?.claims.flatMap((c) => c.evidence.eventIds) ?? []);
-  const kind = KIND_NAMES[item.itemKind] ?? item.itemKind;
   const editor = tenant?.dutyEditor;
-  const blocked = actions.closed || actions.busy;
+  const headline = item.rendered?.headline ?? "";
   return (
     <section className="desk" aria-labelledby="desk-heading">
-      <h2 id="desk-heading" className="sr-only">
-        {`${partner.name}: ${item.rendered?.headline ?? ""}`}
+      <h2 id="desk-heading" className="sr-only" ref={heading} tabIndex={-1}>
+        {`${partner.name}: ${headline}`}
       </h2>
       <div className="desk__stage">
         <ProgramMonitor
           partner={partner}
-          program={preview(view, partner.id, insightId)}
+          program={preview(view, partner.id, item.localized?.insightId ?? "")}
           mode="preview"
           clock={view.clock}
           guides={false}
+          stageLabel={`${partner.name} preview: the held graphic as it would air. Its words are on this desk as text.`}
         />
       </div>
       <div className="desk__reading">
@@ -113,7 +149,7 @@ export function Desk({ item, view, tenant, actions }: DeskProps) {
         )}
         <section className="desk__why" aria-label="Why it waits">
           <h3 className="panel-heading">Why it waits</h3>
-          <p>{`${partner.name}'s policy sends every ${kind} to an editor before it airs.`}</p>
+          <p>{`${partner.name}'s policy sends every ${item.itemKind} to an editor before it airs.`}</p>
           <p>
             {`It rests on ${evidence.size} match ${evidence.size === 1 ? "event" : "events"}, checked twice: once in English, then in ${partner.language}.`}
           </p>
@@ -131,7 +167,7 @@ export function Desk({ item, view, tenant, actions }: DeskProps) {
           className="key"
           data-intent="primary"
           aria-keyshortcuts="A"
-          disabled={blocked || corrected}
+          disabled={actions.blocked || corrected || rejecting}
           onClick={actions.onApprove}
         >
           <span>
@@ -144,9 +180,10 @@ export function Desk({ item, view, tenant, actions }: DeskProps) {
         <button
           type="button"
           className="key"
+          ref={rejectKey}
           aria-keyshortcuts="R"
-          aria-expanded={actions.rejecting}
-          disabled={blocked}
+          aria-expanded={rejecting}
+          disabled={actions.blocked}
           onClick={actions.onReject}
         >
           <span>
@@ -162,7 +199,7 @@ export function Desk({ item, view, tenant, actions }: DeskProps) {
             : "Decisions are recorded against the partner's duty editor (demo identity)."}
         </p>
       </div>
-      {actions.rejecting && !blocked && <Reject actions={actions} />}
+      {rejecting && <Reject actions={actions} prefill={corrected ? CORRECTED_REASON : ""} />}
     </section>
   );
 }

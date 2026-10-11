@@ -12,6 +12,8 @@ describe("cleanReason", () => {
     ["", "blank"],
     ["   ", "spaces"],
     ["a\nb", "two lines"],
+    ["see https://x.example", "a link"],
+    ["visit www.x.example", "a web address"],
     ["a‮b", "a direction override"],
     ["a​b", "a zero-width space"],
     ["x".repeat(201), "too long"],

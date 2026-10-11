@@ -1,5 +1,5 @@
 import { type ItemState, StatusLamp } from "@/components/ui/StatusLamp";
-import type { TenantItemEntry } from "@/contracts/feed";
+import type { DecidedItem } from "@/domain/approvals";
 import { PARTNERS, type Phase, phaseAt } from "@/domain/broadcast";
 
 const NOW: Record<Phase, ItemState> = {
@@ -10,13 +10,21 @@ const NOW: Record<Phase, ItemState> = {
   rejected: "dropped",
 };
 
+// The studio's clock: the time in the top bar, so the log and the clock agree.
+const STUDIO_TIME = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 function timeOf(iso: string): string {
   const at = new Date(iso);
-  return Number.isNaN(at.getTime()) ? "" : `${at.toISOString().slice(11, 16)} UTC`;
+  return Number.isNaN(at.getTime()) ? "" : STUDIO_TIME.format(at);
 }
 
 interface DecisionLogProps {
-  readonly items: readonly TenantItemEntry[];
+  readonly items: readonly DecidedItem[];
   readonly now: number | null;
 }
 
@@ -33,7 +41,7 @@ export function DecisionLog({ items, now }: DecisionLogProps) {
         <table className="decision-log__table" role="table" aria-labelledby="decisions-heading">
           <thead>
             <tr>
-              <th scope="col">Decided</th>
+              <th scope="col">Decided (studio time)</th>
               <th scope="col">Partner</th>
               <th scope="col">Item</th>
               <th scope="col">Decision</th>
@@ -46,7 +54,7 @@ export function DecisionLog({ items, now }: DecisionLogProps) {
               semantics. */}
           <tbody role="rowgroup">
             {items.map((item) => {
-              const approval = item.approval!;
+              const { approval } = item;
               return (
                 <tr key={`${item.tenantId}/${item.overlay.itemId}`} role="row">
                   <td role="cell" data-label="Decided" className="tabular">
@@ -65,8 +73,10 @@ export function DecisionLog({ items, now }: DecisionLogProps) {
                     <StatusLamp state={NOW[phaseAt(item, now)]} />
                   </td>
                   <td role="cell" data-label="Editor">
-                    {approval.editor}
-                    <span className="decision-log__role"> · duty editor</span>
+                    <span>
+                      {approval.editor}
+                      <span className="decision-log__role"> · duty editor (demo identity)</span>
+                    </span>
                   </td>
                   <td role="cell" data-label="Reason">
                     {approval.reason ?? ""}
