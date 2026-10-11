@@ -21,6 +21,15 @@ param exists bool
 @maxValue(10)
 param maxReplicas int = 3
 
+@description('False keeps the app inside the environment: other apps reach it, the internet cannot.')
+param external bool = true
+
+@description('Plain settings for the container, as { name, value }. Never secrets: there are none.')
+param env array = []
+
+@description('Further user-assigned identities the app runs as, besides the image-pull identity.')
+param additionalIdentityIds string[] = []
+
 // Public placeholder used until the first `azd deploy` pushes a real image. It listens on port 80,
 // not targetPort, so it never serves traffic; that is safe because minReplicas is 0 and provisioning
 // does not wait for a healthy replica.
@@ -42,7 +51,7 @@ resource app 'Microsoft.App/containerApps@2025-07-01' = {
   tags: union(tags, { 'azd-service-name': serviceName })
   identity: {
     type: 'UserAssigned'
-    userAssignedIdentities: { '${identityId}': {} }
+    userAssignedIdentities: toObject(concat([identityId], additionalIdentityIds), id => id, id => {})
   }
   properties: {
     managedEnvironmentId: environmentId
@@ -51,7 +60,7 @@ resource app 'Microsoft.App/containerApps@2025-07-01' = {
       activeRevisionsMode: 'Single'
       maxInactiveRevisions: 2
       ingress: {
-        external: true
+        external: external
         targetPort: targetPort
         transport: 'auto'
         allowInsecure: false
@@ -66,6 +75,7 @@ resource app 'Microsoft.App/containerApps@2025-07-01' = {
           name: serviceName
           image: empty(currentContainers) ? placeholderImage : currentContainers[0].image
           resources: { cpu: json('0.25'), memory: '0.5Gi' }
+          env: env
           probes: [
             {
               type: 'Startup'

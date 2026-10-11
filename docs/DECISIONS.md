@@ -179,3 +179,6 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Consequences.**
 - Cost is a few blob operations per start: negligible.
 - Cosmos DB (planned for state) could hold the ledger later; the `StartLedger` protocol keeps that a swap, not a rewrite.
+- Blob versioning and 7-day soft delete make a bad write or a delete recoverable.
+- **Accepted risk:** the API runs as the agents identity, which can both call the models and write the ledger, so a compromised API could spend tokens and reset its own allowance. Splitting the identities buys little while one process does both; the TPM limits and budget alerts still bound spend.
+- **Accepted risk:** the Match Data MCP server has no authentication of its own. It is reachable only through the environment's internal ingress, which is checked from outside after each infrastructure change; Entra authentication is the next step if the environment ever hosts apps we do not run.

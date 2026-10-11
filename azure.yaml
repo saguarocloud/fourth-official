@@ -17,6 +17,16 @@ services:
       # APP_VERSION is the git SHA in CI. Locally it may be empty; the apps then report "dev".
       buildArgs:
         - APP_VERSION=${APP_VERSION}
+  match-data:
+    project: ./services/match-data
+    language: py
+    host: containerapp
+    docker:
+      path: ./Dockerfile
+      # The uv workspace lockfile lives at the repository root.
+      context: ../..
+      buildArgs:
+        - APP_VERSION=${APP_VERSION}
   web:
     project: ./apps/web
     language: js
