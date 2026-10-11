@@ -171,3 +171,17 @@ def test_postprovision_skips_github_when_no_deploy_repository_is_set(stubs: Path
 
     assert run.returncode == 0, run.output
     assert run.gh_calls == []
+
+
+def test_preprovision_matches_repository_names_case_insensitively(stubs: Path) -> None:
+    # GitHub owner and repository names are case-insensitive; the API returns canonical casing.
+    run = _run(
+        "preprovision.sh",
+        stubs,
+        {
+            "GITHUB_DEPLOY_REPOSITORY": "SaguaroCloud/Fourth-Official",
+            "GH_STUB_OUTPUT": _oidc(GOOD_PREFIX),
+        },
+    )
+
+    assert run.returncode == 0, run.output

@@ -22,11 +22,12 @@ if [ -n "${GITHUB_DEPLOY_REPOSITORY:-}" ]; then
     exit 1
   fi
   prefix="$(printf '%s' "$oidc" | jq -r '.sub_claim_prefix // empty')"
-  # The prefix must name exactly this repository: repo:<owner>[@id]/<name>[@id], on one line.
+  # The prefix must name exactly this repository (case-insensitively, as GitHub does):
+  # repo:<owner>[@id]/<name>[@id], on one line.
   owner_re="$(printf '%s' "${repo%%/*}" | sed 's/[.]/\\./g')"
   name_re="$(printf '%s' "${repo#*/}" | sed 's/[.]/\\./g')"
   if [ "$(printf '%s' "$prefix" | wc -l)" -ne 0 ] ||
-    ! printf '%s\n' "$prefix" | grep -Eqx "repo:${owner_re}(@[0-9]+)?/${name_re}(@[0-9]+)?"; then
+    ! printf '%s\n' "$prefix" | grep -Eqix "repo:${owner_re}(@[0-9]+)?/${name_re}(@[0-9]+)?"; then
     echo "preprovision: OIDC subject prefix '$prefix' does not identify $repo" >&2
     exit 1
   fi
