@@ -142,10 +142,12 @@ def test_github_federated_credential_is_scoped_to_one_environment(
 
     assert credential.properties["issuer"] == "https://token.actions.githubusercontent.com"
     assert credential.properties["audiences"] == ["api://AzureADTokenExchange"]
-    subject = credential.properties["subject"]
-    assert "environment:" in subject
-    assert "ref:" not in subject
-    assert "pull_request" not in subject
+    # Exactly the prefix GitHub reports for the repository (ID-based when immutable subjects are
+    # on) plus one environment: no branch, pull request or wildcard form can match.
+    assert credential.properties["subject"] == (
+        "[format('{0}:environment:{1}', parameters('githubSubjectPrefix'), "
+        "parameters('githubEnvironment'))]"
+    )
 
 
 def test_outputs_never_expose_secrets(compiled: CompiledTemplate) -> None:

@@ -2,8 +2,38 @@
 # Before `azd provision`: record which container apps already exist, so the Bicep keeps the image
 # `azd deploy` last released instead of resetting it to the placeholder (see fetch-container-image.bicep).
 # azd does not refresh SERVICE_<NAME>_RESOURCE_EXISTS on its own after the first provision.
-# Fails closed: if existence cannot be determined, provisioning stops rather than risk a reset.
+# It also records the OIDC subject prefix GitHub uses for the deploy repository, so the federated
+# credential matches the tokens GitHub actually issues (ID-based when immutable subjects are on).
+# Fails closed: if either fact cannot be determined, provisioning stops.
 set -eu
+
+if [ -n "${GITHUB_DEPLOY_REPOSITORY:-}" ]; then
+  for tool in gh jq; do
+    command -v "$tool" >/dev/null 2>&1 || { echo "preprovision: $tool is required" >&2; exit 1; }
+  done
+  repo="$GITHUB_DEPLOY_REPOSITORY"
+  oidc="$(gh api "repos/$repo/actions/oidc/customization/sub")" || {
+    echo "preprovision: cannot read the OIDC subject settings of $repo." >&2
+    echo "preprovision: run 'gh auth login' with an account that administers the repository." >&2
+    exit 1
+  }
+  if [ "$(printf '%s' "$oidc" | jq -r '.use_default')" != "true" ]; then
+    echo "preprovision: $repo uses a custom OIDC subject template, which is not supported." >&2
+    exit 1
+  fi
+  prefix="$(printf '%s' "$oidc" | jq -r '.sub_claim_prefix // empty')"
+  # The prefix must name exactly this repository (case-insensitively, as GitHub does):
+  # repo:<owner>[@id]/<name>[@id], on one line.
+  owner_re="$(printf '%s' "${repo%%/*}" | sed 's/[.]/\\./g')"
+  name_re="$(printf '%s' "${repo#*/}" | sed 's/[.]/\\./g')"
+  if [ "$(printf '%s' "$prefix" | wc -l)" -ne 0 ] ||
+    ! printf '%s\n' "$prefix" | grep -Eqix "repo:${owner_re}(@[0-9]+)?/${name_re}(@[0-9]+)?"; then
+    echo "preprovision: OIDC subject prefix '$prefix' does not identify $repo" >&2
+    exit 1
+  fi
+  azd env set GITHUB_DEPLOY_SUBJECT_PREFIX "$prefix"
+  echo "preprovision: GITHUB_DEPLOY_SUBJECT_PREFIX=$prefix"
+fi
 
 SERVICES="api web"
 RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-}"
