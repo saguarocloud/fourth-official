@@ -14,8 +14,8 @@ updates:
       # @types/node tracks the Node.js runtime (24 LTS), not the newest Node.js.
       - dependency-name: "@types/node"
         update-types: ["version-update:semver-major"]
-      # eslint-config-next does not yet load under ESLint 10; TypeScript 7 is a new compiler.
-      # Both majors are taken deliberately, with their own pull request.
+      # Toolchain majors are upgraded by hand in their own pull request (see #2: ESLint 10 broke
+      # eslint-config-next). Security updates are not affected by these rules.
       - dependency-name: "eslint"
         update-types: ["version-update:semver-major"]
       - dependency-name: "typescript"
@@ -27,6 +27,7 @@ updates:
     directories: [/apps/api, /apps/web]
     schedule: { interval: weekly }
     ignore:
-      # Production images stay on Node.js LTS; odd-numbered releases never become LTS.
+      # Node.js majors are upgraded by hand, together with `engines` in apps/web/package.json, and
+      # only to an LTS line (see #4).
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
