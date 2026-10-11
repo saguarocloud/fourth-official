@@ -110,7 +110,8 @@ class Disclosure(WireModel):
     """How AI involvement is shown on an item: the label (rendered by code, never by a model)."""
 
     label: (
-        Annotated[str, StringConstraints(min_length=1, max_length=60), AfterValidator(_line)] | None
+        Annotated[str, StringConstraints(min_length=1, max_length=100), AfterValidator(_line)]
+        | None
     )
     mode: DisclosureMode
     # ai_generated: written by agents, not reviewed; ai_assisted_reviewed: approved by a named

@@ -1,0 +1,16 @@
+# Tribuna Austral: Latin America. Energetic, passionate, local football vocabulary.
+# Every narrative item waits for a named editor; stats publish automatically.
+tenantId: tribuna-austral
+version: 1
+displayName: Tribuna Austral
+locale: es-MX
+tone: [energetic, passionate]
+preferTerms: [golazo, contragolpe, presión alta]
+avoidTerms: [aburrido]
+blockedTopics: [injury_speculation, betting, referee_criticism]
+approvalRequired: [insight, recap]
+disclosureMode: label-all
+latencyBudgetMs: 10000
+maxItemsPerMinute: 6
+templates: [lower_third, stat_card, correction_strap, score_bug]
+correctionBehaviour: retract-and-notify

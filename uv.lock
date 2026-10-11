@@ -10,6 +10,7 @@ members = [
     "fourth-official-explain",
     "fourth-official-match-data",
     "fourth-official-moments",
+    "fourth-official-policy",
     "fourth-official-replay",
     "fourth-official-simulator",
     "fourth-official-stats",
@@ -615,6 +616,21 @@ dependencies = [
 requires-dist = [
     { name = "fourth-official-contracts", editable = "packages/contracts" },
     { name = "fourth-official-stats", editable = "services/stats-engine" },
+]
+
+[[package]]
+name = "fourth-official-policy"
+version = "0.1.0"
+source = { editable = "services/policy" }
+dependencies = [
+    { name = "fourth-official-contracts" },
+    { name = "pyyaml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fourth-official-contracts", editable = "packages/contracts" },
+    { name = "pyyaml", specifier = ">=6.0.2,<7" },
 ]
 
 [[package]]

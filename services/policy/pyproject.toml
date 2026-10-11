@@ -1,0 +1,16 @@
+[project]
+name = "fourth-official-policy"
+version = "0.1.0"
+description = "Broadcast partner policies, disclosure and approval routing for Fourth Official"
+requires-python = ">=3.12,<3.13"
+dependencies = ["fourth-official-contracts", "pyyaml>=6.0.2,<7"]
+
+[tool.uv.sources]
+fourth-official-contracts = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fourth_official_policy"]
