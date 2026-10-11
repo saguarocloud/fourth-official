@@ -174,6 +174,23 @@ components:
     backgroundColor: "{colors.panel-1}"
     rounded: "{rounded.key}"
     padding: "16px"
+  incident:
+    backgroundColor: "{colors.panel-1}"
+    textColor: "{colors.ink-1}"
+    rounded: "{rounded.key}"
+    padding: "24px"
+  impact-fan:
+    backgroundColor: "{colors.panel-0}"
+    rounded: "{rounded.key}"
+    width: "100%"
+  item-board:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "16px"
+  item-board-panel:
+    backgroundColor: "{colors.panel-0}"
+    rounded: "{rounded.key}"
+    padding: "12px"
 ---
 
 # Design System: Fourth Official
@@ -291,6 +308,14 @@ The main wall leads with the page header and verdict, then the match wall: a two
 - **Focus:** after a decision, to the new item's desk heading; after Cancel, back to the R key; to the "Waiting" heading when the queue empties.
 - **Phones (720 and below):** the decisions log becomes cards, each column a labelled line (see Decisions log).
 
+**Corrections** (`/corrections`) has no live rail, so main takes the full width. A correction is a substitution: every partner item it reached is shown OUT and IN, never as a log table of affected ids. The first viewport runs: page header (title, "Home v Away · Meridian League", verdict line); the controls row (`.corrections__controls`) with the match keys (the featured match when none is asked for); the correction keys; the incident panel; "What it reached" with the impact fan and the item boards beneath; the synthetic-data footnote, which says the corrections desk finds every partner item resting on the corrected event and acts as each partner's policy says.
+- **Verdict:** "N corrections this match: M partner items corrected across P partners and L languages." Green when nothing waits; amber, with "; K new versions held for an editor" before the full stop, when escalated versions wait for an editor. With no corrections, neutral: "No corrections this match. When the source data changes, every item it reached appears here." Neutral "Loading the matchday." while matches load; red "The match service is unavailable. Retrying every few seconds."
+- **Correction keys:** a group labelled by the "Corrections this match" panel heading, sitting on one row with its keys (wraps, `--space-2` by `--space-3` gaps): one default key per correction, in issue order, reading `Kind: OUT → IN` ("Ruled out: 2-1 → 1-1", "Amended: …"). The current key is `aria-pressed`: panel-3, ink-3 edge, no bevel, like a pressed key. The screen opens on the correction that reached the most partner items, the earliest on a tie; choosing another key resets Replay. Switching match starts afresh.
+- **Incident** (`.incident`): a panel-1 panel padded 24px with a hairline edge. An `h2` with the correction's summary (20px, 600, ink-1); then the body, one column, `3fr | 2fr` from 1280: the OUT/IN board in brief form (no summary or UTC time in its caption, only "N published items corrected.", counting only items that were on air, or "No published item rested on it.") beside a facts `dl` in two columns (11px uppercase ink-3 terms over 14px ink-1 values): Correction ("Event voided" / "Event amended"), Corrected event (its id, tabular), Issued (studio time, `Europe/London`, hh:mm:ss, matching the top-bar clock), Desk reports (how many reports the desk published for it). Last, above a hairline, the summary bar: "3 partner items (2 on air, 1 held) · 3 partners · 3 languages · 4 ms" at 24px weight 600, tabular, ink-1, prefixed for screen readers by "What it reached:"; the held split appears only when something was held; before the desk reports, "The corrections desk has not reported yet."
+- **Desk time:** milliseconds under a second ("4 ms"), seconds to one decimal above ("6.4 s"), summed over the correction's reports.
+- **What it reached:** the panel heading with the small Replay key at the right (shown only when items were reached); the impact fan; then the item boards as a list labelled "Items corrected", one column, `repeat(auto-fill, minmax(28rem, 1fr))` from 1280. With nothing reached, a 13px ink-2 sentence: "No partner item rested on the corrected event." (or, before any report, "The corrections desk has not reported on this correction yet.").
+- **Phones (720 and below):** the fan switches to its stacked layout (a 400-unit viewBox read top to bottom: the correction, its insights, then each partner item), so every node stays legible without scrolling; the wide layout hides, and a hidden layout is out of the accessibility tree, so the fan is announced once; each board's OUT and IN panels stack; the facts drop to one column; the summary bar drops to 20px.
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -301,6 +326,7 @@ Breakpoints:
 - **Below 768:** the match wall goes to one column; stats go two across.
 - **Broadcast Preview only:** 1800 and up puts the rundown beside the monitor; 720 and below is the phone layout above.
 - **Approvals only:** 1280 and up puts the call sheet beside the desk and the stage beside the reading; 720 and below turns the decisions log into cards.
+- **Corrections only:** 1280 and up puts the incident's facts beside its board and lays item boards out at `minmax(28rem, 1fr)`; 720 and below stacks each board's panels and the facts, and the fan scrolls sideways.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -364,12 +390,12 @@ The fourth official's dot matrix, drawn as SVG: all unlit dots in one path and a
 ### OUT/IN substitution board (signature; the correction pattern)
 The fourth official's board, repurposed: what went out (red) and what replaced it (green), side by side in two recessed panel-0 panels with OUT and IN labels, 4px LED dots. Used wherever a correction is summarised. Its caption gives the reason, the impact sentence ("Corrected 17 published items across 3 partners and 3 languages in 6.4 s") and the received/event times in tabular figures.
 
-**The One Moment Rule.** This is the single authored motion moment: the IN panel's lit dots light up 260ms after OUT, over 420ms ease-out, like the board being raised. No other element animates for effect.
+**The One Moment Rule.** This is the single authored motion moment: the IN panel's lit dots light up 260ms after OUT, over 420ms ease-out, like the board being raised. No other element animates for effect. The Corrections Center applies the same beat to each item board's IN panel, staggered board after board (260, 380, 500, then 620ms for the fourth and later), and, on Replay, to the impact fan's item nodes and their edges; it is the only motion on that screen, and under reduced motion none of it runs.
 
-The two panels shrink to fit a narrow rail (`repeat(2, minmax(0, 1fr))`, `min-width: 0`, and the readout SVG at `max-width: 100%; height: auto`), so a long OUT or IN text scales down rather than overflowing. On Match Live the rail ("Corrections") lists every correction, newest first (empty, a 13px ink-2 sentence says what will appear there); each caption gives the summary (14px ink-1), "N published items corrected." (or "No published item rested on it.") in ink-2, and "Issued hh:mm:ss UTC" in tabular figures. When a corrected item is on the page the summary is a link to it (underline in hairline-strong, `currentColor` on hover), and the item it reaches is outlined (see Wire item, `:target`).
+The two panels shrink to fit a narrow rail (`repeat(2, minmax(0, 1fr))`, `min-width: 0`, and the readout SVG at `max-width: 100%; height: auto`), so a long OUT or IN text scales down rather than overflowing. On Match Live the rail ("Corrections") lists every correction, newest first (empty, a 13px ink-2 sentence says what will appear there); each caption gives the summary (14px ink-1), "N published items corrected." (or "No published item rested on it.") in ink-2, and "Issued hh:mm:ss UTC" in tabular figures. When a corrected item is on the page the summary is a link to it (underline in hairline-strong, `currentColor` on hover), and the item it reaches is outlined (see Wire item, `:target`). In brief form (`brief`, for a page that states the summary and times itself, as the Corrections incident does) the caption keeps only the impact line.
 
 ### Verdict line
-One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute (see Layout).
+One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute; on Corrections, how many corrections and what they reached (see Layout).
 
 ### Match keys (Match Live)
 One square-cut key per match in a `nav` labelled "Matches": 36px tall, 12px side padding, panel-2 face with strong hairline edge and the key bevel, 13px weight 500 ink-2, club codes ("ARD v KES") in tabular figures with full names for screen readers. Hover and current (`aria-current="page"`) go panel-3 and ink-1; current drops the bevel, like a pressed key. A running match adds a 6px red lamp and "LIVE" as an 11px uppercase label in ink-1; a finished one a quiet "FT" in ink-3; otherwise nothing.
@@ -453,6 +479,25 @@ Opened by R on the desk: a panel-1 panel padded 16px with a strong hairline edge
 ### Decisions log (Approvals)
 The audit trail beneath the floor, headed "Decisions", newest first; empty, "No decisions yet this match." in ink-3. A data table: decided (studio time, `Europe/London`, hh:mm, matching the top-bar clock), partner, the item's headline in its own `lang`, the decision as text ("Approved" or "Rejected", never colour alone), "Now" with the shared status lamp read at the match clock (Queued, On air, Published, Pending approval, Dropped), the editor followed by " · duty editor (demo identity)" in ink-3, and the reason. On phones each row becomes a card of labelled lines (`6rem | 1fr`, labels from `data-label` in 11px uppercase ink-3, empty cells hidden); the table keeps explicit roles (`table`, `rowgroup`, `row`, `cell`) so its semantics survive the restyle.
 
+### Impact fan (Corrections)
+The correction, the insights resting on it and every partner item it reached, drawn as one fan in an SVG (`role="img"`, labelled "summary: reached N insights and M partner items"; the item boards are its text equivalent). A recessed panel-0 field with a hairline edge and the key radius, full width; on phones a stacked layout replaces it (see Corrections, Phones). Three columns of 28-unit nodes (panel-2 fill, strong-hairline edge, 2px radius, 14px ink-1 Geist), joined by 2px strong-hairline edges:
+- **Event node** (left, vertically centred): the board's own text, `OUT → IN` ("2-1 → 1-1"), with a board-white edge.
+- **Insight nodes** (centre): named by moment kind and broadcast minute ("Goal 67'"), or "Insight" when the moment is not on the feed.
+- **Item nodes** (right): "Partner · locale" ("Tribuna Austral · es-MX"), each joined to the insight it rests on.
+- **Colour:** item nodes and their edges take their state colour only: retracted red, amended violet, escalated amber. Everything else is neutral.
+- **Titles:** each node's `<title>` carries its id (the event node's carries the summary), for a hover read without cluttering the fan.
+
+### Item board (Corrections)
+One partner item a correction reached, as a list item: a panel-1 panel padded 16px with a hairline edge.
+- **Head:** the partner name as an `h3` (14px, 600, ink-1), its language as an 11px uppercase ink-3 label, the shared status lamp (Retracted, Amended, or Pending approval for an escalation), and, when the item had been held, "was held for an editor" in the same label style.
+- **Panels:** OUT and IN side by side (`repeat(2, minmax(0, 1fr))`, stacked on phones), each a recessed panel-0 panel padded 12px with a red OUT or green IN label (hidden from screen readers; each panel is a group labelled "Out: Partner" / "In: Partner").
+- **OUT:** the published headline (600, ink-1) and first claim (13px ink-2) in the item's own `lang`, struck with a 1.5px line, red when the item was pulled and violet when it was amended, followed by a visually hidden "(withdrawn)" or "(replaced)".
+- **IN:** the new version's words, unstruck; or, in 13px ink-2, "Pulled off air", "Withdrawn before air" (the item was held), or "Held for an editor: pending approval" (escalated, beneath the held version). Words missing from the feed say so ("Its words are not on the feed.", "The new version is not on the feed yet").
+- **Motion:** the IN panel lights a beat after OUT, staggered across boards (see The One Moment Rule).
+
+### Replay (Corrections)
+A small default key beside "What it reached". It re-runs the One Moment light-up across the item boards (260, 380, 500, 620ms) and the fan's item nodes and their edges, then moves focus to the first board's heading (`#first-change`, `tabindex="-1"`). Under reduced motion nothing animates, but focus still moves, so the replay is felt.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -472,6 +517,7 @@ The audit trail beneath the floor, headed "Decisions", newest first; empty, "No 
 - **Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows.
 - **Do** name the duty editor as a demo identity wherever a decision names an editor; this demo has no sign-in.
 - **Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.
+- **Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.
 
 ### Don't:
 - **Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).
@@ -479,7 +525,7 @@ The audit trail beneath the floor, headed "Decisions", newest first; empty, "No 
 - **Don't** use green, amber, red or violet for anything that is not a state; don't use blue for anything but the AI tag.
 - **Don't** colour a clock or scoreline by state.
 - **Don't** convey state by colour alone.
-- **Don't** add motion beyond the OUT/IN light-up and state transitions of 160 to 220ms (the functional exceptions are loading spinners, the disclosure chevron, and broadcast graphics animating in within 360ms inside the monitor, as they do on air).
+- **Don't** add motion beyond the OUT/IN light-up (including its staggered repeat on the Corrections item boards and fan) and state transitions of 160 to 220ms (the functional exceptions are loading spinners, the disclosure chevron, and broadcast graphics animating in within 360ms inside the monitor, as they do on air).
 - **Don't** mark moment kinds with colour; a kind is an icon and a label.
 - **Don't** repeat a correction's state with a lamp when its strap already names it.
 - **Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.
