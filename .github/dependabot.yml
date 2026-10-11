@@ -10,9 +10,24 @@ updates:
     schedule: { interval: weekly }
     groups:
       web: { patterns: ["*"] }
+    ignore:
+      # @types/node tracks the Node.js runtime (24 LTS), not the newest Node.js.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      # Toolchain majors are upgraded by hand in their own pull request (see #2: ESLint 10 broke
+      # eslint-config-next). Security updates are not affected by these rules.
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
   - package-ecosystem: docker
     directories: [/apps/api, /apps/web]
     schedule: { interval: weekly }
+    ignore:
+      # Node.js majors are upgraded by hand, together with `engines` in apps/web/package.json, and
+      # only to an LTS line (see #4).
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
