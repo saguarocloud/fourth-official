@@ -39,7 +39,7 @@ def client() -> Iterator[TestClient]:
         yield client
 
 
-def test_the_partners_are_listed_with_their_language_and_disclosure(client: TestClient) -> None:
+def test_the_partners_are_listed_with_their_policy_and_editor(client: TestClient) -> None:
     response = client.get("/api/tenants")
 
     assert response.status_code == 200
@@ -51,18 +51,24 @@ def test_the_partners_are_listed_with_their_language_and_disclosure(client: Test
                 "displayName": "Northlight Sport",
                 "locale": "en-GB",
                 "disclosureMode": "label-unless-approved",
+                "approvalRequired": ["recap"],
+                "dutyEditor": "R. Hale",
             },
             {
                 "tenantId": "rheinblick-sport",
                 "displayName": "Rheinblick Sport",
                 "locale": "de-DE",
                 "disclosureMode": "eu-strict",
+                "approvalRequired": ["recap"],
+                "dutyEditor": "L. Vogt",
             },
             {
                 "tenantId": "tribuna-austral",
                 "displayName": "Tribuna Austral",
                 "locale": "es-MX",
                 "disclosureMode": "label-all",
+                "approvalRequired": ["insight", "recap"],
+                "dutyEditor": "T. Ibarra",
             },
         ]
     }

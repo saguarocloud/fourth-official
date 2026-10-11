@@ -255,8 +255,9 @@ def matchday_router(
         )
 
     @router.get("/tenants")
-    def tenants(request: Request, response: Response) -> dict[str, list[dict[str, str]]]:
-        """The broadcast partners, with their language and how they disclose AI involvement."""
+    def tenants(request: Request, response: Response) -> dict[str, list[dict[str, Any]]]:
+        """The broadcast partners: their language, how they disclose AI involvement, which items
+        wait for an editor, and the duty editor who decides on them."""
         response.headers["Cache-Control"] = "no-store"
         policies: dict[str, TenantPolicy] = request.app.state.tenants
         return {
@@ -266,6 +267,8 @@ def matchday_router(
                     "displayName": policy.display_name,
                     "locale": policy.locale,
                     "disclosureMode": policy.disclosure_mode,
+                    "approvalRequired": list(policy.approval_required),
+                    "dutyEditor": policy.duty_editor,
                 }
                 for _, policy in sorted(policies.items())
             ]

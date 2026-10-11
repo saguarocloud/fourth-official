@@ -9,17 +9,22 @@ one ledger sees every start.
 
 Each match keeps one feed log for the life of the matchday; a new run resets it, so readers that
 opened the feed earlier follow the new run.
+
+An editor's decision on a held item is published as the item's next entry on its match's feed,
+while the match runs; after full time the feed is closed and held items stay off air.
 """
 
 import asyncio
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Literal, Protocol
 
+from fourth_official_contracts import ClockEntry, TenantItemEntry
 from fourth_official_match_data import MatchStore
 from fourth_official_replay.log import FeedLog
-from fourth_official_replay.partners import Partners
+from fourth_official_replay.partners import Decision, DecisionError, Partners
 from fourth_official_replay.replay import Explainer, ReplayConfig, Sleep, replay
 
 MatchState = Literal["idle", "running", "finished", "failed"]
@@ -51,6 +56,10 @@ class InMemoryLedger:
     async def claim(self, started: float, check: Callable[[tuple[float, ...]], None]) -> None:
         check(self._starts)
         self._starts = (*self._starts[-(DEFAULT_RUNS_PER_DAY * 2) :], started)
+
+
+class UnknownItemError(LookupError):
+    """No such match, or no such item of the partner on its feed this run."""
 
 
 class MatchdayBusyError(RuntimeError):
@@ -95,6 +104,10 @@ class Matchday:
         self._cooldown, self._runs_per_day = cooldown, runs_per_day
         self._feeds = {match_id: FeedLog(match_id) for match_id in store.match_ids()}
         self._runs: dict[str, asyncio.Task[None]] = {}
+        # This run's partners for each match: their schedules place an approved item on air.
+        self._run_partners: dict[str, Partners] = {}
+        # One decision at a time, so two editors cannot both decide the same item.
+        self._deciding = asyncio.Lock()
         self._ledger = ledger or InMemoryLedger()
         self._lock = asyncio.Lock()
 
@@ -171,6 +184,9 @@ class Matchday:
             records = {match_id: self._store.record(match_id) for match_id in self._feeds}
             for feed in self._feeds.values():
                 await feed.reset()
+            self._run_partners = (
+                {match_id: self._partners() for match_id in records} if self._partners else {}
+            )
             self._runs = {
                 match_id: asyncio.create_task(
                     replay(
@@ -179,12 +195,58 @@ class Matchday:
                         self._explainer,
                         config=self._config,
                         sleep=self._sleep,
-                        partners=self._partners() if self._partners else None,
+                        partners=self._run_partners.get(match_id),
                     ),
                     name=f"replay-{match_id}",
                 )
                 for match_id, record in records.items()
             }
+
+    async def decide(
+        self,
+        match_id: str,
+        tenant_id: str,
+        item_id: str,
+        decision: Decision,
+        *,
+        reason: str | None,
+        now: datetime,
+    ) -> TenantItemEntry:
+        """Publish the duty editor's decision on a held item as its next entry. Raises
+        `UnknownItemError` for an item not on the feed, `DecisionError` (safe to show) for one
+        that cannot be decided now."""
+        feed = self._feeds.get(match_id)
+        if feed is None:
+            raise UnknownItemError("unknown match")
+        async with self._deciding:
+            entries = feed.entries
+            item = next(
+                (
+                    e
+                    for e in reversed(entries)
+                    if isinstance(e, TenantItemEntry)
+                    and e.tenant_id == tenant_id
+                    and e.overlay.item_id == item_id
+                ),
+                None,
+            )
+            if item is None:
+                raise UnknownItemError("no such item on this match's feed")
+            partners = self._run_partners.get(match_id)
+            if feed.finished or partners is None:
+                raise DecisionError("the match has reached full time; held items stay off air")
+            clocks = [e.clock for e in entries if isinstance(e, ClockEntry)]
+            at = clocks[-1] if clocks else item.overlay.in_at
+            build = await partners.decide(item, decision, reason=reason, at=at, now=now)
+            try:
+                entry = await feed.publish(build)
+            except RuntimeError:
+                raise DecisionError(
+                    "the match has reached full time; held items stay off air"
+                ) from None
+        if not isinstance(entry, TenantItemEntry):  # pragma: no cover - built as a tenant item
+            raise TypeError("a decision is published as the partner's item")
+        return entry
 
     async def wait(self) -> None:
         """Wait for the current run to end, however it ends."""

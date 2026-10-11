@@ -220,3 +220,22 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Consequences.**
 - German "wird" is refused even as "becomes". An unfamiliar German compound noun is refused until it is listed. Both lists grow from measured drafts, as the English vocabulary did, never by loosening the rules on numbers and names.
 - Off-topic wording in Spanish or German is not caught by vocabulary. It is screened by the partners' blocked topics now, and later by content safety and the LLM judge.
+
+## ADR-011: Editors decide on held items through the match's own feed
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** Each partner's policy names the item kinds a human must decide on before they air: Tribuna Austral holds every insight, and all three hold recaps. Producers need to approve or reject those items while the match runs, and every screen and partner stream must see the decision at once. The demo has no sign-in (plan §10.5), and Microsoft Teams is not available in the tenant yet.
+
+**Choice.**
+- **A decision is an entry.** Approving or rejecting publishes the item's next version on the match's append-only feed: the same item id, the same words, the editor's `approval` record and the new state. Approved items are placed on air by the partner's director from the current match clock. Their label becomes "reviewed" where the policy says so: "Asistido por IA · Revisado por T. Ibarra", or no label under `label-unless-approved`. A rejection keeps the item off air and must give a one-line reason, which stays with the item.
+- **The contract checks every decision.** The entry is built through `TenantItemEntry`, so an item airs only if approved, a rejection always records its reason, and a reviewed label always has its approval behind it.
+- **One decision per item.** Decisions are serialised per matchday. The second of two simultaneous decisions on the same item is refused (409).
+- **Only during the match.** After full time the feed is closed, and held items stay off air.
+- **From the studio only.** `POST /api/tenants/{t}/matches/{m}/items/{id}/decision` uses the matchday start's guard: a required `X-Requested-By` header that a cross-site form cannot send, with any browser `Origin` refused. The web app's same-origin proxy is the only caller.
+- **Who decided.** Without sign-in, a decision is recorded against the partner's duty editor (`dutyEditor` in its policy). This is a named demo identity, not a signed-in person. With Entra ID the editor is the signed-in user, and the endpoint then also needs authorisation per partner.
+
+**Consequences.**
+- Anyone who can reach the studio can decide on the demo's synthetic items. That is acceptable for a public, no-login demo of synthetic data. It is not acceptable for production, where sign-in and per-partner roles come first.
+- Edit-and-approve (E) is not offered yet. Edited words would have to pass the Verifier again before airing, and that path is not built.
+- Teams approvals (an Adaptive Card that calls the same endpoint) wait on a Microsoft 365 tenant.

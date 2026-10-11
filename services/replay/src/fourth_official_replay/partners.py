@@ -10,7 +10,11 @@ import asyncio
 import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from functools import partial
+from typing import Literal
+
+from pydantic import ValidationError
 
 from fourth_official_broadcast import (
     Schedule,
@@ -22,6 +26,7 @@ from fourth_official_broadcast import (
     score_bug,
 )
 from fourth_official_contracts import (
+    Approval,
     AttemptRecord,
     ClubCode,
     Correction,
@@ -42,10 +47,15 @@ from fourth_official_policy import approval_required, disclose
 from fourth_official_verifier import BlockedTopics, MatchFacts, render_insight
 
 logger = logging.getLogger(__name__)
+Decision = Literal["approved", "rejected"]
 # Localisations in flight at once, across the match's partners and moments.
 DEFAULT_CONCURRENCY = 3
 # Builds a partner's feed entry once the log assigns its position.
 EntryBuilder = Callable[[int], TenantItemEntry]
+
+
+class DecisionError(ValueError):
+    """An editor's decision that cannot be applied. The message is safe to show."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,6 +184,60 @@ class Partners:
             overlay=overlay,
             attempts=attempts,
             approval=None,
+        )
+
+    async def decide(
+        self,
+        item: TenantItemEntry,
+        decision: Decision,
+        *,
+        reason: str | None,
+        at: MatchClock,
+        now: datetime,
+    ) -> EntryBuilder:
+        """The held item's next entry once its partner's duty editor decides: approved, it airs
+        from `at` (the match clock now) labelled as reviewed where the policy says so; rejected, it
+        stays off air with the reason. The words are the ones the editor saw, unchanged."""
+        partner = next((p for p in self._partners if p.policy.tenant_id == item.tenant_id), None)
+        if partner is None:
+            raise DecisionError(f"{item.tenant_id} is not a partner of this match")
+        if item.state != "pending_approval" or item.localized is None or item.rendered is None:
+            raise DecisionError("this item is not awaiting a decision")
+        policy = partner.policy
+        try:
+            approval = Approval(
+                editor=policy.duty_editor, decided_at=now, decision=decision, reason=reason
+            )
+        except ValidationError:
+            raise DecisionError("a rejection needs a reason of one line") from None
+        if decision == "rejected":
+            overlay = item.overlay
+        else:
+            timing = await self._place(policy.tenant_id, "lower_third", at)
+            if timing is None:
+                raise DecisionError("no room on air this minute; try again shortly")
+            disclosure = disclose(policy, item.item_kind, approval)
+            if disclosure is None:  # pragma: no cover - narrative is always disclosed
+                raise ValueError("an insight is always disclosed")
+            rendered = item.rendered
+            overlay = lower_third(
+                item.localized, (rendered.headline, rendered.claims), disclosure, timing
+            )
+        state: Literal["on_air", "rejected"] = "on_air" if decision == "approved" else "rejected"
+        # Built through the contract, not copied, so the decided item is checked like any other.
+        return lambda n: TenantItemEntry(
+            kind="tenant_item",
+            entry_seq=n,
+            match_id=item.match_id,
+            tenant_id=item.tenant_id,
+            item_kind=item.item_kind,
+            approval_required=item.approval_required,
+            state=state,
+            localized=item.localized,
+            rendered=item.rendered,
+            overlay=overlay,
+            attempts=item.attempts,
+            approval=approval,
         )
 
     async def correction(

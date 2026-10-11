@@ -95,6 +95,20 @@
           "pattern": "^[A-Z][A-Za-z.' -]{1,59}$",
           "title": "Editor",
           "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "maxLength": 200,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
         }
       },
       "required": [
