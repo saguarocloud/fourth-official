@@ -4,7 +4,7 @@ import time
 
 import pytest
 
-from events import pass_, penalty_awarded, period_end, pressure, shot
+from events import pass_, penalty_awarded, period_end, pressure, shot, turnover
 from fourth_official_contracts import MetricSnapshot, parse_metric_snapshot
 from fourth_official_stats.context import MatchContext
 from fourth_official_stats.prepare import prepare
@@ -127,14 +127,17 @@ def test_the_window_start_is_exclusive() -> None:
 
 
 def test_rates_use_at_least_one_minute_and_never_more_than_has_elapsed() -> None:
-    early = prepare(CTX, (pressure(1, 0, "HCY", "NGT"),))
-    three_minutes = prepare(CTX, (pressure(1, 1, "HCY", "NGT"), pressure(2, 3, "HCY", "NGT")))
+    # Control-versus-chaos reads turnovers per minute; with no passes, its chain term is 1.
+    early = prepare(CTX, (turnover(1, 0, "HCY"),))
+    three_minutes = prepare(CTX, (turnover(1, 1, "HCY"), turnover(2, 3, "NGT")))
 
-    first = snapshot(early, as_of_seq=1, key=SnapshotKey("pressing_intensity", "HCY", "5m"))
-    later = snapshot(three_minutes, as_of_seq=2, key=SnapshotKey("pressing_intensity", "HCY", "5m"))
+    first = snapshot(early, as_of_seq=1, key=SnapshotKey("control_chaos", "match", "5m"))
+    later = snapshot(three_minutes, as_of_seq=2, key=SnapshotKey("control_chaos", "match", "5m"))
 
-    assert first.value == 1.0  # one press over the one-minute floor
-    assert later.value == 0.6667  # two presses over the three minutes played, rounded
+    # One turnover over the one-minute floor: 100 x (0.4 x 1/4 + 0.4 x 1).
+    assert first.value == 50.0
+    # Two turnovers over the three minutes played, not five: 100 x (0.4 x 2/3/4 + 0.4 x 1).
+    assert later.value == 46.6667
 
 
 def test_windows_run_across_half_time_on_continuous_match_time() -> None:

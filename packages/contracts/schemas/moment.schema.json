@@ -1,0 +1,173 @@
+{
+  "$defs": {
+    "MatchClock": {
+      "additionalProperties": false,
+      "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
+      "properties": {
+        "minute": {
+          "maximum": 104,
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Period",
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Second",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "period",
+        "minute",
+        "second"
+      ],
+      "title": "MatchClock",
+      "type": "object"
+    },
+    "MetricShift": {
+      "additionalProperties": false,
+      "description": "A metric that moved: its value in a baseline snapshot and in the current one.",
+      "properties": {
+        "after": {
+          "title": "After",
+          "type": "number"
+        },
+        "afterSnapshotId": {
+          "maxLength": 96,
+          "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+          "title": "Aftersnapshotid",
+          "type": "string"
+        },
+        "before": {
+          "title": "Before",
+          "type": "number"
+        },
+        "beforeSnapshotId": {
+          "maxLength": 96,
+          "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+          "title": "Beforesnapshotid",
+          "type": "string"
+        },
+        "metric": {
+          "enum": [
+            "possession",
+            "field_tilt",
+            "passes",
+            "pass_completion",
+            "shots",
+            "shots_on_target",
+            "xg",
+            "ppda",
+            "pressing_intensity",
+            "momentum",
+            "control_chaos"
+          ],
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metric",
+        "before",
+        "after",
+        "beforeSnapshotId",
+        "afterSnapshotId"
+      ],
+      "title": "MetricShift",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/moment.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "asOfSeq": {
+      "maximum": 10000000,
+      "minimum": 1,
+      "title": "Asofseq",
+      "type": "integer"
+    },
+    "clock": {
+      "$ref": "#/$defs/MatchClock"
+    },
+    "club": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Club",
+      "type": "string"
+    },
+    "eventIds": {
+      "items": {
+        "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Eventids",
+      "type": "array"
+    },
+    "kind": {
+      "enum": [
+        "goal",
+        "big_chance",
+        "red_card",
+        "var_overturn",
+        "pressing_collapse",
+        "pressing_surge",
+        "momentum_swing",
+        "tactical_shift"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "matchId": {
+      "pattern": "^m[0-9]{1,12}$",
+      "title": "Matchid",
+      "type": "string"
+    },
+    "metricSnapshotIds": {
+      "items": {
+        "maxLength": 96,
+        "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+        "type": "string"
+      },
+      "maxItems": 16,
+      "title": "Metricsnapshotids",
+      "type": "array"
+    },
+    "momentId": {
+      "maxLength": 64,
+      "pattern": "^mo-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}$",
+      "title": "Momentid",
+      "type": "string"
+    },
+    "shifts": {
+      "items": {
+        "$ref": "#/$defs/MetricShift"
+      },
+      "maxItems": 4,
+      "title": "Shifts",
+      "type": "array"
+    }
+  },
+  "required": [
+    "momentId",
+    "matchId",
+    "kind",
+    "club",
+    "asOfSeq",
+    "clock",
+    "eventIds",
+    "metricSnapshotIds",
+    "shifts"
+  ],
+  "title": "Moment",
+  "type": "object"
+}

@@ -5,7 +5,8 @@ traced back to the match data. When a correction changes those events, the metri
 and published as a new version that supersedes the old one; the old snapshot is kept.
 """
 
-from typing import Annotated, Literal
+import re
+from typing import Annotated, Literal, NamedTuple
 
 from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
@@ -53,6 +54,29 @@ def snapshot_id_for(
 ) -> str:
     """The canonical identity of a snapshot: every part names a field of the snapshot."""
     return f"ms-{match_id}-{metric}-{scope}-{window}-s{as_of_seq:04d}-v{version}"
+
+
+class SnapshotIdParts(NamedTuple):
+    match_id: str
+    metric: str
+    scope: str
+    window: str
+    as_of_seq: int
+    version: int
+
+
+_SNAPSHOT_ID_PARTS = re.compile(
+    r"^ms-(m[0-9]{1,12})-([a-z_]{2,24})-([A-Z]{3}|match)-(5m|15m|match)-s([0-9]{4,9})-v([0-9]{1,4})$"
+)
+
+
+def snapshot_id_parts(snapshot_id: str) -> SnapshotIdParts:
+    """Read a snapshot ID back into the fields it names."""
+    found = _SNAPSHOT_ID_PARTS.match(snapshot_id)
+    if found is None:
+        raise ValueError("not a snapshot ID")
+    match_id, metric, scope, window, seq, version = found.groups()
+    return SnapshotIdParts(match_id, metric, scope, window, int(seq), int(version))
 
 
 def _event_number(event_id: str) -> int:

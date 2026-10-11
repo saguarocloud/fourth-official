@@ -3,6 +3,7 @@
 from datetime import UTC, datetime, timedelta
 
 from fourth_official_contracts import (
+    CarryEvent,
     InterceptionEvent,
     MatchClock,
     PassEvent,
@@ -61,6 +62,17 @@ def pass_(
     )
 
 
+def carry(seq: int, minute: int, team: str) -> CarryEvent:
+    return CarryEvent(
+        **_envelope(seq, minute),  # type: ignore[arg-type]
+        type="CARRY",
+        team_id=team,
+        player_id=f"{team}-07",
+        origin=PitchPoint(x=40.0, y=34.0),
+        end=PitchPoint(x=46.0, y=34.0),
+    )
+
+
 def shot(
     seq: int,
     minute: int,
@@ -94,9 +106,10 @@ def pressure(
     *,
     at: tuple[float, float] = (50.0, 34.0),
     intensity: float = 0.5,
+    second: int = 0,
 ) -> PressureEvent:
     return PressureEvent(
-        **_envelope(seq, minute),  # type: ignore[arg-type]
+        **_envelope(seq, minute, second),  # type: ignore[arg-type]
         type="PRESSURE",
         team_id=team,
         player_id=f"{team}-07",

@@ -38,6 +38,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Event Hubs publisher and infrastructure
 - [x] Stats engine: metrics with evidence, snapshots and windows (docs/metrics.md)
 - [ ] Stats engine: restate snapshots when corrections change their events
+- [x] Moment Detector: event and pressing-shift moments with evidence (docs/moments.md)
+- [ ] Moment Detector: momentum swing and tactical shift rules
 
 - [ ] Simulator → Event Hubs → stats → Moment Detector → Analyst ⇄ Verifier → one tenant → Match Live UI, deployed with `azd up`
 - [ ] Attend Reactor livestream (Oct 14, 10:00)
