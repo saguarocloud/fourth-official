@@ -12,7 +12,7 @@ from fourth_official_contracts import (
 
 def _correction(**overrides: object) -> dict[str, object]:
     base: dict[str, object] = {
-        "correctionId": "c-0003",
+        "correctionId": "c-m42-03",
         "matchId": "m42",
         "targetEventId": "m42-e0188",
         "kind": "EVENT_VOIDED",
@@ -55,6 +55,8 @@ def test_round_trips_through_the_wire_format() -> None:
     ("field", "value"),
     [
         ("correctionId", "c3"),
+        ("correctionId", "c-m41-03"),  # issued for another match
+        ("correctionId", "c-m42-3"),
         ("targetEventId", "m41-e0188"),  # another match's event
         ("newVersion", 1),  # a correction always creates a new version
         ("reason", "BECAUSE"),

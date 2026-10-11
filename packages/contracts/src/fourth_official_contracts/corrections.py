@@ -32,7 +32,8 @@ from fourth_official_contracts.primitives import (
     match_of,
 )
 
-CorrectionId = Annotated[str, StringConstraints(pattern=r"^c-[0-9]{4,9}$")]
+# Scoped by match like event IDs: `c-m42-01` is the first correction issued for match m42.
+CorrectionId = Annotated[str, StringConstraints(pattern=r"^c-m[0-9]{1,12}-[0-9]{2,4}$")]
 CorrectionReason = Literal[
     "VAR_OFFSIDE",
     "VAR_FOUL",
@@ -50,6 +51,12 @@ class CorrectionBase(WireModel):
     match_id: MatchId
     reason: CorrectionReason
     issued_at: UtcTimestamp
+
+    @model_validator(mode="after")
+    def _issued_for_the_match(self) -> "CorrectionBase":
+        if not self.correction_id.startswith(f"c-{self.match_id}-"):
+            raise ValueError(f"correction {self.correction_id} was issued for another match")
+        return self
 
 
 class EventTargeting(CorrectionBase):

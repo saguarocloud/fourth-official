@@ -1,0 +1,109 @@
+{
+  "away": "NGT",
+  "finalScore": {
+    "away": 1,
+    "home": 2
+  },
+  "home": "HCY",
+  "matchId": "m42",
+  "seed": 4207,
+  "storyline": "Early lead, the press collapses, a goal ruled out, a late winner reassigned",
+  "storylines": [
+    {
+      "club": "HCY",
+      "correctionIds": [],
+      "eventIds": [
+        "m42-e0285",
+        "m42-e0286",
+        "m42-e0287"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "HCY goal by HCY-19",
+      "minute": 12
+    },
+    {
+      "club": "NGT",
+      "correctionIds": [],
+      "eventIds": [],
+      "expectedDirection": "down",
+      "expectedMetric": "pressing_intensity",
+      "kind": "pressing_collapse",
+      "label": "NGT press collapses",
+      "minute": 61
+    },
+    {
+      "club": "HCY",
+      "correctionIds": [],
+      "eventIds": [
+        "m42-e1700",
+        "m42-e1701",
+        "m42-e1702"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "HCY goal by HCY-07",
+      "minute": 67
+    },
+    {
+      "club": "HCY",
+      "correctionIds": [
+        "c-m42-01"
+      ],
+      "eventIds": [
+        "m42-e1702",
+        "m42-e1703",
+        "m42-e1704"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "var_overturn",
+      "label": "HCY goal ruled out (offside)",
+      "minute": 67
+    },
+    {
+      "club": "NGT",
+      "correctionIds": [],
+      "eventIds": [
+        "m42-e1880",
+        "m42-e1881",
+        "m42-e1882"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "NGT goal by NGT-07",
+      "minute": 78
+    },
+    {
+      "club": "HCY",
+      "correctionIds": [],
+      "eventIds": [
+        "m42-e2042",
+        "m42-e2043",
+        "m42-e2044"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "goal",
+      "label": "HCY goal by HCY-19",
+      "minute": 89
+    },
+    {
+      "club": "HCY",
+      "correctionIds": [
+        "c-m42-02"
+      ],
+      "eventIds": [
+        "m42-e2044"
+      ],
+      "expectedDirection": null,
+      "expectedMetric": null,
+      "kind": "scorer_reassigned",
+      "label": "HCY goal credited to HCY-22",
+      "minute": 89
+    }
+  ]
+}

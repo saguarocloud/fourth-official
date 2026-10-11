@@ -6,9 +6,18 @@ from dataclasses import dataclass, replace
 from datetime import datetime, timedelta
 from typing import Literal, TypedDict
 
-from fourth_official_contracts import EventEnvelope, MatchClock, MatchEvent, PitchPoint
-from fourth_official_simulator.pitch import Zone, attacking_to_pitch
+from fourth_official_contracts import (
+    Correction,
+    EventEnvelope,
+    GoalEvent,
+    MatchClock,
+    MatchEvent,
+    PitchPoint,
+    StorylineTruth,
+)
+from fourth_official_simulator.pitch import Zone, attacking_to_pitch, pitch_to_attacking, zone_of
 from fourth_official_simulator.squads import Player, Position, Squad
+from fourth_official_simulator.storylines import ScriptedGoal, Storyline
 from fourth_official_simulator.style import TeamStyle
 
 HALF_SECONDS = 45 * 60
@@ -33,6 +42,27 @@ class MatchSetup:
     kickoff: datetime
     home: TeamSetup
     away: TeamSetup
+    storyline: Storyline | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ScoredGoal:
+    """A scripted goal as it happened, and the scoring side's outfield players at the time."""
+
+    directive: ScriptedGoal
+    event: GoalEvent
+    on_pitch: tuple[str, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class StoryLog:
+    """What the storyline has done so far: moments played, and the record it leaves behind."""
+
+    moments_done: frozenset[int] = frozenset()
+    shifts_seen: frozenset[int] = frozenset()
+    goals: tuple[ScoredGoal, ...] = ()
+    corrections: tuple[Correction, ...] = ()
+    truths: tuple[StorylineTruth, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,6 +102,7 @@ class MatchState:
     last_delivery: str | None = None  # the kind of that pass (a cross sets up headers)
     # Whether the carrier has already dribbled since receiving; a second dribble ends the assist.
     dribbled: bool = False
+    story: StoryLog = StoryLog()
 
 
 class Envelope(TypedDict):
@@ -118,6 +149,18 @@ class Emitter:
 
 
 Step = tuple[MatchState, list[MatchEvent]]
+
+
+def natural_goals(emit: Emitter) -> bool:
+    """Whether goals other than the storyline's scripted ones may happen."""
+    story = emit.setup.storyline
+    return story is None or story.natural_goals
+
+
+def wait(state: MatchState, seconds: int) -> MatchState:
+    """Let time pass at a stoppage (VAR, a scripted lull), whatever the tempo."""
+    return replace(state, elapsed=min(state.elapsed + seconds, state.period_end))
+
 
 # How likely each position is to be involved on the ball in each zone.
 ROLE_WEIGHTS: dict[Zone, dict[Position, float]] = {
@@ -168,6 +211,12 @@ def point(state: MatchState, progress: float, lateral: float) -> PitchPoint:
     """A point in the attacking frame of the team in possession, as pitch metres."""
     x, y = attacking_to_pitch(progress, lateral, home=state.home_in_possession, period=state.period)
     return PitchPoint(x=x, y=y)
+
+
+def zone_at(at: PitchPoint, *, home: bool, period: Period) -> Zone:
+    """The zone of an emitted point, for the side attacking as `home`. Decisions about where
+    something happened use the point as published, so a reader of the events always agrees."""
+    return zone_of(*pitch_to_attacking(at.x, at.y, home=home, period=period))
 
 
 def pick(

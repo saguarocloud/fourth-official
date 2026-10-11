@@ -1,11 +1,24 @@
 """Play a whole match: two halves of phases, with kick-offs, added time and half-time."""
 
 import random
-from dataclasses import replace
+from dataclasses import dataclass, replace
 
-from fourth_official_contracts import MatchEvent, PeriodEndEvent, PeriodStartEvent
+from fourth_official_contracts import (
+    Correction,
+    GroundTruth,
+    MatchEvent,
+    PeriodEndEvent,
+    PeriodStartEvent,
+    Score,
+)
 from fourth_official_simulator.engine.actions import carry, foul, foul_rate, pass_ball, press, shoot
 from fourth_official_simulator.engine.restarts import MAX_SUBSTITUTIONS, restart, set_piece
+from fourth_official_simulator.engine.scripted import (
+    apply_styles,
+    due_moment,
+    play_moment,
+    reassign_scorers,
+)
 from fourth_official_simulator.engine.state import (
     HALF_SECONDS,
     Emitter,
@@ -79,16 +92,42 @@ def _play_period(
             lateral=0.5,
         )
     events += kick_off
+    story = emit.setup.storyline
     while state.elapsed < state.period_end:
+        if story is not None:
+            state = apply_styles(state, emit, story)
+            due = due_moment(state, story)
+            if due is not None:
+                state, played = play_moment(state, emit, rng, story=story, due=due)
+                events += played
+                continue
         state, played = _phase(state, emit, rng)
         events += played
     state, ended = emit.stamp(state, lambda env: PeriodEndEvent(**env, type="PERIOD_END"))
     return state, [*events, ended]
 
 
-def simulate(setup: MatchSetup) -> tuple[MatchEvent, ...]:
-    """Play a whole match and return its events in order. The same setup always gives the same
-    events, in any process."""
+@dataclass(frozen=True, slots=True)
+class SimulatedMatch:
+    """A played match: its events in order, the corrections issued later, and what really
+    happened."""
+
+    events: tuple[MatchEvent, ...]
+    corrections: tuple[Correction, ...]
+    ground_truth: GroundTruth
+
+
+def _check_storyline(setup: MatchSetup) -> None:
+    clubs = {setup.home.squad.club, setup.away.squad.club}
+    if setup.storyline is not None and not setup.storyline.clubs() <= clubs:
+        unknown = sorted(setup.storyline.clubs() - clubs)
+        raise ValueError(f"storyline names clubs not in the match: {', '.join(unknown)}")
+
+
+def play(setup: MatchSetup) -> SimulatedMatch:
+    """Play a whole match, storyline included. The same setup always gives the same match, in any
+    process."""
+    _check_storyline(setup)
     rng = random.Random(f"{setup.match_id}:{setup.seed}")
     emit = Emitter(setup)
     home, away = _initial_side(setup.home, rng), _initial_side(setup.away, rng)
@@ -115,4 +154,23 @@ def simulate(setup: MatchSetup) -> tuple[MatchEvent, ...]:
         period_end=2 * HALF_SECONDS + second_added * 60,
     )
     state, second_half = _play_period(state, emit, rng, not home_kicks_off)
-    return tuple(first_half + second_half)
+    events = tuple(first_half + second_half)
+    log = state.story
+    if setup.storyline is not None:
+        log = reassign_scorers(log, rng, story=setup.storyline, final_whistle=events[-1])
+    truth = GroundTruth(
+        match_id=setup.match_id,
+        seed=setup.seed,
+        storyline=setup.storyline.name if setup.storyline else "No storyline",
+        home=setup.home.squad.club,
+        away=setup.away.squad.club,
+        final_score=Score(home=state.home_score, away=state.away_score),
+        storylines=log.truths,
+    )
+    return SimulatedMatch(events=events, corrections=log.corrections, ground_truth=truth)
+
+
+def simulate(setup: MatchSetup) -> tuple[MatchEvent, ...]:
+    """Play a whole match and return its events in order. The same setup always gives the same
+    events, in any process."""
+    return play(setup).events

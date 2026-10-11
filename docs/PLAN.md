@@ -23,7 +23,7 @@ Running checklist. Update daily. Times are Mexico City.
 - [x] Dev environment provisioned via `azd provision` (budget $100/month)
 - [ ] Upgrade subscription to pay-as-you-go (before the credit expires around Nov 6)
 - [ ] Foundry quota request for a stronger `quality` model
-- [ ] Simulator v0 emitting events
+- [x] Simulator v0 emitting events
 - [ ] Placeholder project on Innovation Studio (neutral title); teammates joined and registered (by Oct 20, 1:00 pm)
 - [ ] Email hackathon support: partner credits (§4.12), how to declare a category
 
@@ -32,7 +32,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [x] Match event and correction contracts (ADR-005) (#7)
 - [ ] TypeScript types generated from the contract schemas when the web consumes events
 - [x] Simulator engine: squads, styles, possession-chain match engine, realism checks (docs/simulator.md)
-- [ ] Simulator storylines, ground truth and scheduled corrections; fixed demo matchday
+- [x] Simulator storylines, ground truth and scheduled corrections; fixed demo matchday (docs/simulator.md)
+- [ ] Metric restatement correction kind (demo match m44)
 - [ ] Simulator 5 Hz tracking frames
 - [ ] Event Hubs publisher and infrastructure
 - [x] Stats engine: metrics with evidence, snapshots and windows (docs/metrics.md)

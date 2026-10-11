@@ -31,9 +31,11 @@ from fourth_official_simulator.engine.state import (
     attackers,
     defenders,
     keeper,
+    natural_goals,
     pick,
     point,
     with_side,
+    zone_at,
 )
 from fourth_official_simulator.pitch import Zone, distance_to_goal, shooting_angle, zone_of
 from fourth_official_simulator.probabilities import (
@@ -131,8 +133,19 @@ def _offender(
     return rng.choices(outfield, weights=weights)[0]
 
 
-def foul(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
-    """The carrier is fouled: maybe a card, then a free kick, or a penalty inside the box."""
+def _card_for(offender: Player, booked: frozenset[str], roll: float) -> CardKind | None:
+    if roll < RED_GIVEN_FOUL:
+        return "red"
+    if roll < RED_GIVEN_FOUL + YELLOW_GIVEN_FOUL:
+        return "second_yellow" if offender.player_id in booked else "yellow"
+    return None
+
+
+def foul(
+    state: MatchState, emit: Emitter, rng: random.Random, *, card: CardKind | None = None
+) -> Step:
+    """The carrier is fouled: maybe a card (always `card`, if given), then a free kick, or a
+    penalty inside the box."""
     team = defenders(state)
     offender = _offender(team.on_pitch, team.booked, rng)
     at = point(state, state.progress, state.lateral)
@@ -149,12 +162,7 @@ def foul(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
         ),
     )
     events: list[MatchEvent] = [committed]
-    roll = rng.random()
-    card: CardKind | None = None
-    if roll < RED_GIVEN_FOUL:
-        card = "red"
-    elif roll < RED_GIVEN_FOUL + YELLOW_GIVEN_FOUL:
-        card = "second_yellow" if offender.player_id in team.booked else "yellow"
+    card = card or _card_for(offender, team.booked, rng.random())
     if card is not None:
         state, shown = emit.stamp(
             state,
@@ -175,7 +183,7 @@ def foul(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
         )
         state = with_side(state, not state.home_in_possession, team)
     state = advance(state, rng.uniform(25, 45))
-    if zone_of(state.progress, state.lateral) is Zone.BOX:
+    if zone_at(at, home=state.home_in_possession, period=state.period) is Zone.BOX:
         state, awarded = restart(
             state,
             emit,
@@ -458,7 +466,7 @@ def shoot(
         min(170.0, max(40.0, (70 if header else 85) + rng.uniform(0, 40) - distance * 0.3)), 1
     )
     body: BodyPart = "head" if header else foot
-    return _strike(state, emit, rng, strike=_Strike(outcome, body, speed, pressure), passer=passer)
+    return _strike(state, emit, rng, strike=Strike(outcome, body, speed, pressure), passer=passer)
 
 
 def penalty_kick(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
@@ -471,25 +479,24 @@ def penalty_kick(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
         else "off_target"
     )
     foot: BodyPart = rng.choice(("right_foot", "left_foot"))
-    strike = _Strike(outcome, foot, round(rng.uniform(95.0, 125.0), 1), 0.0)
+    strike = Strike(outcome, foot, round(rng.uniform(95.0, 125.0), 1), 0.0)
     return _strike(state, emit, rng, strike=strike, passer=None)
 
 
 @dataclass(frozen=True, slots=True)
-class _Strike:
+class Strike:
     outcome: ShotOutcome
     body_part: BodyPart
     speed: float
     pressure: float
 
 
-def _strike(
-    state: MatchState, emit: Emitter, rng: random.Random, *, strike: _Strike, passer: Player | None
-) -> Step:
+def strike_shot(state: MatchState, emit: Emitter, strike: Strike) -> tuple[MatchState, ShotEvent]:
+    """The carrier strikes the ball from where they are."""
     team = attackers(state)
     shooter = state.carrier.player_id
     origin = point(state, state.progress, state.lateral)
-    state, shot = emit.stamp(
+    return emit.stamp(
         state,
         lambda env: ShotEvent(
             **env,
@@ -503,6 +510,14 @@ def _strike(
             pressure=round(strike.pressure, 3),
         ),
     )
+
+
+def _strike(
+    state: MatchState, emit: Emitter, rng: random.Random, *, strike: Strike, passer: Player | None
+) -> Step:
+    if strike.outcome == "goal" and not natural_goals(emit):
+        strike = replace(strike, outcome="saved")
+    state, shot = strike_shot(state, emit, strike)
     if strike.outcome == "goal":
         state, after = _goal(state, emit, rng, shot=shot, passer=passer)
     else:
@@ -510,9 +525,10 @@ def _strike(
     return state, [shot, *after]
 
 
-def _goal(
-    state: MatchState, emit: Emitter, rng: random.Random, *, shot: ShotEvent, passer: Player | None
-) -> Step:
+def award_goal(
+    state: MatchState, emit: Emitter, *, shot: ShotEvent, passer: Player | None
+) -> tuple[MatchState, GoalEvent]:
+    """The shot went in: credit the carrier and the passer who set them up; update the score."""
     home_scored = state.home_in_possession
     score = Score(home=state.home_score + home_scored, away=state.away_score + (not home_scored))
     club, scorer = attackers(state).club, state.carrier.player_id
@@ -530,10 +546,24 @@ def _goal(
             score_after=score,
         ),
     )
-    state = advance(replace(state, home_score=score.home, away_score=score.away), 60)
-    state, kick_off = restart(
+    return replace(state, home_score=score.home, away_score=score.away), scored
+
+
+def kick_off_after_goal(
+    state: MatchState, emit: Emitter, rng: random.Random, *, home_scored: bool
+) -> Step:
+    state = advance(state, 60)
+    return restart(
         state, emit, rng, "kick_off", home_in_possession=not home_scored, progress=0.5, lateral=0.5
     )
+
+
+def _goal(
+    state: MatchState, emit: Emitter, rng: random.Random, *, shot: ShotEvent, passer: Player | None
+) -> Step:
+    home_scored = state.home_in_possession
+    state, scored = award_goal(state, emit, shot=shot, passer=passer)
+    state, kick_off = kick_off_after_goal(state, emit, rng, home_scored=home_scored)
     return state, [scored, *kick_off]
 
 

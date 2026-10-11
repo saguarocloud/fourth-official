@@ -1,0 +1,188 @@
+{
+  "$defs": {
+    "Score": {
+      "additionalProperties": false,
+      "properties": {
+        "away": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Away",
+          "type": "integer"
+        },
+        "home": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Home",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "home",
+        "away"
+      ],
+      "title": "Score",
+      "type": "object"
+    },
+    "StorylineTruth": {
+      "additionalProperties": false,
+      "description": "One thing that happened, with the events and corrections that prove it.",
+      "properties": {
+        "club": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Club",
+          "type": "string"
+        },
+        "correctionIds": {
+          "items": {
+            "pattern": "^c-m[0-9]{1,12}-[0-9]{2,4}$",
+            "type": "string"
+          },
+          "maxItems": 4,
+          "title": "Correctionids",
+          "type": "array"
+        },
+        "eventIds": {
+          "items": {
+            "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Eventids",
+          "type": "array"
+        },
+        "expectedDirection": {
+          "anyOf": [
+            {
+              "enum": [
+                "up",
+                "down"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expecteddirection"
+        },
+        "expectedMetric": {
+          "anyOf": [
+            {
+              "enum": [
+                "possession",
+                "field_tilt",
+                "passes",
+                "pass_completion",
+                "shots",
+                "shots_on_target",
+                "xg",
+                "ppda",
+                "pressing_intensity",
+                "momentum",
+                "control_chaos"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expectedmetric"
+        },
+        "kind": {
+          "enum": [
+            "goal",
+            "red_card",
+            "pressing_collapse",
+            "pressing_surge",
+            "tactical_shift",
+            "var_overturn",
+            "scorer_reassigned"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 120,
+          "minLength": 1,
+          "pattern": "^[^\\x00-\\x1f\\x7f\\u2028\\u2029\\u202a-\\u202e\\u2066-\\u2069]+$",
+          "title": "Label",
+          "type": "string"
+        },
+        "minute": {
+          "maximum": 130,
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "kind",
+        "club",
+        "minute",
+        "label",
+        "eventIds",
+        "correctionIds",
+        "expectedMetric",
+        "expectedDirection"
+      ],
+      "title": "StorylineTruth",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/ground-truth.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Every storyline of one simulated match, in the order they happened.",
+  "properties": {
+    "away": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Away",
+      "type": "string"
+    },
+    "finalScore": {
+      "$ref": "#/$defs/Score"
+    },
+    "home": {
+      "pattern": "^[A-Z]{3}$",
+      "title": "Home",
+      "type": "string"
+    },
+    "matchId": {
+      "pattern": "^m[0-9]{1,12}$",
+      "title": "Matchid",
+      "type": "string"
+    },
+    "seed": {
+      "minimum": 0,
+      "title": "Seed",
+      "type": "integer"
+    },
+    "storyline": {
+      "maxLength": 120,
+      "minLength": 1,
+      "pattern": "^[^\\x00-\\x1f\\x7f\\u2028\\u2029\\u202a-\\u202e\\u2066-\\u2069]+$",
+      "title": "Storyline",
+      "type": "string"
+    },
+    "storylines": {
+      "items": {
+        "$ref": "#/$defs/StorylineTruth"
+      },
+      "maxItems": 64,
+      "title": "Storylines",
+      "type": "array"
+    }
+  },
+  "required": [
+    "matchId",
+    "seed",
+    "storyline",
+    "home",
+    "away",
+    "finalScore",
+    "storylines"
+  ],
+  "title": "GroundTruth",
+  "type": "object"
+}
