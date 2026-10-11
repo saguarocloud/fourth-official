@@ -214,6 +214,7 @@ module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubReposit
     registryName: registry.outputs.name
     containerAppNames: [api.outputs.name, web.outputs.name, matchData.outputs.name]
     appIdentityName: appIdentity.outputs.name
+    agentsIdentityName: foundry.outputs.agentsIdentityName
     managedEnvironmentName: containerAppsEnvironment.outputs.name
   }
 }

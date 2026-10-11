@@ -108,3 +108,4 @@ output projectEndpoint string = 'https://${account.properties.customSubDomainNam
 output agentsIdentityId string = agentsIdentity.id
 output agentsIdentityClientId string = agentsIdentity.properties.clientId
 output agentsIdentityPrincipalId string = agentsIdentity.properties.principalId
+output agentsIdentityName string = agentsIdentity.name

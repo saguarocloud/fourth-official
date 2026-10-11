@@ -363,3 +363,25 @@ def test_match_data_accepts_only_its_internal_host(compiled: CompiledTemplate) -
 
     assert set(env) == {"MATCH_DATA_ALLOWED_HOSTS"}
     assert ".internal." in env["MATCH_DATA_ALLOWED_HOSTS"]
+
+
+def test_the_deploy_identity_may_assign_exactly_the_identities_the_apps_run_as(
+    compiled: CompiledTemplate,
+) -> None:
+    grants = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if MANAGED_IDENTITY_OPERATOR in str(a.properties["roleDefinitionId"])
+    ]
+    (deploy,) = [m for m in compiled.modules if m.name == "deploy-identity"]
+
+    assert len(grants) == 2
+    assert {"appIdentityName", "agentsIdentityName"} <= set(deploy.parameters)
+
+
+def test_the_ledger_survives_a_bad_write_or_delete(compiled: CompiledTemplate) -> None:
+    (blobs,) = compiled.of_type("Microsoft.Storage/storageAccounts/blobServices")
+
+    assert blobs.properties["isVersioningEnabled"] is True
+    assert blobs.properties["deleteRetentionPolicy"] == {"enabled": True, "days": 7}
+    assert blobs.properties["containerDeleteRetentionPolicy"] == {"enabled": True, "days": 7}

@@ -33,9 +33,15 @@ resource account 'Microsoft.Storage/storageAccounts@2025-01-01' = {
   }
 }
 
+// The ledger is the spend control: a bad write or a delete must be recoverable.
 resource blobs 'Microsoft.Storage/storageAccounts/blobServices@2025-01-01' = {
   parent: account
   name: 'default'
+  properties: {
+    isVersioningEnabled: true
+    deleteRetentionPolicy: { enabled: true, days: 7 }
+    containerDeleteRetentionPolicy: { enabled: true, days: 7 }
+  }
 }
 
 resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-01-01' = {
