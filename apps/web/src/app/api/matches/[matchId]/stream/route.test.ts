@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { GET } from "./route";
+import { GET, MAX_STREAMS_PER_CLIENT } from "./route";
 
 const params = (matchId: string) => ({ params: Promise.resolve({ matchId }) });
 
@@ -37,15 +37,18 @@ describe("GET /api/matches/[matchId]/stream", () => {
     );
   });
 
-  it("refuses an upstream answer that is not an event stream", async () => {
+  it("refuses an upstream answer that is not an event stream, and closes it", async () => {
+    const cancel = vi.fn();
+    const body = new ReadableStream({ start: () => undefined, cancel });
     vi.stubGlobal(
       "fetch",
-      vi.fn(() => Promise.resolve(new Response("<html>", { status: 200 }))),
+      vi.fn(() => Promise.resolve(new Response(body, { status: 200 }))),
     );
 
     const response = await GET(new Request("http://studio/x"), params("m42"));
 
     expect(response.status).toBe(502);
+    expect(cancel).toHaveBeenCalled();
   });
 
   it("refuses a malformed match id without calling the API", async () => {
@@ -68,6 +71,35 @@ describe("GET /api/matches/[matchId]/stream", () => {
     );
 
     expect((await GET(new Request("http://studio/x"), params("m42"))).status).toBe(expected);
+  });
+
+  it("limits how many streams one client holds open, and frees a slot when one closes", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(new ReadableStream({ start: () => undefined }), {
+            headers: { "Content-Type": "text/event-stream" },
+          }),
+        ),
+      ),
+    );
+    const open = () =>
+      GET(
+        new Request("http://studio/x", { headers: { "x-forwarded-for": "198.51.100.4" } }),
+        params("m42"),
+      );
+
+    const streams = [];
+    for (let n = 0; n < MAX_STREAMS_PER_CLIENT; n++) streams.push(await open());
+    expect(streams.every((r) => r.status === 200)).toBe(true);
+    const refused = await open();
+    expect(refused.status).toBe(429);
+    expect(refused.headers.get("retry-after")).toBe("30");
+
+    await streams[0]!.body!.cancel();
+    expect((await open()).status).toBe(200);
+    await Promise.all(streams.slice(1).map((r) => r.body!.cancel()));
   });
 
   it("answers 502 when the API is unreachable", async () => {
