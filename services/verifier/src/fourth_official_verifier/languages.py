@@ -138,6 +138,8 @@ SPANISH = Language(
         penal penalti tarjeta roja amarilla presión ahora así aquí ya pese aunque cuando
         mientras como que qué cómo y o pero también todo toda nada nadie ni no sí
         balón remate pase centro contragolpe jugada error parada después antes
+        casi muy más menos solo sólo incluso entonces allí aquí se le les su sus este esta
+        estos estas ese esa esos esas aquel aquella cada mucho mucha poco poca tanto tanta
         """
     ),
     capitalised=lambda word: word in TERMS,
@@ -147,6 +149,9 @@ SPANISH = Language(
     possessive=r"",
     leading=" \"'(¡¿«",
 )
+
+
+_GERMAN_ENDINGS = ("s", "es", "n", "en", "e")
 
 
 @cache
@@ -174,7 +179,10 @@ def _is_german_noun(word: str) -> bool:
                 # A linking s or n joins two stems; it never ends the word ("Tors", "Torn").
                 if lower[end : end + 1] in {"s", "n"} and end + 1 < len(lower):
                     reachable.add(end + 1)
-    return len(lower) in reachable and not GERMAN.states_number(lower)
+    # A noun may end in its case or plural ending: des Gegners, des Tors, die Torchancen.
+    ends = {len(lower) - len(ending) for ending in _GERMAN_ENDINGS if lower.endswith(ending)}
+    whole = len(lower) in reachable or bool(ends & reachable)
+    return whole and not GERMAN.states_number(lower)
 
 
 _DE_UNITS = r"(ein|zwei|drei|vier|funf|sechs|sieben|acht|neun)"

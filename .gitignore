@@ -42,3 +42,4 @@ eval/runs/
 
 # Reports from scripts/measure-analyst.py
 analyst-report*.json
+localizer-report*.json
