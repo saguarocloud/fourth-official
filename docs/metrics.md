@@ -36,7 +36,7 @@ The home side attacks the goal at x = 105 m in the first half and teams switch e
 | `xg` | club | Sum of the xG model over the club's shots | The club's shots |
 | `momentum` | club | The club's xG minus the opponent's xG in the window | All shots |
 | `ppda` | club (pressing) | Opponent passes in its own 60% of the pitch ÷ the pressing club's tackles, interceptions and fouls in that area (null without actions). Lower is a more aggressive press | Those passes and actions |
-| `pressing_intensity` | club | Pressure events applied per minute of the window | The club's pressure events |
+| `pressing_intensity` | club | Pressure events applied per opponent pass or carry (undefined if the opponent had no touches). Normalised by the opponent's touches, so a side that keeps the ball doesn't make its opponent's press look busier | The club's pressure events and the opponent's passes and carries |
 | `control_chaos` | match | 0–100, defined below | Turnovers, passes and located events |
 
 ### Expected goals (xG)

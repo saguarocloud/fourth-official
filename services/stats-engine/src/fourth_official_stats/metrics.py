@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from fourth_official_contracts import (
     PITCH_LENGTH_M,
     PITCH_WIDTH_M,
+    CarryEvent,
     FoulEvent,
     InterceptionEvent,
     MatchEvent,
@@ -203,11 +204,16 @@ def ppda(events: Sequence[MatchEvent], context: MatchContext, pressing_team: str
 
 
 def pressing_intensity(
-    events: Sequence[MatchEvent], context: MatchContext, team: str, *, minutes: float
+    events: Sequence[MatchEvent], context: MatchContext, team: str
 ) -> MetricValue:
-    """Pressure events the team applies per minute of the window."""
+    """Pressure events the team applies per opponent pass or carry. Normalising by the opponent's
+    touches keeps a side that hoards the ball from making its opponent's press look busier."""
+    opponent = context.opponent(team)
     applied = [e for e in events if isinstance(e, PressureEvent) and e.team_id == team]
-    return MetricValue(len(applied) / minutes if minutes > 0 else None, _ids(applied))
+    touches = [e for e in events if isinstance(e, PassEvent | CarryEvent) and e.team_id == opponent]
+    if not touches:
+        return MetricValue(None, ())
+    return MetricValue(len(applied) / len(touches), _ids([*applied, *touches]))
 
 
 # --- Control versus chaos --------------------------------------------------------------------

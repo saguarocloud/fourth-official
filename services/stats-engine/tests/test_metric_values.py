@@ -4,10 +4,11 @@ import math
 
 import pytest
 
-from events import interception, pass_, penalty_awarded, pressure, shot, tackle, turnover
+from events import carry, interception, pass_, penalty_awarded, pressure, shot, tackle, turnover
 from fourth_official_contracts import MatchEvent
 from fourth_official_stats.context import MatchContext
 from fourth_official_stats.metrics import (
+    MetricValue,
     control_chaos,
     field_tilt,
     momentum,
@@ -155,13 +156,30 @@ def test_ppda_is_undefined_without_defensive_actions() -> None:
     assert ppda((pass_(1, 10, "NGT", origin=(70.0, 30.0)),), CTX, "HCY").value is None
 
 
-def test_pressing_intensity_is_pressure_events_per_minute_of_the_window() -> None:
-    events = tuple(pressure(i, 10, "HCY", "NGT") for i in range(1, 11))
+def test_pressing_intensity_is_pressures_per_opponent_pass_or_carry() -> None:
+    # Normalised by the opponent's touches, so a side that keeps the ball does not make its
+    # opponent's press look busier.
+    events: tuple[MatchEvent, ...] = (
+        pass_(1, 10, "NGT"),
+        pressure(2, 10, "HCY", "NGT"),
+        carry(3, 10, "NGT"),
+        pass_(4, 10, "NGT"),
+        pressure(5, 10, "HCY", "NGT"),
+        pass_(6, 10, "HCY"),  # HCY's own touches do not count
+        pressure(7, 11, "NGT", "HCY"),  # nor do NGT's presses
+        pass_(8, 11, "NGT"),
+    )
 
-    result = pressing_intensity(events, CTX, "HCY", minutes=5.0)
+    result = pressing_intensity(events, CTX, "HCY")
 
-    assert result.value == pytest.approx(2.0)
-    assert result.inputs == ids(*range(1, 11))
+    assert result.value == pytest.approx(0.5)
+    assert result.inputs == ids(1, 2, 3, 4, 5, 8)
+
+
+def test_pressing_intensity_is_undefined_when_the_opponent_never_had_the_ball() -> None:
+    result = pressing_intensity((pressure(1, 10, "HCY", "NGT"),), CTX, "HCY")
+
+    assert result == MetricValue(None, ())
 
 
 # --- Pass difficulty -------------------------------------------------------------------------

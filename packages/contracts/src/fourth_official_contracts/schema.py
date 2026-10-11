@@ -13,6 +13,7 @@ from fourth_official_contracts.corrections import CORRECTION_ADAPTER
 from fourth_official_contracts.events import MATCH_EVENT_ADAPTER
 from fourth_official_contracts.ground_truth import GROUND_TRUTH_ADAPTER
 from fourth_official_contracts.metrics import METRIC_SNAPSHOT_ADAPTER
+from fourth_official_contracts.moments import MOMENT_ADAPTER
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 SCHEMA_ID_BASE = "https://github.com/saguarocloud/fourth-official/schemas/"
@@ -49,6 +50,11 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             GROUND_TRUTH_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "ground-truth.schema.json",
             "GroundTruth",
+        ),
+        "moment.schema.json": _with_header(
+            MOMENT_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "moment.schema.json",
+            "Moment",
         ),
     }
 

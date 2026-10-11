@@ -42,6 +42,7 @@ TEAM_METRICS: dict[MetricName, TeamMetric] = {
     "shots": metrics.shots,
     "shots_on_target": metrics.shots_on_target,
     "ppda": metrics.ppda,
+    "pressing_intensity": metrics.pressing_intensity,
 }
 # Shot-value metrics take the whole match's penalty awards, so a window never cuts a penalty off
 # from the award that decides its value.
@@ -110,8 +111,6 @@ def _compute(match: PreparedMatch, key: SnapshotKey, window: _Window) -> MetricV
     if key.scope == MATCH_SCOPE:
         raise ValueError(f"{key.metric} is measured per club; scope must be a club code")
     context.opponent(key.scope)  # refuses a club that is not playing
-    if key.metric == "pressing_intensity":
-        return metrics.pressing_intensity(window.events, context, key.scope, minutes=window.minutes)
     if key.metric in SHOT_VALUE_METRICS:
         return SHOT_VALUE_METRICS[key.metric](
             window.events, context, key.scope, penalties=match.penalty_awards
