@@ -29,4 +29,5 @@ resource acrPull 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 output id string = identity.id
+output name string = identity.name
 output principalId string = identity.properties.principalId

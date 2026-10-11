@@ -18,7 +18,11 @@ resource workspace 'Microsoft.OperationalInsights/workspaces@2025-02-01' = {
     retentionInDays: 30
     // Hard cap on ingestion: a runaway log loop must not drain the credit.
     workspaceCapping: { dailyQuotaGb: json('0.5') }
-    features: { enableLogAccessUsingOnlyResourcePermissions: true }
+    features: {
+      enableLogAccessUsingOnlyResourcePermissions: true
+      // Entra ID only: no workspace shared keys can be used to read or write data.
+      disableLocalAuth: true
+    }
   }
 }
 

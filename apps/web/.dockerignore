@@ -3,5 +3,8 @@ node_modules
 coverage
 Dockerfile
 .dockerignore
-*.test.ts
-*.test.tsx
+**/*.test.ts
+**/*.test.tsx
+.env*
+*.pem
+*.key

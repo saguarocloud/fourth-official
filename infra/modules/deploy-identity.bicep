@@ -1,5 +1,5 @@
 // Identity for GitHub Actions deployments via workload identity federation (no secrets).
-// It can push images and update container apps, but cannot create resources or grant roles.
+// It can push images and release revisions of the named apps, but cannot create resources or grant roles.
 
 param name string
 param location string
@@ -12,6 +12,12 @@ param githubRepository string
 param githubEnvironment string
 
 param registryName string
+
+@description('Container apps this identity may release new revisions to.')
+param containerAppNames string[]
+
+@description('Runtime identity attached to those apps; updating an app re-asserts its identity assignment.')
+param appIdentityName string
 
 resource identity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' = {
   name: name
@@ -38,17 +44,52 @@ resource acrPush 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: registry
   properties: {
     // AcrPush
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '8311e382-0749-4cb8-b61a-304f252e45ec')
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      '8311e382-0749-4cb8-b61a-304f252e45ec'
+    )
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }
 }
 
-resource containerAppsContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(resourceGroup().id, identity.id, '358470bc-b998-42bd-ab17-a7e34c199c0f')
+resource containerApps 'Microsoft.App/containerApps@2025-07-01' existing = [
+  for appName in containerAppNames: {
+    name: appName
+  }
+]
+
+// Scoped to each app rather than the resource group, so the environment itself stays out of reach.
+resource containerAppsContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = [
+  for (appName, i) in containerAppNames: {
+    name: guid(containerApps[i].id, identity.id, '358470bc-b998-42bd-ab17-a7e34c199c0f')
+    scope: containerApps[i]
+    properties: {
+      // Container Apps Contributor
+      roleDefinitionId: subscriptionResourceId(
+        'Microsoft.Authorization/roleDefinitions',
+        '358470bc-b998-42bd-ab17-a7e34c199c0f'
+      )
+      principalId: identity.properties.principalId
+      principalType: 'ServicePrincipal'
+    }
+  }
+]
+
+resource appIdentity 'Microsoft.ManagedIdentity/userAssignedIdentities@2024-11-30' existing = {
+  name: appIdentityName
+}
+
+resource managedIdentityOperator 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(appIdentity.id, identity.id, 'f1a07417-d97a-45cb-824c-7a7467783830')
+  scope: appIdentity
   properties: {
-    // Container Apps Contributor
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '358470bc-b998-42bd-ab17-a7e34c199c0f')
+    // Managed Identity Operator, on the apps' runtime identity only: ARM checks
+    // userAssignedIdentities/assign/action whenever a revision update carries the identity.
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'f1a07417-d97a-45cb-824c-7a7467783830'
+    )
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }
@@ -58,7 +99,10 @@ resource reader 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(resourceGroup().id, identity.id, 'acdd72a7-3385-48ef-bd42-f606fba81ae7')
   properties: {
     // Reader: lets azd find the apps by tag in the resource group.
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')
+    roleDefinitionId: subscriptionResourceId(
+      'Microsoft.Authorization/roleDefinitions',
+      'acdd72a7-3385-48ef-bd42-f606fba81ae7'
+    )
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }

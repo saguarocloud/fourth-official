@@ -127,9 +127,12 @@ module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubReposit
     githubRepository: githubRepository
     githubEnvironment: environmentName
     registryName: registry.outputs.name
+    containerAppNames: [api.outputs.name, web.outputs.name]
+    appIdentityName: appIdentity.outputs.name
   }
 }
 
+// One budget for the whole subscription (the credit is subscription-wide), shared by all environments.
 module budget 'modules/budget.bicep' = if (!empty(budgetContactEmail)) {
   name: 'budget'
   params: {

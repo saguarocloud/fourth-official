@@ -26,9 +26,18 @@ class Resource:
 
 
 @dataclass(frozen=True, slots=True)
+class Module:
+    """A module (nested deployment) and the parameter values passed to it."""
+
+    name: str
+    parameters: JsonObject
+
+
+@dataclass(frozen=True, slots=True)
 class CompiledTemplate:
     template: JsonObject
     resources: tuple[Resource, ...]
+    modules: tuple[Module, ...]
 
     def of_type(self, resource_type: str) -> list[Resource]:
         return [r for r in self.resources if r.type.lower() == resource_type.lower()]
@@ -45,12 +54,23 @@ def _resources_of(template: JsonObject) -> list[JsonObject]:
 
 def _walk(template: JsonObject, module: str) -> Iterator[Resource]:
     for body in _resources_of(template):
+        if body.get("existing", False):
+            continue  # a reference to a resource declared elsewhere, not something this deploys
         resource_type = body["type"]
         if resource_type == "Microsoft.Resources/deployments":
             nested = body.get("properties", {}).get("template", {})
             yield from _walk(nested, f"{module}/{body.get('name', '?')}")
         else:
             yield Resource(type=resource_type, body=body, module=module)
+
+
+def _modules(template: JsonObject) -> Iterator[Module]:
+    for body in _resources_of(template):
+        if body.get("type") == "Microsoft.Resources/deployments":
+            props = body.get("properties", {})
+            params = {k: v.get("value") for k, v in props.get("parameters", {}).items()}
+            yield Module(name=str(body.get("name", "?")), parameters=params)
+            yield from _modules(props.get("template", {}))
 
 
 def compile_bicep(path: Path) -> JsonObject:
@@ -71,4 +91,8 @@ def compile_bicep(path: Path) -> JsonObject:
 def load_template(path: Path) -> CompiledTemplate:
     """Compile a Bicep file and index all of its resources."""
     template = compile_bicep(path)
-    return CompiledTemplate(template=template, resources=tuple(_walk(template, "main")))
+    return CompiledTemplate(
+        template=template,
+        resources=tuple(_walk(template, "main")),
+        modules=tuple(_modules(template)),
+    )

@@ -11,9 +11,12 @@ Running checklist. Update daily. Times are Mexico City.
 - [x] Stack chosen: Python 3.12 + uv, Next.js + TypeScript (ADR-003)
 - [x] Deployment model chosen: Bicep + azd, infra local, apps via GitHub Actions with workload identity federation (ADR-004)
 - [x] Tooling and CI pull request (api and web skeletons, quality gates) (#1)
-- [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow)
+- [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow) (#3)
 - [ ] Design system pull request (impeccable)
-- [ ] Security headers on web and api (CSP, frame options, referrer policy)
+- [ ] Security headers on web and api (CSP, HSTS, frame-ancestors, referrer and permissions policy)
+- [ ] Observability: wire Application Insights into both apps with OpenTelemetry and Entra ID auth (local auth is disabled)
+- [ ] API: explicit CORS allow-list when the web app starts calling it; decide whether public `/docs` stays on for judges
+- [ ] Supply chain: SBOM and image signing in the deploy workflow
 - [ ] Open decisions settled: names and collision check, team, Teams route, brand, languages
 - [x] Dev environment provisioned via `azd provision` (budget $100/month)
 - [ ] Upgrade subscription to pay-as-you-go (before the credit expires around Nov 6)

@@ -21,8 +21,10 @@ param exists bool
 @maxValue(10)
 param maxReplicas int = 3
 
-// Public placeholder used until the first `azd deploy` pushes a real image.
-var placeholderImage = 'mcr.microsoft.com/k8se/quickstart:latest'
+// Public placeholder used until the first `azd deploy` pushes a real image. It listens on port 80,
+// not targetPort, so it never serves traffic; that is safe because minReplicas is 0 and provisioning
+// does not wait for a healthy replica.
+var placeholderImage = 'mcr.microsoft.com/k8se/quickstart@sha256:3a4d93c34c6753f24765ab17a36f1754aee9b02082b7d9553d17697b9e8252c4'
 
 module fetchImage 'fetch-container-image.bicep' = {
   name: '${name}-image'

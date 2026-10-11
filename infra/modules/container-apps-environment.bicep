@@ -1,4 +1,5 @@
 // Container Apps environment on the serverless Consumption profile only.
+// Logs reach Log Analytics through Azure Monitor diagnostic settings, so no workspace key is used.
 
 param name string
 param location string
@@ -16,17 +17,26 @@ resource environment 'Microsoft.App/managedEnvironments@2025-07-01' = {
   location: location
   tags: tags
   properties: {
-    appLogsConfiguration: {
-      destination: 'log-analytics'
-      logAnalyticsConfiguration: {
-        customerId: workspace.properties.customerId
-        sharedKey: workspace.listKeys().primarySharedKey
-      }
-    }
+    appLogsConfiguration: { destination: 'azure-monitor' }
     workloadProfiles: [
       { name: 'Consumption', workloadProfileType: 'Consumption' }
     ]
     zoneRedundant: false
+  }
+}
+
+// 2021-05-01-preview is the current schema for resource diagnostic settings (the only stable
+// version, 2016-09-01, is the legacy service-level shape); Azure Verified Modules use it too.
+#disable-next-line use-recent-api-versions
+resource logs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'logs-to-workspace'
+  scope: environment
+  properties: {
+    workspaceId: workspace.id
+    logs: [
+      { category: 'ContainerAppConsoleLogs', enabled: true }
+      { category: 'ContainerAppSystemLogs', enabled: true }
+    ]
   }
 }
 

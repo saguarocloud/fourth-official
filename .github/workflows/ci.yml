@@ -19,8 +19,11 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: "0.13.0"
           enable-cache: true
       - name: Install
         run: uv sync --all-packages --locked
@@ -42,6 +45,8 @@ jobs:
         working-directory: apps/web
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
@@ -66,19 +71,28 @@ jobs:
     name: infra
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      BICEP_VERSION: v0.48.1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
+          version: "0.13.0"
           enable-cache: true
       - name: Install
         run: |
           uv sync --all-packages --locked
-          az bicep install
+          az bicep install --version "$BICEP_VERSION"
       - name: Lint Bicep (warnings fail the build)
         run: |
-          output="$(az bicep lint --file infra/main.bicep 2>&1)" || { echo "$output"; exit 1; }
-          if grep -qE "Warning|Error" <<<"$output"; then echo "$output"; exit 1; fi
+          az bicep lint --file infra/main.bicep --diagnostics-format sarif > bicep-lint.sarif
+          findings="$(jq '[.runs[].results[] | select(.level == "warning" or .level == "error")]' bicep-lint.sarif)"
+          if [[ "$(jq length <<<"$findings")" != "0" ]]; then
+            jq -r '.[] | "\(.level): \(.message.text) (\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine))"' <<<"$findings"
+            exit 1
+          fi
       - name: Policy tests
         run: uv run pytest infra/tests --no-cov
 
@@ -88,6 +102,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Build images
         run: |
           docker build -f apps/api/Dockerfile --build-arg APP_VERSION="$GITHUB_SHA" -t fo-api:ci .
@@ -96,6 +112,20 @@ jobs:
         run: |
           scripts/smoke-container.sh fo-api:ci 8000 fourth-official-api "$GITHUB_SHA"
           scripts/smoke-container.sh fo-web:ci 3000 fourth-official-web "$GITHUB_SHA"
+      - name: Scan api image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: fo-api:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Scan web image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: fo-web:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
 
   # Single stable name for the branch ruleset to require, however the jobs above evolve.
   ci-ok:

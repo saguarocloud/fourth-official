@@ -14,6 +14,7 @@ services:
       path: ./Dockerfile
       # The uv workspace lockfile lives at the repository root.
       context: ../..
+      # APP_VERSION is the git SHA in CI. Locally it may be empty; the apps then report "dev".
       buildArgs:
         - APP_VERSION=${APP_VERSION}
   web:
@@ -26,6 +27,12 @@ services:
       buildArgs:
         - APP_VERSION=${APP_VERSION}
 hooks:
+  preprovision:
+    posix:
+      shell: sh
+      run: ./infra/hooks/preprovision.sh
+      interactive: false
+      continueOnError: false
   postprovision:
     posix:
       shell: sh

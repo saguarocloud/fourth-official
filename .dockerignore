@@ -11,3 +11,6 @@
 .azure
 docs
 infra
+.env*
+*.pem
+*.key
