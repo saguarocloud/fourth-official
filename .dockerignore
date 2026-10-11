@@ -14,3 +14,4 @@ infra
 **/.env*
 **/*.pem
 **/*.key
+**/tests
