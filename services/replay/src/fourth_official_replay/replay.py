@@ -288,6 +288,8 @@ async def replay(
             found: tuple[Moment, ...] = ()
             if last or (index + 1) % config.detect_every == 0 or isinstance(event, GoalEvent):
                 state, found = detect(prepare(record.match.context, events[: index + 1]), state)
+            # Corrections issued by now are timed at this event, not the last published clock.
+            run.now = event.clock
             corrected = await run.corrections_due(event)
             due = record.match.seconds(event) - run.last_clock >= config.clock_every
             if (

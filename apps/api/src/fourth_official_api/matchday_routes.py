@@ -284,11 +284,16 @@ def matchday_router(
         view = _feed(_matchday(request), match_id).view(after)
         response.headers["Cache-Control"] = "no-store"
         page, more = _page(view.entries, for_partner(policy.tenant_id))
+        # Where to resume: past everything scanned, so a quiet partner's client moves on.
+        scanned = (
+            page[-1].entry_seq if more else (view.entries[-1].entry_seq if view.entries else after)
+        )
         return {
             "generation": view.generation,
             "entries": [e.to_wire() for e in page],
             "hasMore": more,
             "finished": view.finished and not more,
+            "cursor": scanned,
         }
 
     @router.get("/tenants/{tenant_id}/matches/{match_id}/stream")

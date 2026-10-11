@@ -5,11 +5,9 @@ from functools import cache, partial
 
 import anyio
 
-from fourth_official_contracts import (
-    Moment,
-    TenantItemEntry,
-)
+from fourth_official_contracts import Moment, Provenance, TenantItemEntry
 from fourth_official_explain import Explanation, explain
+from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
 from fourth_official_match_data import demo_store
 from fourth_official_policy import blocked_topics_in, bundled_store
 from fourth_official_replay import FeedLog, ReplayConfig, replay
@@ -142,3 +140,51 @@ def test_a_failure_for_one_partner_leaves_the_others_and_the_match_alone() -> No
     items = [e for e in log.entries if isinstance(e, TenantItemEntry)]
     assert {i.tenant_id for i in items if i.item_kind == "insight"} == {"rheinblick-sport"}
     assert log.finished
+
+
+def test_a_correction_strap_is_timed_at_the_correction_not_before_it() -> None:
+    record = demo_store().record("m42")
+    events = {e.wall_clock: e for e in record.match.events}
+    for strap in of("rheinblick-sport", "correction"):
+        correction = next(
+            c for c in record.corrections if strap.overlay.item_id.endswith(c.correction_id)
+        )
+        due = [e for t, e in events.items() if t >= correction.issued_at]
+        issued_at = due[0].clock if due else record.match.events[-1].clock
+        assert (strap.overlay.in_at.period, strap.overlay.in_at.minute) >= (
+            issued_at.period,
+            issued_at.minute,
+        )
+
+
+def test_localisations_in_flight_are_limited() -> None:
+    running = 0
+    peak = 0
+
+    class Counting:
+        provenance = Provenance(
+            agent="localizer", prompt_version="v1.0", model="fast", produced_by="model"
+        )
+
+        async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
+            nonlocal running, peak
+            running += 1
+            peak = max(peak, running)
+            await anyio.sleep(0.01)
+            running -= 1
+            raise RuntimeError("no model in tests")
+
+    many = Partners(
+        [
+            Partner(policy=p.policy, blocked=partial(blocked_topics_in, policy=p.policy))
+            for p in bundled_store().all()
+        ],
+        localizer=Counting(),
+        concurrency=2,
+    )
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(demo_store().record("m42"), log, template_only, sleep=no_wait, partners=many)
+    )
+
+    assert 0 < peak <= 2

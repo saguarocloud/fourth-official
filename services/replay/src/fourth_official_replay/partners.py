@@ -42,6 +42,8 @@ from fourth_official_policy import approval_required, disclose
 from fourth_official_verifier import BlockedTopics, MatchFacts, render_insight
 
 logger = logging.getLogger(__name__)
+# Localisations in flight at once, across the match's partners and moments.
+DEFAULT_CONCURRENCY = 3
 # Builds a partner's feed entry once the log assigns its position.
 EntryBuilder = Callable[[int], TenantItemEntry]
 
@@ -90,9 +92,17 @@ def _data_entry(
 class Partners:
     """One match's items for each partner. Holds each partner's director schedule."""
 
-    def __init__(self, partners: Sequence[Partner], *, localizer: Localizer | None) -> None:
+    def __init__(
+        self,
+        partners: Sequence[Partner],
+        *,
+        localizer: Localizer | None,
+        concurrency: int = DEFAULT_CONCURRENCY,
+    ) -> None:
         self._partners = tuple(partners)
         self._localizer = localizer
+        # Bounds the Localizer's model calls in flight, however many moments arrive at once.
+        self._slots = asyncio.Semaphore(concurrency)
         self._schedules: dict[TenantId, Schedule] = {
             p.policy.tenant_id: Schedule(max_per_minute=p.policy.max_items_per_minute)
             for p in self._partners
@@ -127,9 +137,10 @@ class Partners:
         at: MatchClock,
     ) -> EntryBuilder | None:
         policy = partner.policy
-        result = await localize(
-            insight, moment, facts, policy, localizer=self._localizer, blocked=partner.blocked
-        )
+        async with self._slots:
+            result = await localize(
+                insight, moment, facts, policy, localizer=self._localizer, blocked=partner.blocked
+            )
         localized = result.localized
         if localized is None:
             logger.warning("nothing passed for %s at %s", policy.tenant_id, insight.insight_id)

@@ -107,3 +107,10 @@ def test_unknown_partners_and_matches_are_not_found(client: TestClient, path: st
 
 def test_a_malformed_partner_id_is_refused(client: TestClient) -> None:
     assert client.get("/api/tenants/Evil..Sport/matches/m42/feed").status_code == 422
+
+
+def test_a_partner_feed_gives_a_cursor_past_what_it_scanned(client: TestClient) -> None:
+    body = client.get("/api/tenants/tribuna-austral/matches/m42/feed?after=0").json()
+    every = client.get("/api/matches/m42/feed?after=0").json()
+
+    assert body["cursor"] == every["entries"][-1]["entrySeq"]
