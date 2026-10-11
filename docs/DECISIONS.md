@@ -182,3 +182,24 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - Blob versioning and 7-day soft delete make a bad write or a delete recoverable.
 - **Accepted risk:** the API runs as the agents identity, which can both call the models and write the ledger, so a compromised API could spend tokens and reset its own allowance. Splitting the identities buys little while one process does both; the TPM limits and budget alerts still bound spend.
 - **Accepted risk:** the Match Data MCP server has no authentication of its own. It is reachable only through the environment's internal ingress, which is checked from outside after each infrastructure change; Entra authentication is the next step if the environment ever hosts apps we do not run.
+
+## ADR-009: Security headers, and a CSP that allows inline scripts
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** The studio web app and the API should carry the standard browser protections. The web pages are prerendered with Partial Prerendering, and Next.js streams each page's data in inline scripts.
+
+**Choice.**
+- **Web (`apps/web/src/lib/securityHeaders.ts`, every response):**
+  - a CSP that allows only this origin for scripts, styles, images, fonts and connections;
+  - `object-src 'none'`, `frame-ancestors 'none'`, `script-src-attr 'none'` (no inline event handlers), `base-uri` and `form-action` limited to this origin, and `upgrade-insecure-requests` in production;
+  - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, HSTS for two years, `Cross-Origin-Opener-Policy: same-origin`, and a Permissions-Policy that turns off camera, microphone, geolocation, payment and USB.
+- **Scripts need `'unsafe-inline'`.** Nonces need per-request rendering, which Partial Prerendering rules out. Hashes cannot list scripts whose content varies. Subresource Integrity covers only external files. Checked in a browser, a strict `script-src 'self'` blocked every page's inline data scripts, 14 to 47 per page, and the pages never became interactive. `'unsafe-eval'` is allowed in development only.
+- **API (`apps/api/src/fourth_official_api/security.py`):** a plain ASGI middleware, so event streams pass through unbuffered. It sets each header, replacing any value a route set, so only one is ever sent. Every response gets nosniff, `DENY`, `no-referrer`, HSTS and `Cross-Origin-Resource-Policy: same-origin`. JSON answers also get `default-src 'none'; frame-ancestors 'none'`. The interactive docs (`/docs`, `/redoc`) load their own assets, so they keep everything but the policy.
+
+**Consequences.**
+- The XSS risk `'unsafe-inline'` leaves is small:
+  - all text, model output included, renders through React as text;
+  - nothing uses raw HTML;
+  - no script can load from another origin.
+- If the studio ever renders per request, switch to nonces and drop `'unsafe-inline'`.
