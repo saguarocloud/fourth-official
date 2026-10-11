@@ -9,9 +9,14 @@ GITHUB_VARIABLES="AZURE_ENV_NAME AZURE_LOCATION AZURE_RESOURCE_GROUP AZURE_CONTA
 # The only branch allowed to deploy to the environment.
 DEPLOY_BRANCH="main"
 
-if [ -z "${GITHUB_DEPLOY_REPOSITORY:-}" ] || [ -z "${AZURE_DEPLOY_CLIENT_ID:-}" ]; then
-  echo "postprovision: no GitHub deploy identity configured; skipping GitHub setup."
+if [ -z "${GITHUB_DEPLOY_REPOSITORY:-}" ]; then
+  echo "postprovision: GITHUB_DEPLOY_REPOSITORY is not set; skipping GitHub setup."
   exit 0
+fi
+if [ -z "${AZURE_DEPLOY_CLIENT_ID:-}" ]; then
+  echo "postprovision: GITHUB_DEPLOY_REPOSITORY is set but provisioning created no deploy identity;" >&2
+  echo "postprovision: check that the preprovision hook recorded GITHUB_DEPLOY_SUBJECT_PREFIX." >&2
+  exit 1
 fi
 command -v gh >/dev/null 2>&1 || { echo "postprovision: the gh CLI is required" >&2; exit 1; }
 command -v jq >/dev/null 2>&1 || { echo "postprovision: jq is required" >&2; exit 1; }

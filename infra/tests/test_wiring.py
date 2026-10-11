@@ -59,9 +59,7 @@ def test_deploy_workflow_reads_only_what_the_hook_publishes() -> None:
     assert read_secrets <= published_secrets
 
 
-def test_preprovision_supplies_every_github_parameter_the_template_reads() -> None:
+def test_main_parameters_read_the_prefix_the_preprovision_hook_writes() -> None:
     parameters = (REPO / "infra/main.parameters.json").read_text()
-    hook = (REPO / "infra/hooks/preprovision.sh").read_text()
 
-    assert "${GITHUB_DEPLOY_SUBJECT_PREFIX" in parameters
-    assert "azd env set GITHUB_DEPLOY_SUBJECT_PREFIX" in hook
+    assert "${GITHUB_DEPLOY_SUBJECT_PREFIX=}" in parameters

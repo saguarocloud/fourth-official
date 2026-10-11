@@ -8,12 +8,28 @@
 set -eu
 
 if [ -n "${GITHUB_DEPLOY_REPOSITORY:-}" ]; then
-  command -v gh >/dev/null 2>&1 || { echo "preprovision: the gh CLI is required" >&2; exit 1; }
-  prefix="$(gh api "repos/$GITHUB_DEPLOY_REPOSITORY/actions/oidc/customization/sub" --jq .sub_claim_prefix)"
-  case "$prefix" in
-    repo:*) ;;
-    *) echo "preprovision: unexpected OIDC subject prefix '$prefix'" >&2; exit 1 ;;
-  esac
+  for tool in gh jq; do
+    command -v "$tool" >/dev/null 2>&1 || { echo "preprovision: $tool is required" >&2; exit 1; }
+  done
+  repo="$GITHUB_DEPLOY_REPOSITORY"
+  oidc="$(gh api "repos/$repo/actions/oidc/customization/sub")" || {
+    echo "preprovision: cannot read the OIDC subject settings of $repo." >&2
+    echo "preprovision: run 'gh auth login' with an account that administers the repository." >&2
+    exit 1
+  }
+  if [ "$(printf '%s' "$oidc" | jq -r '.use_default')" != "true" ]; then
+    echo "preprovision: $repo uses a custom OIDC subject template, which is not supported." >&2
+    exit 1
+  fi
+  prefix="$(printf '%s' "$oidc" | jq -r '.sub_claim_prefix // empty')"
+  # The prefix must name exactly this repository: repo:<owner>[@id]/<name>[@id], on one line.
+  owner_re="$(printf '%s' "${repo%%/*}" | sed 's/[.]/\\./g')"
+  name_re="$(printf '%s' "${repo#*/}" | sed 's/[.]/\\./g')"
+  if [ "$(printf '%s' "$prefix" | wc -l)" -ne 0 ] ||
+    ! printf '%s\n' "$prefix" | grep -Eqx "repo:${owner_re}(@[0-9]+)?/${name_re}(@[0-9]+)?"; then
+    echo "preprovision: OIDC subject prefix '$prefix' does not identify $repo" >&2
+    exit 1
+  fi
   azd env set GITHUB_DEPLOY_SUBJECT_PREFIX "$prefix"
   echo "preprovision: GITHUB_DEPLOY_SUBJECT_PREFIX=$prefix"
 fi
