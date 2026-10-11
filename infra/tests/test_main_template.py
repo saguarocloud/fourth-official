@@ -14,6 +14,7 @@ USER_ACCESS_ADMINISTRATOR = "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
 RBAC_ADMINISTRATOR = "f58310d9-a9f6-439a-9e8d-f62e7b41a168"
 MANAGED_IDENTITY_OPERATOR = "f1a07417-d97a-45cb-824c-7a7467783830"
 AZURE_AI_USER = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
+STORAGE_BLOB_DATA_CONTRIBUTOR = "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
 GUID = re.compile(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}")
 
 
@@ -217,6 +218,8 @@ EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
     ),
     MANAGED_IDENTITY_OPERATOR: ("Microsoft.ManagedIdentity/userAssignedIdentities'",),
     AZURE_AI_USER: ("Microsoft.CognitiveServices/accounts'",),
+    # On the ledger's one container, never the account.
+    STORAGE_BLOB_DATA_CONTRIBUTOR: ("Microsoft.Storage/storageAccounts/blobServices/containers'",),
     READER: None,
 }
 
@@ -286,3 +289,77 @@ def test_the_api_runs_as_one_replica_so_its_spend_guards_hold(compiled: Compiled
     (api,) = [m for m in compiled.modules if m.name == "api"]
 
     assert api.parameters["maxReplicas"] == 1
+
+
+# --- Storage and the Analyst's wiring ---------------------------------------------------------
+
+
+def _env(compiled: CompiledTemplate, module: str) -> dict[str, str]:
+    (app,) = [m for m in compiled.modules if m.name == module]
+    return {e["name"]: str(e["value"]) for e in app.parameters.get("env", [])}
+
+
+def test_storage_is_keyless_private_and_locally_redundant(compiled: CompiledTemplate) -> None:
+    (account,) = compiled.of_type("Microsoft.Storage/storageAccounts")
+
+    assert account.body["sku"]["name"] == "Standard_LRS"
+    assert account.properties["allowSharedKeyAccess"] is False
+    assert account.properties["allowBlobPublicAccess"] is False
+    assert account.properties["defaultToOAuthAuthentication"] is True
+    assert account.properties["minimumTlsVersion"] == "TLS1_2"
+    assert account.properties["supportsHttpsTrafficOnly"] is True
+    (container,) = compiled.of_type("Microsoft.Storage/storageAccounts/blobServices/containers")
+    assert container.properties["publicAccess"] == "None"
+
+
+def test_only_the_api_identity_writes_the_start_ledger(compiled: CompiledTemplate) -> None:
+    (grant,) = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if STORAGE_BLOB_DATA_CONTRIBUTOR in str(a.properties["roleDefinitionId"])
+    ]
+
+    assert "storage" in grant.module
+    assert "writerPrincipalId" in str(grant.properties["principalId"])
+    (storage,) = [m for m in compiled.modules if m.name == "storage"]
+    assert "agentsIdentityPrincipalId" in str(storage.parameters["writerPrincipalId"])
+
+
+def test_match_data_is_reachable_only_inside_the_environment(compiled: CompiledTemplate) -> None:
+    external = {
+        m.parameters["serviceName"]: m.parameters.get("external", True)
+        for m in compiled.modules
+        if "serviceName" in m.parameters
+    }
+
+    assert external == {"api": True, "web": True, "match-data": False}
+
+
+def test_the_api_runs_the_analyst_with_a_durable_ledger_and_a_small_daily_allowance(
+    compiled: CompiledTemplate,
+) -> None:
+    env = _env(compiled, "api")
+
+    assert set(env) == {
+        "FOUNDRY_PROJECT_ENDPOINT",
+        "MATCH_DATA_URL",
+        "AZURE_CLIENT_ID",
+        "START_LEDGER_URL",
+        "MATCHDAY_RUNS_PER_DAY",
+    }
+    assert env["MATCHDAY_RUNS_PER_DAY"] == "6"
+    assert ".internal." in env["MATCH_DATA_URL"]
+    assert "/mcp" in env["MATCH_DATA_URL"]
+    (api,) = [m for m in compiled.modules if m.name == "api"]
+    assert "agentsIdentityId" in str(api.parameters["additionalIdentityIds"])
+
+
+def test_the_web_app_reaches_the_api_through_its_own_proxy(compiled: CompiledTemplate) -> None:
+    assert set(_env(compiled, "web")) == {"API_URL"}
+
+
+def test_match_data_accepts_only_its_internal_host(compiled: CompiledTemplate) -> None:
+    env = _env(compiled, "match-data")
+
+    assert set(env) == {"MATCH_DATA_ALLOWED_HOSTS"}
+    assert ".internal." in env["MATCH_DATA_ALLOWED_HOSTS"]

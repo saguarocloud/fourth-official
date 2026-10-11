@@ -9,6 +9,7 @@
     "budgetContactEmail": { "value": "${BUDGET_CONTACT_EMAIL=}" },
     "apiExists": { "value": "${SERVICE_API_RESOURCE_EXISTS=false}" },
     "webExists": { "value": "${SERVICE_WEB_RESOURCE_EXISTS=false}" },
+    "matchDataExists": { "value": "${SERVICE_MATCH_DATA_RESOURCE_EXISTS=false}" },
     "developerPrincipalId": { "value": "${AZURE_PRINCIPAL_ID=}" },
     "developerPrincipalType": { "value": "${AZURE_PRINCIPAL_TYPE=User}" }
   }

@@ -32,6 +32,9 @@ param apiExists bool = false
 @description('Set by azd: true once the web app exists, so provisioning keeps its deployed image.')
 param webExists bool = false
 
+@description('Set by azd: true once the match-data app exists, so provisioning keeps its deployed image.')
+param matchDataExists bool = false
+
 @description('Object ID of the person running azd (azd sets AZURE_PRINCIPAL_ID); may call the models locally.')
 param developerPrincipalId string = ''
 
@@ -94,6 +97,42 @@ module containerAppsEnvironment 'modules/container-apps-environment.bicep' = {
   }
 }
 
+// Internal only: the Analyst in the API reads the match through it; nothing else can reach it.
+var matchDataName = 'ca-mcp-${token}'
+var matchDataHost = '${matchDataName}.internal.${containerAppsEnvironment.outputs.defaultDomain}'
+
+module matchData 'modules/container-app.bicep' = {
+  name: 'match-data'
+  scope: resourceGroup
+  params: {
+    name: matchDataName
+    location: location
+    tags: tags
+    serviceName: 'match-data'
+    environmentId: containerAppsEnvironment.outputs.id
+    identityId: appIdentity.outputs.id
+    registryServer: registry.outputs.loginServer
+    targetPort: 8100
+    exists: matchDataExists
+    external: false
+    maxReplicas: 1
+    env: [
+      { name: 'MATCH_DATA_ALLOWED_HOSTS', value: matchDataHost }
+    ]
+  }
+}
+
+module storage 'modules/storage.bicep' = {
+  name: 'storage'
+  scope: resourceGroup
+  params: {
+    name: 'stfo${token}'
+    location: location
+    tags: tags
+    writerPrincipalId: foundry.outputs.agentsIdentityPrincipalId
+  }
+}
+
 module api 'modules/container-app.bicep' = {
   name: 'api'
   scope: resourceGroup
@@ -108,9 +147,19 @@ module api 'modules/container-app.bicep' = {
     registryServer: registry.outputs.loginServer
     targetPort: 8000
     exists: apiExists
-    // One replica: the matchday's run guards (one run at a time, cooldown, daily budget) live in
-    // the process, so a single replica is what bounds model spend for the whole deployment.
+    // One replica: one process runs the matchday. Its spend guards also hold across replicas and
+    // restarts, because starts are claimed atomically in the durable ledger (ADR-008).
     maxReplicas: 1
+    // The API runs as the agents identity too: it calls the models and claims ledger starts.
+    additionalIdentityIds: [foundry.outputs.agentsIdentityId]
+    env: [
+      { name: 'FOUNDRY_PROJECT_ENDPOINT', value: foundry.outputs.projectEndpoint }
+      { name: 'MATCH_DATA_URL', value: 'https://${matchDataHost}/mcp' }
+      { name: 'AZURE_CLIENT_ID', value: foundry.outputs.agentsIdentityClientId }
+      { name: 'START_LEDGER_URL', value: storage.outputs.startLedgerUrl }
+      // At most 6 runs a day keeps the worst case of model spend well inside the budget.
+      { name: 'MATCHDAY_RUNS_PER_DAY', value: '6' }
+    ]
   }
 }
 
@@ -127,6 +176,10 @@ module web 'modules/container-app.bicep' = {
     registryServer: registry.outputs.loginServer
     targetPort: 3000
     exists: webExists
+    // The browser talks only to the web app; its routes forward to the API on the server side.
+    env: [
+      { name: 'API_URL', value: api.outputs.uri }
+    ]
   }
 }
 
@@ -159,7 +212,7 @@ module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubReposit
     githubSubjectPrefix: githubSubjectPrefix
     githubEnvironment: environmentName
     registryName: registry.outputs.name
-    containerAppNames: [api.outputs.name, web.outputs.name]
+    containerAppNames: [api.outputs.name, web.outputs.name, matchData.outputs.name]
     appIdentityName: appIdentity.outputs.name
     managedEnvironmentName: containerAppsEnvironment.outputs.name
   }
