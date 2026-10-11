@@ -6,8 +6,10 @@ COPY --from=ghcr.io/astral-sh/uv:0.13.0@sha256:cdc6093146eb3ff6a40107b38f008b789
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
 WORKDIR /app
 # Dependencies first, so source edits don't invalidate the dependency layer.
+# Every workspace member's manifest is needed for uv to validate the lockfile.
 COPY pyproject.toml uv.lock ./
 COPY apps/api/pyproject.toml apps/api/pyproject.toml
+COPY packages/contracts/pyproject.toml packages/contracts/pyproject.toml
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked --no-dev --package fourth-official-api --no-install-workspace
 COPY apps/api apps/api
