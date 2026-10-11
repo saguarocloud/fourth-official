@@ -6,7 +6,7 @@ import pytest
 from fourth_official_contracts import InsightEntry, Moment
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
-from fourth_official_replay import InMemoryLedger, Matchday, ReplayConfig
+from fourth_official_replay import Availability, InMemoryLedger, Matchday, ReplayConfig
 from fourth_official_replay.matchday import MatchdayBusyError
 from fourth_official_verifier import MatchFacts
 
@@ -180,3 +180,52 @@ def test_the_guards_read_starts_from_the_ledger_so_a_durable_one_survives_restar
             await second.start(now=1_100.0)
 
     anyio.run(run)
+
+
+def test_availability_says_when_the_next_run_may_start() -> None:
+    day = matchday(cooldown=600.0, runs_per_day=2)
+
+    async def run() -> list[Availability]:
+        seen = [await day.availability(now=0.0)]
+        await day.start(now=0.0)
+        seen.append(await day.availability(now=1.0))
+        await day.wait()
+        seen.append(await day.availability(now=100.0))
+        await day.start(now=700.0)
+        await day.wait()
+        seen.append(await day.availability(now=1400.0))
+        return seen
+
+    idle, running, cooling, spent = anyio.run(run)
+
+    assert idle == Availability(ready=True)
+    assert running == Availability(
+        ready=False, blocked_by="running", reason="a matchday is already running"
+    )
+    assert cooling == Availability(
+        ready=False,
+        blocked_by="cooldown",
+        reason="the matchday can be replayed again in 500 seconds",
+        ready_at=600.0,
+    )
+    assert spent.blocked_by == "daily_limit"
+    assert spent.ready_at == 24 * 60 * 60.0
+
+
+def test_when_the_cooldown_ends_inside_a_spent_day_the_day_decides() -> None:
+    day = matchday(cooldown=600.0, runs_per_day=2)
+
+    async def run() -> Availability:
+        for now in (0.0, 700.0):
+            await day.start(now=now)
+            await day.wait()
+        blocked = await day.availability(now=800.0)
+        assert blocked.ready_at is not None
+        await day.start(now=blocked.ready_at)  # a run starts exactly when promised
+        await day.wait()
+        return blocked
+
+    blocked = anyio.run(run)
+
+    assert blocked.blocked_by == "daily_limit"
+    assert blocked.ready_at == 24 * 60 * 60.0

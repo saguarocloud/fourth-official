@@ -95,3 +95,19 @@ def test_plain_http_is_allowed_only_on_this_machine(monkeypatch: pytest.MonkeyPa
 
     assert foundry is not None
     assert foundry.match_data_url == "http://127.0.0.1:8100/mcp"
+
+
+def test_replay_speed_defaults_and_reads_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("REPLAY_SPEED", raising=False)
+    assert Settings.from_env().replay_speed == 8.0
+
+    monkeypatch.setenv("REPLAY_SPEED", "30")
+    assert Settings.from_env().replay_speed == 30.0
+
+
+@pytest.mark.parametrize("value", ["fast", "0", "0.5", "1000"])
+def test_replay_speed_is_validated(monkeypatch: pytest.MonkeyPatch, value: str) -> None:
+    monkeypatch.setenv("REPLAY_SPEED", value)
+
+    with pytest.raises(ValueError, match="REPLAY_SPEED"):
+        Settings.from_env()

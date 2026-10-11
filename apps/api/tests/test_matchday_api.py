@@ -3,8 +3,10 @@
 import asyncio
 import contextlib
 import json
+import time
 from collections.abc import AsyncIterator, Iterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 
 import anyio
 import pytest
@@ -88,6 +90,39 @@ def test_a_second_start_is_refused_while_running_or_cooling_down(client: TestCli
 
     assert again.status_code == 409
     assert "matchday" in again.json()["detail"]
+
+
+def test_availability_tells_the_studio_when_it_may_start(client: TestClient) -> None:
+    before = client.get("/api/matchday")
+    assert before.status_code == 200
+    assert before.headers["cache-control"] == "no-store"
+    assert before.json() == {
+        "ready": True,
+        "blockedBy": None,
+        "reason": None,
+        "readyAt": None,
+    }
+
+    start(client)
+    finish(client)
+    after = client.get("/api/matchday").json()
+
+    assert after["ready"] is False
+    assert after["blockedBy"] == "cooldown"
+    assert after["reason"].startswith("the matchday can be replayed again in ")
+
+
+def test_availability_says_from_when_in_utc() -> None:
+    started = time.time() - 100.0
+    ledger = InMemoryLedger()
+    anyio.run(ledger.record, started)
+    day = Matchday(demo_store(), template_only, cooldown=600.0, ledger=ledger, sleep=no_wait)
+
+    with TestClient(create_app(Settings(version="test"), matchday=day)) as client:
+        body = client.get("/api/matchday").json()
+
+    assert body["blockedBy"] == "cooldown"
+    assert body["readyAt"] == datetime.fromtimestamp(started + 600.0, UTC).isoformat()
 
 
 def test_the_feed_resumes_after_the_entries_a_client_has(client: TestClient) -> None:
@@ -387,3 +422,13 @@ def test_the_analyst_is_never_enabled_without_a_durable_start_ledger() -> None:
 
     with pytest.raises(RuntimeError, match="durable start ledger"), TestClient(app):
         pass
+
+
+def test_a_finished_run_ends_its_stream_with_an_end_event(client: TestClient) -> None:
+    start(client)
+    finish(client)
+
+    with client.stream("GET", "/api/matches/m42/stream") as stream:
+        chunks = list(stream.iter_text())
+
+    assert "".join(chunks).rstrip().endswith('event: end\ndata: {"generation": 1}')
