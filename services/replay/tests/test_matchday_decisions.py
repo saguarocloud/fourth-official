@@ -7,7 +7,13 @@ from datetime import UTC, datetime
 import anyio
 import pytest
 
-from fourth_official_contracts import ClockEntry, CorrectionEntry, MatchClock, TenantItemEntry
+from fourth_official_contracts import (
+    ClockEntry,
+    CorrectionAction,
+    CorrectionEntry,
+    MatchClock,
+    TenantItemEntry,
+)
 from fourth_official_match_data import demo_store
 from fourth_official_replay import Decision, Matchday, Partners, ReplayConfig
 from fourth_official_replay.errors import (
@@ -32,10 +38,13 @@ def during_the_match(
 
     async def run() -> None:
         await held.day.start(now=0.0)
-        await held.until_held()
-        await check(held)
-        held.released.set()
-        await held.day.wait()
+        try:
+            await held.until_held()
+            await check(held)
+        finally:
+            # Released whatever the check did: a failing check fails the test, never hangs it.
+            held.released.set()
+            await held.day.wait()
 
     anyio.run(run)
 
@@ -241,7 +250,17 @@ def test_an_approval_with_no_room_on_air_waits() -> None:
     during_the_match(check, Paused(factory=factory))
 
 
+class NoDesk(Partners):
+    """Partners whose corrections desk does nothing: the decision guard is the last line."""
+
+    async def correct(
+        self, *args: object, **kwargs: object
+    ) -> tuple[list[EntryBuilder], list[CorrectionAction]]:
+        return [], []
+
+
 def test_an_item_a_correction_has_since_touched_cannot_air() -> None:
+    # The desk retracts such an item at once; should a decision arrive first, it is refused.
     async def check(paused: Paused) -> None:
         targets = corrected_targets(paused)
         touched = next(
@@ -253,5 +272,16 @@ def test_an_item_a_correction_has_since_touched_cannot_air() -> None:
         with pytest.raises(CorrectedSinceError):
             await decide(paused, touched)
         assert touched in paused.held()
+
+    no_desk = Paused(factory=lambda: NoDesk(partners()._partners, localizer=None))
+    during_the_match(check, no_desk)
+
+
+def test_the_desk_retracts_a_held_item_a_correction_touched() -> None:
+    async def check(paused: Paused) -> None:
+        targets = corrected_targets(paused)
+        for item in paused.held():
+            evidence = {e for c in item.localized.claims for e in c.evidence.event_ids}  # type: ignore[union-attr]
+            assert not evidence & targets
 
     during_the_match(check)

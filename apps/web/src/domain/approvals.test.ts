@@ -10,7 +10,8 @@ const FEED = feedM42 as unknown as FeedEntry[];
 const DONE = foldBroadcast(FEED);
 const NEXT = Math.max(...FEED.map((e) => e.entrySeq)) + 1;
 
-const held = () => DONE.items.filter((i) => i.state === "pending_approval");
+// Items whose latest version is held: a correction may have pulled some since.
+const held = () => waiting(DONE);
 
 function decided(item: TenantItemEntry, seq: number, decision: "approved" | "rejected") {
   return {
@@ -34,7 +35,7 @@ describe("latestVersions", () => {
 
     const mine = versions.filter((v) => v.overlay.itemId === first!.overlay.itemId);
     expect(mine).toEqual([later]);
-    expect(versions).toHaveLength(DONE.items.length);
+    expect(versions).toHaveLength(new Set(DONE.items.map((i) => i.overlay.itemId)).size);
     expect(versions.indexOf(later)).toBe(DONE.items.indexOf(first!));
   });
 });
@@ -43,7 +44,7 @@ describe("waiting", () => {
   it("lists the items held for an editor, oldest first", () => {
     const queue = waiting(DONE);
 
-    expect(queue).toHaveLength(7);
+    expect(queue).toHaveLength(5);
     expect(queue.every((i) => i.state === "pending_approval")).toBe(true);
     expect(queue.map((i) => i.entrySeq)).toEqual(
       [...queue.map((i) => i.entrySeq)].sort((a, b) => a - b),
@@ -58,7 +59,7 @@ describe("waiting", () => {
       decided(second!, NEXT + 1, "rejected"),
     ]);
 
-    expect(waiting(state)).toHaveLength(5);
+    expect(waiting(state)).toHaveLength(3);
   });
 });
 

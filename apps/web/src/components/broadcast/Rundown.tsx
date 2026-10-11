@@ -2,13 +2,13 @@ import { RefreshCcw } from "lucide-react";
 
 import { MOMENT_STYLES } from "@/components/match-live/moments";
 import { AiTag } from "@/components/ui/AiTag";
-import { type ItemState, StatusLamp, stateLabel } from "@/components/ui/StatusLamp";
+import { PHASE_STATES } from "@/components/ui/phaseState";
+import { StatusLamp, stateLabel } from "@/components/ui/StatusLamp";
 import type { TenantItemEntry } from "@/contracts/feed";
 import {
   type Partner,
   PARTNERS,
   type PartnerId,
-  type Phase,
   phaseAt,
   type RundownRow,
 } from "@/domain/broadcast";
@@ -24,14 +24,6 @@ interface RundownProps {
   /** The match clock as an instant, so each graphic reads as queued, on air or published. */
   readonly now?: number | null;
 }
-
-const STATES: Record<Phase, ItemState> = {
-  queued: "queued",
-  airing: "on_air",
-  aired: "published",
-  held: "pending_approval",
-  rejected: "dropped",
-};
 
 function words(item: TenantItemEntry): string {
   return (
@@ -50,7 +42,7 @@ interface VersionProps {
 function Version({ item, partner, now, onChoose }: VersionProps) {
   if (!item) return <span className="rundown__none">Not sent</span>;
   const text = words(item);
-  const state = STATES[phaseAt(item, now)];
+  const state = PHASE_STATES[phaseAt(item, now)];
   const labelled = item.overlay.disclosure?.label ? ", AI-labelled" : "";
   return (
     <button

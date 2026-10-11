@@ -286,6 +286,83 @@
       "title": "ClockEntry",
       "type": "object"
     },
+    "CorrectionAction": {
+      "additionalProperties": false,
+      "description": "What the corrections desk did to one partner item a correction touched.",
+      "properties": {
+        "action": {
+          "enum": [
+            "retracted",
+            "amended",
+            "escalated"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "insightId": {
+          "maxLength": 72,
+          "pattern": "^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$",
+          "title": "Insightid",
+          "type": "string"
+        },
+        "itemId": {
+          "maxLength": 128,
+          "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+          "title": "Itemid",
+          "type": "string"
+        },
+        "locale": {
+          "enum": [
+            "en-GB",
+            "es-MX",
+            "de-DE"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "newItemId": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Newitemid"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        },
+        "was": {
+          "enum": [
+            "on_air",
+            "pending_approval"
+          ],
+          "title": "Was",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tenantId",
+        "locale",
+        "insightId",
+        "itemId",
+        "was",
+        "action",
+        "newItemId"
+      ],
+      "title": "CorrectionAction",
+      "type": "object"
+    },
     "CorrectionEntry": {
       "additionalProperties": false,
       "properties": {
@@ -350,6 +427,80 @@
         "inText"
       ],
       "title": "CorrectionEntry",
+      "type": "object"
+    },
+    "CorrectionReportEntry": {
+      "additionalProperties": false,
+      "description": "What a correction did to everything already published, and how long it took: the record\nthe Corrections Center replays its impact graph from.",
+      "properties": {
+        "actions": {
+          "items": {
+            "$ref": "#/$defs/CorrectionAction"
+          },
+          "maxItems": 600,
+          "title": "Actions",
+          "type": "array"
+        },
+        "correctionId": {
+          "pattern": "^c-m[0-9]{1,12}-[0-9]{2,4}$",
+          "title": "Correctionid",
+          "type": "string"
+        },
+        "elapsedMs": {
+          "maximum": 3600000,
+          "minimum": 0,
+          "title": "Elapsedms",
+          "type": "integer"
+        },
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "insightIds": {
+          "items": {
+            "maxLength": 72,
+            "pattern": "^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$",
+            "type": "string"
+          },
+          "maxItems": 200,
+          "title": "Insightids",
+          "type": "array"
+        },
+        "kind": {
+          "const": "correction_report",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "startedAt": {
+          "format": "date-time",
+          "title": "Startedat",
+          "type": "string"
+        },
+        "targetEventId": {
+          "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+          "title": "Targeteventid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "kind",
+        "correctionId",
+        "targetEventId",
+        "startedAt",
+        "elapsedMs",
+        "insightIds",
+        "actions"
+      ],
+      "title": "CorrectionReportEntry",
       "type": "object"
     },
     "CorrectionStrap": {
@@ -1458,7 +1609,9 @@
           "enum": [
             "on_air",
             "pending_approval",
-            "rejected"
+            "rejected",
+            "retracted",
+            "amended"
           ],
           "title": "State",
           "type": "string"
@@ -1533,6 +1686,7 @@
     "mapping": {
       "clock": "#/$defs/ClockEntry",
       "correction": "#/$defs/CorrectionEntry",
+      "correction_report": "#/$defs/CorrectionReportEntry",
       "insight": "#/$defs/InsightEntry",
       "moment": "#/$defs/MomentEntry",
       "tenant_item": "#/$defs/TenantItemEntry"
@@ -1554,6 +1708,9 @@
     },
     {
       "$ref": "#/$defs/TenantItemEntry"
+    },
+    {
+      "$ref": "#/$defs/CorrectionReportEntry"
     }
   ],
   "title": "FeedEntry"

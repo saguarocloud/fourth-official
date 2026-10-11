@@ -57,7 +57,14 @@ export function streamReducer<V>(
   };
 }
 
-const KINDS = ["clock", "moment", "insight", "correction", "tenant_item"] as const;
+const KINDS = [
+  "clock",
+  "moment",
+  "insight",
+  "correction",
+  "tenant_item",
+  "correction_report",
+] as const;
 
 /** The run an event belongs to, from its id (`generation:entrySeq`); null when it does not say. */
 function runOf(lastEventId: string): number | null {

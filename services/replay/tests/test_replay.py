@@ -24,7 +24,7 @@ from fourth_official_contracts import (
 )
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
-from fourth_official_replay import FeedLog, ReplayConfig, replay
+from fourth_official_replay import FeedLog, ReplayConfig, fixed_clocks, replay
 from fourth_official_replay.replay import correction_board, correction_summary
 from fourth_official_verifier import MatchFacts
 from test_partners import partners
@@ -334,7 +334,12 @@ def test_the_web_app_partners_fixture_is_this_replay_with_partners() -> None:
     log = FeedLog("m42")
     anyio.run(
         lambda: replay(
-            demo_store().record("m42"), log, template_only, sleep=no_wait, partners=partners()
+            demo_store().record("m42"),
+            log,
+            template_only,
+            sleep=no_wait,
+            partners=partners(),
+            clocks=fixed_clocks(),
         )
     )
 

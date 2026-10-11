@@ -59,7 +59,7 @@ describe("BroadcastPreview", () => {
 
     expect(stream().url).toBe("/api/matches/m42/stream");
     expect(screen.getByRole("status", { name: "Broadcast verdict" })).toHaveTextContent(
-      "7 moments in three voices: 14 graphics cleared for air, 7 pending approval at Tribuna Austral.",
+      "7 moments in three voices: 12 graphics cleared for air, 5 pending approval at Tribuna Austral; 4 pulled by corrections.",
     );
     expect(screen.getByRole("heading", { name: "Program: Northlight Sport" })).toBeInTheDocument();
   });

@@ -7,9 +7,12 @@ never holds up the match.
 """
 
 import asyncio
+import itertools
 import logging
+import time
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from functools import partial
 
 from fourth_official_contracts import (
@@ -31,6 +34,7 @@ from fourth_official_explain import Explanation
 from fourth_official_explain.snapshots import ComputedSnapshots
 from fourth_official_match_data import MatchRecord
 from fourth_official_moments import DetectorState, detect
+from fourth_official_replay.corrections import corrected_facts, report_entry, touched
 from fourth_official_replay.log import FeedLog
 from fourth_official_replay.partners import EntryBuilder, Partners
 from fourth_official_stats.prepare import prepare
@@ -136,6 +140,28 @@ def _correction_entry(
     )
 
 
+def _now() -> datetime:
+    return datetime.now(UTC)
+
+
+@dataclass(frozen=True, slots=True)
+class Clocks:
+    """When the corrections desk starts (wall time) and how long it takes (seconds)."""
+
+    wall: Callable[[], datetime] = _now
+    elapsed: Callable[[], float] = time.monotonic
+
+
+def fixed_clocks() -> Clocks:
+    """Clocks for a reproducible replay (the recorded fixtures): the desk always starts at the
+    same moment, and each of its readings is 4 ms after the last."""
+    ticks = itertools.count()
+    return Clocks(
+        wall=lambda: datetime(2026, 10, 11, 15, 0, tzinfo=UTC),
+        elapsed=lambda: next(ticks) * 0.004,
+    )
+
+
 class _Replay:
     def __init__(
         self,
@@ -145,8 +171,10 @@ class _Replay:
         *,
         config: ReplayConfig,
         partners: Partners | None,
+        clocks: Clocks,
     ) -> None:
         self.record, self.log, self.explainer, self.config = record, log, explainer, config
+        self.clocks = clocks
         self.partners = partners
         # Where the match is as last published, and the score the partners last showed.
         self.now: MatchClock = record.match.events[0].clock
@@ -155,6 +183,13 @@ class _Replay:
         self.slots = asyncio.Semaphore(config.concurrency)
         self.tasks: set[asyncio.Task[None]] = set()
         self.corrections: list[Correction] = sorted(record.corrections, key=lambda c: c.issued_at)
+        # Corrections issued so far, the facts with their amendments, and the partner items the
+        # desk has dealt with (and the versions it made): each is acted on once, however the work
+        # arrives.
+        self.issued: list[Correction] = []
+        self.corrected = self.facts
+        self.handled: set[str] = set()
+        self.desk_lock = asyncio.Lock()
         self.last_clock = -record.match.seconds(record.match.events[0]) - config.clock_every
 
     async def clock(self, event: MatchEvent) -> None:
@@ -199,12 +234,43 @@ class _Replay:
             await self.log.publish(
                 partial(_correction_entry, self.record, self.log.match_id, correction)
             )
+            self.issued.append(correction)
+            self.corrected = corrected_facts(self.corrected, correction)
             if self.partners is not None:
                 await self._publish_all(
                     await self.partners.correction(correction, self.facts, self.now)
                 )
+                await self.desk(correction)
             published = True
         return published
+
+    async def desk(self, correction: Correction, only: frozenset[str] | None = None) -> None:
+        """Apply a correction to the partners' items resting on it, each item once, and report
+        what was done and how long it took. On issue, the report is published even
+        when nothing was touched; for a late insight, only when something was."""
+        if self.partners is None:  # pragma: no cover - called with partners only
+            return
+        async with self.desk_lock:
+            started, began = self.clocks.wall(), self.clocks.elapsed()
+            entries = self.log.entries
+            found, _ = touched(entries, correction, only=only)
+            builders, actions = await self.partners.correct(
+                correction,
+                entries,
+                self.corrected,
+                self.now,
+                only=only,
+                skip=frozenset(self.handled),
+            )
+            self.handled |= {a.item_id for a in actions}
+            self.handled |= {a.new_item_id for a in actions if a.new_item_id is not None}
+            await self._publish_all(builders)
+            if only is not None and not actions:
+                return
+            elapsed = int((self.clocks.elapsed() - began) * 1000)
+            await self.log.publish(
+                report_entry(correction, found, actions, started_at=started, elapsed_ms=elapsed)
+            )
 
     async def explain(self, moment: Moment) -> None:
         """Explain one moment and publish its insight. Whatever goes wrong is logged and stays
@@ -221,6 +287,9 @@ class _Replay:
                     explanation.insight, moment, self.facts, self.now
                 )
                 await self._publish_all(builders)
+                # Published after a correction it rests on: the desk deals with it now.
+                for correction in list(self.issued):
+                    await self.desk(correction, frozenset({explanation.insight.insight_id}))
         except Exception:
             logger.exception("explaining %s failed", moment.moment_id)
 
@@ -270,11 +339,15 @@ async def replay(
     config: ReplayConfig | None = None,
     sleep: Sleep = asyncio.sleep,
     partners: Partners | None = None,
+    clocks: Clocks | None = None,
 ) -> None:
     """Play the match into `log`, then wait for every explanation and finish the log. With
-    `partners`, each partner's items are published too."""
+    `partners`, each partner's items are published too. `clocks` time the corrections desk
+    (fixed ones make a replay reproducible, as the recorded fixtures need)."""
     config = config or ReplayConfig()
-    run = _Replay(record, log, explainer, config=config, partners=partners)
+    run = _Replay(
+        record, log, explainer, config=config, partners=partners, clocks=clocks or Clocks()
+    )
     events = record.match.events
     state: DetectorState | None = None
     previous: MatchEvent | None = None

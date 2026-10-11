@@ -12,6 +12,8 @@ vi.mock("next/navigation", () => ({
 import { FEED } from "@/components/broadcast/testing";
 import { FakeEventSource, MATCHES } from "@/components/match-live/testing";
 import type { TenantItemEntry } from "@/contracts/feed";
+import { waiting } from "@/domain/approvals";
+import { foldBroadcast } from "@/domain/broadcast";
 
 import { Approvals, SETTLE_MS } from "./Approvals";
 
@@ -44,9 +46,7 @@ const TENANTS = {
   ],
 };
 const RUNNING = MATCHES.map((m) => ({ ...m, state: "running" }));
-const HELD = FEED.filter(
-  (e): e is TenantItemEntry => e.kind === "tenant_item" && e.state === "pending_approval",
-);
+const HELD = waiting(foldBroadcast(FEED));
 const NEXT = Math.max(...FEED.map((e) => e.entrySeq)) + 1;
 
 let decisionAnswer: { status: number; body: unknown } = { status: 200, body: {} };

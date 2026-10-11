@@ -5,21 +5,33 @@ Insight entries carry text already rendered by code from the verified insight, s
 it as plain text and never renders references or computes anything itself.
 """
 
+import re
 from typing import Annotated, Literal
 
 from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
-from fourth_official_contracts.corrections import Correction
-from fourth_official_contracts.insights import Insight
-from fourth_official_contracts.localized import LocalizedInsight
+from fourth_official_contracts.corrections import Correction, CorrectionId
+from fourth_official_contracts.insights import Insight, InsightId
+from fourth_official_contracts.localized import ItemId, LocalizedInsight
 from fourth_official_contracts.moments import Moment
 from fourth_official_contracts.overlays import LowerThird, OverlaySpec
-from fourth_official_contracts.primitives import MatchClock, MatchId, Score, Seq, WireModel
+from fourth_official_contracts.primitives import (
+    EventId,
+    MatchClock,
+    MatchId,
+    Score,
+    Seq,
+    UtcTimestamp,
+    WireModel,
+    match_of,
+)
 from fourth_official_contracts.tenants import (
     NARRATIVE_KINDS,
     TEMPLATE_FOR,
+    TENANT_LOCALES,
     Approval,
     ItemKind,
+    Locale,
     TenantId,
 )
 from fourth_official_contracts.verdicts import FindingCode, Verdict
@@ -125,8 +137,9 @@ class TenantItemEntry(FeedEntryBase):
     item_kind: ItemKind
     # Whether the partner's policy has a named editor decide on this item before it airs.
     approval_required: bool
-    # Pending and rejected items stay off air.
-    state: Literal["on_air", "pending_approval", "rejected"]
+    # Pending and rejected items stay off air, as do items a correction pulled (retracted) or
+    # replaced with a newer version (amended).
+    state: Literal["on_air", "pending_approval", "rejected", "retracted", "amended"]
     localized: LocalizedInsight | None
     rendered: RenderedInsight | None
     overlay: OverlaySpec
@@ -190,8 +203,70 @@ class TenantItemEntry(FeedEntryBase):
             raise ValueError("a reviewed label needs the approval behind it")
 
 
+_VERSION = re.compile(r"-v([0-9]+)$")
+
+
+class CorrectionAction(WireModel):
+    """What the corrections desk did to one partner item a correction touched."""
+
+    tenant_id: TenantId
+    locale: Locale
+    insight_id: InsightId
+    # The version that was published, and its state when the correction arrived.
+    item_id: ItemId
+    was: Literal["on_air", "pending_approval"]
+    # Retracted: pulled and kept off air. Amended: replaced by a new version from the corrected
+    # facts, on air. Escalated: replaced by a new version held for an editor.
+    action: Literal["retracted", "amended", "escalated"]
+    new_item_id: ItemId | None
+
+    @model_validator(mode="after")
+    def _one_item_and_its_versions(self) -> "CorrectionAction":
+        if self.locale != TENANT_LOCALES[self.tenant_id]:
+            raise ValueError(f"{self.tenant_id} broadcasts in {TENANT_LOCALES[self.tenant_id]}")
+        stem = f"it-{self.tenant_id}-{self.insight_id}-v"
+        if not self.item_id.startswith(stem):
+            raise ValueError("the item is the partner's version of the insight")
+        if (self.action == "retracted") != (self.new_item_id is None):
+            raise ValueError("an amended or escalated item names its new version, and only those")
+        if self.new_item_id is not None:
+            old, new = _VERSION.search(self.item_id), _VERSION.search(self.new_item_id)
+            if not self.new_item_id.startswith(stem) or old is None or new is None:
+                raise ValueError("the new version is the same partner's item")
+            if int(new.group(1)) <= int(old.group(1)):
+                raise ValueError("the new version is a later one")
+        return self
+
+
+class CorrectionReportEntry(FeedEntryBase):
+    """What a correction did to everything already published, and how long it took: the record
+    the Corrections Center replays its impact graph from."""
+
+    kind: Literal["correction_report"]
+    correction_id: CorrectionId
+    target_event_id: EventId
+    started_at: UtcTimestamp
+    elapsed_ms: Annotated[int, Field(ge=0, le=3_600_000)]
+    # The canonical insights the corrected event's evidence reached.
+    insight_ids: Annotated[tuple[InsightId, ...], Field(max_length=200, strict=False)]
+    actions: Annotated[tuple[CorrectionAction, ...], Field(max_length=600, strict=False)]
+
+    @model_validator(mode="after")
+    def _same_match(self) -> "CorrectionReportEntry":
+        if not self.correction_id.startswith(f"c-{self.match_id}-"):
+            raise ValueError("the correction belongs to another match")
+        if match_of(self.target_event_id) != self.match_id:
+            raise ValueError("the event belongs to another match")
+        return self
+
+
 FeedEntry = Annotated[
-    ClockEntry | MomentEntry | InsightEntry | CorrectionEntry | TenantItemEntry,
+    ClockEntry
+    | MomentEntry
+    | InsightEntry
+    | CorrectionEntry
+    | TenantItemEntry
+    | CorrectionReportEntry,
     Field(discriminator="kind"),
 ]
 FEED_ENTRY_ADAPTER: TypeAdapter[FeedEntry] = TypeAdapter(FeedEntry)

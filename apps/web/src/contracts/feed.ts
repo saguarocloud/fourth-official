@@ -1,6 +1,12 @@
 /* Generated from packages/contracts/schemas by `npm run contracts`. Do not edit. */
 
-export type FeedEntry = ClockEntry | MomentEntry | InsightEntry | CorrectionEntry | TenantItemEntry;
+export type FeedEntry =
+  | ClockEntry
+  | MomentEntry
+  | InsightEntry
+  | CorrectionEntry
+  | TenantItemEntry
+  | CorrectionReportEntry;
 export type Asofseq = number;
 export type Minute = number;
 export type Period = 1 | 2;
@@ -245,8 +251,30 @@ export type Provenanceurl = string | null;
 export type Supersedes = string | null;
 export type Tenantid1 = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
 export type Version1 = number;
-export type State = "on_air" | "pending_approval" | "rejected";
+export type State = "on_air" | "pending_approval" | "rejected" | "retracted" | "amended";
 export type Tenantid2 = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
+export type Action = "retracted" | "amended" | "escalated";
+export type Insightid3 = string;
+export type Itemid2 = string;
+export type Locale3 = "en-GB" | "es-MX" | "de-DE";
+export type Newitemid = string | null;
+export type Tenantid3 = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
+export type Was = "on_air" | "pending_approval";
+/**
+ * @maxItems 600
+ */
+export type Actions = CorrectionAction[];
+export type Correctionid2 = string;
+export type Elapsedms = number;
+export type Entryseq5 = number;
+/**
+ * @maxItems 200
+ */
+export type Insightids = string[];
+export type Kind8 = "correction_report";
+export type Matchid11 = string;
+export type Startedat = string;
+export type Targeteventid2 = string;
 
 /**
  * The match clock and score as published so far (corrections in force applied).
@@ -499,4 +527,31 @@ export interface Disclosure {
   label: Label1;
   mode: Mode;
   reason: Reason3;
+}
+/**
+ * What a correction did to everything already published, and how long it took: the record
+ * the Corrections Center replays its impact graph from.
+ */
+export interface CorrectionReportEntry {
+  actions: Actions;
+  correctionId: Correctionid2;
+  elapsedMs: Elapsedms;
+  entrySeq: Entryseq5;
+  insightIds: Insightids;
+  kind: Kind8;
+  matchId: Matchid11;
+  startedAt: Startedat;
+  targetEventId: Targeteventid2;
+}
+/**
+ * What the corrections desk did to one partner item a correction touched.
+ */
+export interface CorrectionAction {
+  action: Action;
+  insightId: Insightid3;
+  itemId: Itemid2;
+  locale: Locale3;
+  newItemId: Newitemid;
+  tenantId: Tenantid3;
+  was: Was;
 }

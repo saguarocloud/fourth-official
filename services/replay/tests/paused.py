@@ -39,11 +39,12 @@ class Paused:
         return self.day.feed("m42").generation
 
     def held(self) -> list[TenantItemEntry]:
-        return [
-            e
-            for e in self.day.feed("m42").entries
-            if isinstance(e, TenantItemEntry) and e.state == "pending_approval"
-        ]
+        """Items whose latest version is held for an editor."""
+        latest: dict[str, TenantItemEntry] = {}
+        for entry in self.day.feed("m42").entries:
+            if isinstance(entry, TenantItemEntry):
+                latest[entry.overlay.item_id] = entry
+        return [e for e in latest.values() if e.state == "pending_approval"]
 
     async def until_held(self) -> None:
         with anyio.fail_after(10):

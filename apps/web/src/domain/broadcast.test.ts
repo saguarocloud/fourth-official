@@ -137,6 +137,30 @@ describe("onAir, across the whole match", () => {
   });
 });
 
+describe("correction reports", () => {
+  it("are kept, in the order they arrive", () => {
+    const report = {
+      kind: "correction_report",
+      entrySeq: 999,
+      matchId: "m42",
+      correctionId: "c-m42-01",
+      targetEventId: "m42-e0287",
+      startedAt: "2026-10-11T15:00:00.000Z",
+      elapsedMs: 10,
+      insightIds: [],
+      actions: [],
+    } as unknown as FeedEntry;
+
+    expect(foldBroadcast([...FEED, report]).reports.at(-1)).toEqual(report);
+    expect(DONE.reports.map((r) => r.correctionId)).toEqual([
+      "c-m42-01",
+      "c-m42-01",
+      "c-m42-02",
+      "c-m42-02",
+    ]);
+  });
+});
+
 describe("rundown, for corrections", () => {
   it("knows a correction's row before the correction itself arrives", () => {
     const early = { ...DONE, corrections: [] };
@@ -168,6 +192,14 @@ describe("phaseAt", () => {
     expect(phaseAt(goal, instant(goal.overlay.outAt))).toBe("airing");
     expect(phaseAt(goal, instant(goal.overlay.outAt) + 1)).toBe("aired");
     expect(phaseAt(goal, null)).toBe("airing");
+  });
+
+  it("never airs a graphic a correction pulled or replaced", () => {
+    const pulled = { ...goal, state: "retracted" as const };
+    const replaced = { ...goal, state: "amended" as const };
+
+    expect(phaseAt(pulled, instant(goal.overlay.inAt))).toBe("retracted");
+    expect(phaseAt(replaced, instant(goal.overlay.inAt))).toBe("amended");
   });
 
   it("never airs a graphic held for approval", () => {
