@@ -1,0 +1,16 @@
+# Northlight Sport: UK and Ireland. Measured, analytical; no speculation on injuries.
+# Stats and insight cards publish automatically; recaps wait for a named editor.
+tenantId: northlight-sport
+version: 1
+displayName: Northlight Sport
+locale: en-GB
+tone: [measured, analytical]
+preferTerms: [pressing, transition, chance]
+avoidTerms: [sensational, unbelievable]
+blockedTopics: [injury_speculation, betting]
+approvalRequired: [recap]
+disclosureMode: label-unless-approved
+latencyBudgetMs: 8000
+maxItemsPerMinute: 6
+templates: [lower_third, stat_card, correction_strap, score_bug]
+correctionBehaviour: auto-amend

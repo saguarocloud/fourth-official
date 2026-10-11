@@ -1,0 +1,16 @@
+# Rheinblick Sport: Germany, Austria, Switzerland. Formal register.
+# EU strict mode: every narrative item carries the AI label; an approved one names its editor.
+tenantId: rheinblick-sport
+version: 1
+displayName: Rheinblick Sport
+locale: de-DE
+tone: [formal, precise]
+preferTerms: [Pressing, Umschaltspiel, Torchance]
+avoidTerms: [Wahnsinn]
+blockedTopics: [injury_speculation, betting, transfer_rumour, off_field]
+approvalRequired: [recap]
+disclosureMode: eu-strict
+latencyBudgetMs: 8000
+maxItemsPerMinute: 4
+templates: [lower_third, stat_card, correction_strap, score_bug]
+correctionBehaviour: auto-amend
