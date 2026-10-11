@@ -68,7 +68,7 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Choice.**
 - Infrastructure as code: **Bicep**, driven by the **Azure Developer CLI (`azd`)**.
 - **`azd provision` runs locally**, by a subscription Owner. Provisioning also creates the GitHub Actions deploy identity: a user-assigned managed identity with a **federated credential** (workload identity federation) for the GitHub `dev` environment. No client secret exists anywhere.
-- **GitHub Actions only runs `azd deploy`**: it builds images, pushes them to the registry and releases new revisions. Its identity holds **AcrPush** (registry), **Container Apps Contributor** (each app, plus the environment where it grants only read and join, not the resource group), **Managed Identity Operator** (the apps' runtime identity only, because a revision update re-asserts it) and **Reader** (resource group, so azd can find the apps). Nothing it holds can create resources or grant roles.
+- **GitHub Actions only runs `azd deploy`**: it builds images, pushes them to the registry and releases new revisions. Its identity holds **AcrPush** (registry), **Container Apps Contributor** (each app, plus the environment, where it amounts to read and join because its write actions do not apply at that scope; never the resource group), **Managed Identity Operator** (the apps' runtime identity only, because a revision update re-asserts it) and **Reader** (resource group, so azd can find the apps). Nothing it holds can create resources or grant roles.
 - Container registry: **Azure Container Registry, Basic tier**, with the admin user disabled. Container Apps pull with their own managed identity (AcrPull).
 - Budget: $100/month on the subscription, with alerts at 25/50/75/100%.
 
