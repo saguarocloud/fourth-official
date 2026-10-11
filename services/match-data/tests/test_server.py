@@ -6,9 +6,11 @@ from typing import Any
 import anyio
 import pytest
 from mcp.client.session import ClientSession
+from mcp.server.fastmcp import FastMCP
 from mcp.shared.memory import create_connected_server_and_client_session
 from mcp.types import CallToolResult
 
+from fourth_official_match_data import __main__ as entry
 from fourth_official_match_data import create_server, demo_store
 
 EXPECTED_TOOLS = {
@@ -88,10 +90,6 @@ def test_every_tool_answers_through_the_protocol() -> None:
 
 
 def test_the_command_line_serves_stdio_or_loopback_http(monkeypatch: pytest.MonkeyPatch) -> None:
-    from mcp.server.fastmcp import FastMCP
-
-    from fourth_official_match_data import __main__ as entry
-
     served: list[tuple[str, str, int]] = []
 
     def fake_run(self: FastMCP, transport: str) -> None:

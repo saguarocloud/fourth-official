@@ -42,6 +42,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Moment Detector: momentum swing and tactical shift rules
 - [x] Verifier, deterministic layer: claim markup, rendering, adversarial checks (ADR-006, docs/verifier.md)
 - [ ] Verifier, LLM judge layer (Foundry evaluation)
+- [x] Match Data MCP server: read-only, time-bounded tools (docs/match-data.md)
+- [ ] Match Data MCP server: Container App, Entra-authenticated ingress, Cosmos-backed store
 
 - [ ] Simulator → Event Hubs → stats → Moment Detector → Analyst ⇄ Verifier → one tenant → Match Live UI, deployed with `azd up`
 - [ ] Attend Reactor livestream (Oct 14, 10:00)
