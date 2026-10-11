@@ -7,13 +7,17 @@ Running checklist. Update daily. Times are Mexico City.
 - [x] Azure CLI signed in as the work account; Owner on the subscription
 - [x] Resource providers registered
 - [x] Region chosen: East US 2 (ADR-001)
-- [x] GitHub repository created: `saguarocloud/fourth-official` (private, ADR-002)
-- [ ] Open decisions settled: names and collision check, team, tech stack, budget, Teams route, brand, languages
-- [ ] Budget amount set; resource groups `rg-fourth-official-dev` / `-demo` with budget alerts
+- [x] GitHub repository created and public: `saguarocloud/fourth-official`; `main` protected, PRs only (ADR-002)
+- [x] Stack chosen: Python 3.12 + uv, Next.js + TypeScript (ADR-003)
+- [x] Deployment model chosen: Bicep + azd, infra local, apps via GitHub Actions with workload identity federation (ADR-004)
+- [ ] Tooling and CI pull request (api and web skeletons, quality gates)
+- [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow)
+- [ ] Design system pull request (impeccable)
+- [ ] Open decisions settled: names and collision check, team, Teams route, brand, languages
+- [ ] Budget ($100/month) and resource groups provisioned via `azd provision`
 - [ ] Upgrade subscription to pay-as-you-go (before the credit expires around Nov 6)
 - [ ] Foundry quota request for a stronger `quality` model
 - [ ] `azd auth login` for the tenant
-- [ ] Repository scaffold (layout, CI, contracts, design tokens, fonts)
 - [ ] Simulator v0 emitting events
 - [ ] Placeholder project on Innovation Studio (neutral title); teammates joined and registered (by Oct 20, 1:00 pm)
 - [ ] Email hackathon support: partner credits (§4.12), how to declare a category

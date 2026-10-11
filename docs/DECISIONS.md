@@ -24,15 +24,52 @@ One entry per decision: context, options, choice, consequences. Newest last.
 
 ---
 
-## ADR-002: MIT licence; repository private until submission
+## ADR-002: MIT licence; repository public from day one; all changes through pull requests
 
-**Date:** 2026-10-10 · **Status:** Accepted
+**Date:** 2026-10-10 · **Status:** Accepted (revised the same day: originally private until submission)
 
-**Context.** The Official Rules require a public repository at submission and grant Microsoft and the Premier League a broad licence to the entry. Project pages and public repositories are visible to competing entrants.
+**Context.** The Official Rules require a public repository and grant Microsoft and the Premier League a broad licence to the entry. Judges review the repository itself, so its history and process are part of what they score.
 
 **Choice.**
 - Licence: MIT.
-- The repository `saguarocloud/fourth-official` stays **private** during development and is made **public before submission** (target: Oct 25–26, 2026).
-- No proprietary Saguaro Cloud IP goes in the repository. Tenant and subscription IDs live in `azd env` or `.env`, which are git-ignored.
+- `saguarocloud/fourth-official` is **public now**. Strategy documents that should not be visible to competing entrants stay outside the repository.
+- `main` is protected by the `protect-main` ruleset: changes land only through squash-merged pull requests, with linear history, resolved review threads, no force pushes and no branch deletion. The `ci-ok` check is required once CI exists.
+- No proprietary Saguaro Cloud IP goes in the repository. Tenant and subscription IDs live in `azd env`, `.env` or GitHub environment secrets, never in tracked files.
 
-**Consequences.** CI badges and Codespaces links only work for judges once the repo is public. The submission checklist must include flipping visibility and checking every link in a private browser window.
+**Consequences.** Competitors can see our direction early, so the repository leads with engineering quality rather than the pitch. CI badges, Codespaces links and the commit history work for judges from day one.
+
+---
+
+## ADR-003: Python 3.12 with uv for services; Next.js with TypeScript for the web app
+
+**Date:** 2026-10-10 · **Status:** Accepted
+
+**Context.** We considered Go and Python for the backend. Microsoft Agent Framework, a named hero technology, ships for Python and .NET only. The Foundry SDK, Content Safety, the official MCP SDK and NumPy (for metrics) are all first-class in Python. Our load (3 matches × 23 tracked objects × 5 Hz) does not need Go's performance.
+
+**Choice.**
+- **Services:** Python 3.12, managed with **uv** as a single workspace (`uv.lock` committed). FastAPI for HTTP. Frozen Pydantic models and frozen dataclasses for data, in line with our immutability rule.
+- **Web:** Next.js (App Router), TypeScript in strict mode (plus `noUncheckedIndexedAccess`), Tailwind CSS, npm with a committed lockfile. The design system is built with the impeccable design workflow.
+- **Quality gates (CI and `make check`):**
+  - Python: ruff (lint, including bandit security rules, and format), mypy `--strict` over source and tests, pytest with warnings treated as errors, branch coverage of at least 80%.
+  - Web: ESLint with zero warnings, Prettier, `tsc`, Vitest with React Testing Library and coverage of at least 80%, and a production build.
+- **Process:** test-driven development. Every behaviour starts as a failing test. Domain code (stats, verification, policy, corrections) is pure and sits behind ports. Adapters for Azure services get in-memory fakes and contract tests.
+- **Supply chain:** GitHub Actions are pinned to commit SHAs. Dependabot handles uv, npm and Actions updates.
+
+**Consequences.** One backend language means one set of generated contract types and one test toolchain. Go stays an option for a hot path if profiling ever demands it.
+
+---
+
+## ADR-004: Bicep + azd; infrastructure provisioned locally, applications deployed by GitHub Actions
+
+**Date:** 2026-10-10 · **Status:** Accepted (implementation lands with the infrastructure pull request)
+
+**Context.** We want a Microsoft-native toolchain (Pulumi was considered and set aside), a one-command `azd up` for judges, and least privilege for automation.
+
+**Choice.**
+- Infrastructure as code: **Bicep**, driven by the **Azure Developer CLI (`azd`)**.
+- **`azd provision` runs locally**, by a subscription Owner. Provisioning also creates the GitHub Actions deploy identity: a user-assigned managed identity with a **federated credential** (workload identity federation) for the GitHub `dev` environment. No client secret exists anywhere.
+- **GitHub Actions only runs `azd deploy`**: it builds images, pushes them to the registry and updates the Container Apps. Its identity holds **AcrPush** and **Container Apps Contributor** on the app resource group, and nothing that can create resources or grant roles.
+- Container registry: **Azure Container Registry, Basic tier**, with the admin user disabled. Container Apps pull with their own managed identity (AcrPull).
+- Budget: $100/month on the subscription, with alerts at 25/50/75/100%.
+
+**Consequences.** Infrastructure changes are reviewed in pull requests but applied by a person, which suits a small team and a fixed deadline. Application releases are fully automated on every merge to `main`.
