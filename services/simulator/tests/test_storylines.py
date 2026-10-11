@@ -23,6 +23,8 @@ from fourth_official_contracts import (
     parse_correction,
 )
 from fourth_official_simulator.engine import SimulatedMatch, play, simulate
+from fourth_official_simulator.pitch import Zone, pitch_to_attacking, zone_of
+from fourth_official_simulator.squads import Position, generate_squad
 from fourth_official_simulator.storylines import (
     Directive,
     RedCard,
@@ -227,6 +229,36 @@ def test_a_sent_off_player_takes_no_further_part() -> None:
             ),
             "cannot have its scorer reassigned",
         ),
+        (
+            (
+                ScriptedGoal(club="HCY", minute=30),
+                ScorerReassigned(club="HCY", goal_minute=30),
+                ScorerReassigned(club="HCY", goal_minute=30),
+            ),
+            "only once",
+        ),
+        (
+            (
+                ScriptedGoal(club="HCY", minute=30),
+                VarVoid(club="HCY", goal_minute=30),
+                VarVoid(club="HCY", goal_minute=30, reason="VAR_FOUL"),
+            ),
+            "only once",
+        ),
+        (
+            (
+                RedCard(club="HCY", minute=10),
+                RedCard(club="HCY", minute=20),
+                RedCard(club="HCY", minute=30),
+            ),
+            "at most 2",
+        ),
+        ((ScriptedGoal(club="HCY", minute=43), VarVoid(club="HCY", goal_minute=43)), "half-time"),
+        ((ScriptedGoal(club="hcy", minute=30),), "club code"),
+        ((ScriptedGoal(club="HCY", minute=True),), "whole minute"),
+        ((ScriptedGoal(club="HCY", minute=12.5),), "whole minute"),  # type: ignore[arg-type]
+        ((StyleShift(club="HCY", minute=60, label="", pressing=0.2),), "label"),
+        ((StyleShift(club="HCY", minute=60, label="two\nlines", pressing=0.2),), "label"),
     ],
 )
 def test_incoherent_storylines_are_refused(directives: tuple[Directive, ...], message: str) -> None:
@@ -273,3 +305,77 @@ def test_a_red_card_for_the_side_in_possession_is_still_a_foul_and_a_free_kick()
         assert foul_.team_id == "HCY"
         restart = next(e for e in events if e.seq > card.seq and isinstance(e, SetPieceEvent))
         assert restart.team_id == "NGT"
+
+
+# --- Football rules hold in storyline matches on many seeds ---------------------------------------
+DENSE = Storyline(
+    name="Dense",
+    natural_goals=False,
+    directives=(
+        RedCard(club="HCY", minute=20),
+        ScriptedGoal(club="NGT", minute=30),
+        ScriptedGoal(club="HCY", minute=50),
+        VarVoid(club="HCY", goal_minute=50),
+        RedCard(club="NGT", minute=60),
+        ScriptedGoal(club="HCY", minute=70),
+        ScorerReassigned(club="HCY", goal_minute=70),
+    ),
+)
+KEEPERS = {
+    p.player_id
+    for club in ("HCY", "NGT")
+    for p in generate_squad(club, seed=1).players
+    if p.position is Position.GOALKEEPER
+}
+
+
+@cache
+def dense(seed: int) -> SimulatedMatch:
+    return play(setup(seed, storyline=DENSE))
+
+
+def test_no_free_kick_is_awarded_in_the_box_in_storyline_matches() -> None:
+    for seed in range(120):
+        for event in dense(seed).events:
+            if isinstance(event, SetPieceEvent) and event.kind == "free_kick":
+                progress, lateral = pitch_to_attacking(
+                    event.at.x, event.at.y, home=event.team_id == "HCY", period=event.clock.period
+                )
+                assert zone_of(progress, lateral) is not Zone.BOX, (seed, event.event_id)
+
+
+def test_a_red_card_foul_in_the_offenders_box_gives_a_penalty() -> None:
+    penalties = 0
+    for seed in range(120):
+        events = dense(seed).events
+        for i, event in enumerate(events):
+            if isinstance(event, CardEvent) and event.card == "red":
+                restart = next(e for e in events[i + 1 :] if isinstance(e, SetPieceEvent))
+                penalties += restart.kind == "penalty"
+    assert penalties >= 1
+
+
+def test_goalkeepers_never_set_up_scripted_goals() -> None:
+    for seed in range(120):
+        for event in dense(seed).events:
+            if isinstance(event, GoalEvent):
+                assert event.assist_id not in KEEPERS, (seed, event.event_id)
+
+
+def test_sent_off_players_take_no_further_part_in_storyline_matches() -> None:
+    for seed in range(60):
+        gone: set[str] = set()
+        for event in dense(seed).events:
+            refs = {v for k, v in event.model_dump().items() if k.endswith("_id") and v}
+            assert not (refs & gone), (seed, event.event_id)
+            if isinstance(event, CardEvent) and event.card in {"red", "second_yellow"}:
+                gone.add(event.player_id)
+
+
+def test_correction_ids_are_scoped_by_match() -> None:
+    long_id = play(setup(4207, match_id="m123456789012", away_style=PRESSING_NGT, storyline=STORY))
+
+    assert [c.correction_id for c in long_id.corrections] == [
+        "c-m123456789012-01",
+        "c-m123456789012-02",
+    ]

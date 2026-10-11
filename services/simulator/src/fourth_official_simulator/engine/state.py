@@ -15,7 +15,7 @@ from fourth_official_contracts import (
     PitchPoint,
     StorylineTruth,
 )
-from fourth_official_simulator.pitch import Zone, attacking_to_pitch
+from fourth_official_simulator.pitch import Zone, attacking_to_pitch, pitch_to_attacking, zone_of
 from fourth_official_simulator.squads import Player, Position, Squad
 from fourth_official_simulator.storylines import ScriptedGoal, Storyline
 from fourth_official_simulator.style import TeamStyle
@@ -211,6 +211,12 @@ def point(state: MatchState, progress: float, lateral: float) -> PitchPoint:
     """A point in the attacking frame of the team in possession, as pitch metres."""
     x, y = attacking_to_pitch(progress, lateral, home=state.home_in_possession, period=state.period)
     return PitchPoint(x=x, y=y)
+
+
+def zone_at(at: PitchPoint, *, home: bool, period: Period) -> Zone:
+    """The zone of an emitted point, for the side attacking as `home`. Decisions about where
+    something happened use the point as published, so a reader of the events always agrees."""
+    return zone_of(*pitch_to_attacking(at.x, at.y, home=home, period=period))
 
 
 def pick(

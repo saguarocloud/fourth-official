@@ -134,7 +134,7 @@ def test_model_dump_json_is_camel_case_by_default() -> None:
 
 # --- Corrections ---------------------------------------------------------------------------------
 CORRECTION = {
-    "correctionId": "c-0004",
+    "correctionId": "c-m42-04",
     "matchId": "m42",
     "targetEventId": "m42-e0188",
     "kind": "EVENT_AMENDED",

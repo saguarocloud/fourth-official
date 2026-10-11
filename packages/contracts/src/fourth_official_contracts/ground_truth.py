@@ -29,12 +29,20 @@ StorylineKind = Literal[
     "var_overturn",
     "scorer_reassigned",
 ]
-# Kinds that are facts in the event stream, and kinds that only exist through a correction.
-_EVENT_KINDS = frozenset({"goal", "red_card", "var_overturn"})
+# Kinds shown by events, kinds that exist through a correction, and style shifts (no events).
+_EVENT_KINDS = frozenset({"goal", "red_card", "var_overturn", "scorer_reassigned"})
 _CORRECTION_KINDS = frozenset({"var_overturn", "scorer_reassigned"})
-# Printable, single-line text for labels and names.
+# A pressing story names the metric that shows it and the way it moves.
+_PRESSING_DIRECTION = {"pressing_collapse": "down", "pressing_surge": "up"}
+# Printable, single-line text for labels and names: no control characters, line or paragraph
+# separators, or bidirectional overrides that could disguise text in a UI or log.
 Label = Annotated[
-    str, StringConstraints(min_length=1, max_length=120, pattern=r"^[^\x00-\x1f\x7f]+$")
+    str,
+    StringConstraints(
+        min_length=1,
+        max_length=120,
+        pattern=r"^[^\x00-\x1f\x7f\u2028\u2029\u202a-\u202e\u2066-\u2069]+$",
+    ),
 ]
 MAX_MINUTE = 130
 MAX_STORYLINES = 64
@@ -45,12 +53,13 @@ class StorylineTruth(WireModel):
 
     kind: StorylineKind
     club: ClubCode
-    # The match minute it happened in (for a reassigned scorer, the goal's minute).
+    # The match minute it happened in (for a reassigned scorer, the goal's minute; the
+    # reassignment itself is recorded after the final whistle).
     minute: Annotated[int, Field(ge=0, le=MAX_MINUTE)]
     label: Label
     event_ids: Annotated[tuple[EventId, ...], Field(max_length=16, strict=False)]
     correction_ids: Annotated[tuple[CorrectionId, ...], Field(max_length=4, strict=False)]
-    # The metric a good analyst would see move, and which way (tactical shifts only).
+    # The metric a good analyst would see move, and which way (style shifts only).
     expected_metric: MetricName | None
     expected_direction: Literal["up", "down"] | None
 
@@ -62,11 +71,24 @@ class StorylineTruth(WireModel):
             raise ValueError("correction IDs must be unique")
         if self.kind in _EVENT_KINDS and not self.event_ids:
             raise ValueError(f"a {self.kind} storyline needs the events that show it")
+        if self.kind not in _EVENT_KINDS and self.event_ids:
+            raise ValueError(f"a {self.kind} storyline is a change of style; it cites no events")
         if self.kind in _CORRECTION_KINDS and not self.correction_ids:
             raise ValueError(f"a {self.kind} storyline needs its correction")
+        if self.kind not in _CORRECTION_KINDS and self.correction_ids:
+            raise ValueError(f"a {self.kind} storyline has no correction")
         if (self.expected_metric is None) != (self.expected_direction is None):
             raise ValueError("expected metric and direction come together")
+        self._check_expectation()
         return self
+
+    def _check_expectation(self) -> None:
+        direction = _PRESSING_DIRECTION.get(self.kind)
+        if direction is not None:
+            if (self.expected_metric, self.expected_direction) != ("pressing_intensity", direction):
+                raise ValueError(f"a {self.kind} expects pressing_intensity to go {direction}")
+        elif self.kind != "tactical_shift" and self.expected_metric is not None:
+            raise ValueError(f"a {self.kind} storyline expects no metric to move")
 
 
 class GroundTruth(WireModel):

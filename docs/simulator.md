@@ -18,7 +18,7 @@ The simulator generates the synthetic Meridian League matches that feed the whol
   - `scripted.py`: storyline moments and the corrections and ground truth they leave.
 - **Phases**: each phase, the player on the ball may be pressed and may be fouled, then passes, carries, crosses or shoots. The ball is struck from where it actually is. Open play rarely gets closer than about 8 m from goal, near goal play turns lateral (cut-backs), and crosses reach 5 to 12 m.
 - **Football rules the tests enforce in every match**:
-  - A foul in the box is a penalty (defenders rarely risk one), never a free kick.
+  - A foul in the box is a penalty (defenders rarely risk one), never a free kick. The decision uses the foul's point as published, so a reader of the events always agrees, even on the line. Storyline matches are held to the same rules over many seeds.
   - Substitutions happen only at dead balls, never take off the player on the ball, and a substitute is never substituted again.
   - Players who were sent off or substituted appear in no later event.
   - Possession changes hands only through a `POSSESSION_CHANGE` event.
@@ -56,26 +56,29 @@ A storyline (`storylines.py`) lays scripted moments over an otherwise ordinary m
 
 | Directive | In the event stream | Ground truth |
 |---|---|---|
-| `ScriptedGoal(club, minute)` | The side wins the ball if needed (a possession change and an interception). Then comes a completed pass into the box, a shot from where the pass arrived, the goal (assisted by the passer), and a kick-off. | `goal`, with the pass, shot and goal events |
+| `ScriptedGoal(club, minute)` | The side wins the ball where it is if needed (a possession change and an interception). A keeper on the ball first plays it short to a team-mate. Then comes a completed pass into the box, a shot from where the pass arrived, the goal (assisted by the passer), and a kick-off. | `goal`, with the pass, shot and goal events |
 | `StyleShift(club, minute, …dials)` | From that minute the club plays with the new dials. A press that collapses produces visibly fewer `PRESSURE` events. | `pressing_collapse` or `pressing_surge`, with the metric and the direction a good analyst would see move (`pressing_intensity`, down or up). Shifts that don't change pressing are recorded as `tactical_shift`. |
 | `VarVoid(club, goal_minute, reason)` | `VAR_CHECK` 20 s after the goal. `VAR_DECISION` (overturned) 65–90 s after the goal, long enough that items about the goal have gone out. The score reverts, and the defending side restarts with a free kick. | `var_overturn`, with the goal, check and decision events and the `EVENT_VOIDED` correction issued at the decision |
 | `ScorerReassigned(club, goal_minute)` | Nothing during play. 25 minutes after the final whistle, an `EVENT_AMENDED` correction credits the goal to another outfield player who was on the pitch, as an accreditation panel does for a deflection. | `scorer_reassigned`, with the goal and the correction |
-| `RedCard(club, minute)` | A foul by a player of the club, a red card, and a free kick to the opponents. This happens whichever side has the ball. The player takes no further part. | `red_card`, with the foul and the card |
+| `RedCard(club, minute)` | A foul by a player of the club, a red card, and a free kick to the opponents, or a penalty if the foul was in the club's own box. This happens whichever side has the ball. The player takes no further part. | `red_card`, with the foul and the card |
 
 - With `natural_goals=False`, only scripted goals go in. Any other shot that would have scored is saved instead, so the scoreline is exactly the script.
 - A storyline is checked when it is built:
   - Scripted minutes run from 1 to 89, and never 45.
   - Moments are at least three minutes apart.
-  - Every void or reassignment points at a scripted goal.
+  - Every void or reassignment points at a scripted goal, at most once each.
   - A voided goal cannot also be reassigned.
+  - A first-half goal ruled out by VAR is at most 42', so the review ends before half-time.
+  - There are at most two scripted reds per club.
+  - Clubs must be valid codes, minutes whole numbers, and labels printable single lines.
 - `play()` refuses a storyline that names a club not in the match.
-- Correction IDs are unique across matches: `c-` plus the match number, then a two-digit counter (`c-004201`).
+- Correction IDs are scoped by match, like event IDs: `c-m42-01` is the first correction issued for m42. The contract refuses a correction whose ID names another match.
 - A match without a storyline is byte-for-byte the match the engine produced before storylines existed. A test pins this, so the calibration above still holds.
 
 ### Ground truth
 
-Ground truth is a wire contract (`GroundTruth`, `packages/contracts/schemas/ground-truth.schema.json`). It holds:
-- the storylines in the order they happened;
+Ground truth is a wire contract (`GroundTruth`, `packages/contracts/schemas/ground-truth.schema.json`). The contract also enforces per-kind rules: pressing stories expect `pressing_intensity` to move the right way, and only VAR overturns and reassignments carry corrections. It holds:
+- the storylines in the order they were recorded (a reassignment is recorded after the final whistle but carries the goal's minute);
 - the event and correction IDs that prove each one;
 - the final score after corrections.
 

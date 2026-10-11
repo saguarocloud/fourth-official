@@ -44,13 +44,13 @@
       "expectedDirection": null,
       "expectedMetric": null,
       "kind": "goal",
-      "label": "HCY goal by HCY-19",
+      "label": "HCY goal by HCY-07",
       "minute": 67
     },
     {
       "club": "HCY",
       "correctionIds": [
-        "c-004201"
+        "c-m42-01"
       ],
       "eventIds": [
         "m42-e1702",
@@ -67,9 +67,9 @@
       "club": "NGT",
       "correctionIds": [],
       "eventIds": [
-        "m42-e1912",
-        "m42-e1913",
-        "m42-e1914"
+        "m42-e1880",
+        "m42-e1881",
+        "m42-e1882"
       ],
       "expectedDirection": null,
       "expectedMetric": null,
@@ -81,28 +81,28 @@
       "club": "HCY",
       "correctionIds": [],
       "eventIds": [
-        "m42-e2087",
-        "m42-e2088",
-        "m42-e2089"
+        "m42-e2042",
+        "m42-e2043",
+        "m42-e2044"
       ],
       "expectedDirection": null,
       "expectedMetric": null,
       "kind": "goal",
-      "label": "HCY goal by HCY-07",
+      "label": "HCY goal by HCY-19",
       "minute": 89
     },
     {
       "club": "HCY",
       "correctionIds": [
-        "c-004202"
+        "c-m42-02"
       ],
       "eventIds": [
-        "m42-e2089"
+        "m42-e2044"
       ],
       "expectedDirection": null,
       "expectedMetric": null,
       "kind": "scorer_reassigned",
-      "label": "HCY goal credited to HCY-17",
+      "label": "HCY goal credited to HCY-22",
       "minute": 89
     }
   ]

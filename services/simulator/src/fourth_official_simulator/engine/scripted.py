@@ -30,11 +30,13 @@ from fourth_official_contracts import (
     VarDecisionEvent,
 )
 from fourth_official_simulator.engine.actions import (
+    PENALTY_SPOT,
     BodyPart,
     Strike,
     award_goal,
     foul,
     kick_off_after_goal,
+    penalty_kick,
     strike_shot,
 )
 from fourth_official_simulator.engine.restarts import change_possession, restart
@@ -52,8 +54,9 @@ from fourth_official_simulator.engine.state import (
     side,
     wait,
     with_side,
+    zone_at,
 )
-from fourth_official_simulator.pitch import Zone
+from fourth_official_simulator.pitch import Zone, pitch_to_attacking, zone_of
 from fourth_official_simulator.squads import Player, Position
 from fourth_official_simulator.storylines import (
     Moment,
@@ -94,8 +97,8 @@ def _correction(state: MatchState, correction: Correction) -> MatchState:
 
 
 def correction_id(match_id: str, number: int) -> str:
-    """Correction IDs are unique across matches: the match number, then a two-digit counter."""
-    return f"c-{int(match_id.removeprefix('m')):04d}{number:02d}"
+    """Corrections are numbered per match, like events: `c-m42-01`."""
+    return f"c-{match_id}-{number:02d}"
 
 
 # --- Style shifts ---------------------------------------------------------------------------------
@@ -182,8 +185,9 @@ def _win_ball(state: MatchState, emit: Emitter, rng: random.Random, home: bool) 
     """`home`'s side intercepts in midfield, if it does not have the ball already."""
     if state.home_in_possession == home:
         return state, []
-    interceptor = pick(side(state, home).on_pitch, Zone.MIDDLE_THIRD, rng, keepers=False)
-    progress, lateral = rng.uniform(0.45, 0.6), 1.0 - state.lateral
+    # The ball is won where it is: the same spot, seen from the other end.
+    progress, lateral = 1.0 - state.progress, 1.0 - state.lateral
+    interceptor = pick(side(state, home).on_pitch, zone_of(progress, lateral), rng, keepers=False)
     club = side(state, home).club
     state, changed = change_possession(
         state, emit, "interception", carrier=interceptor, progress=progress, lateral=lateral
@@ -204,6 +208,51 @@ def _scorer(team: tuple[Player, ...], passer: Player, rng: random.Random) -> Pla
         if candidates:
             return rng.choice(candidates)
     raise ValueError("no outfield player left to score")
+
+
+def _play_out_from_keeper(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
+    """A keeper on the ball first finds a team-mate nearby; keepers do not set up goals from their
+    own box."""
+    if state.carrier.position is not Position.GOALKEEPER:
+        return state, []
+    team = attackers(state)
+    keeper_ = state.carrier
+    receiver = pick(team.on_pitch, Zone.DEFENSIVE_THIRD, rng, exclude=keeper_, keepers=False)
+    end_progress = min(state.progress + rng.uniform(0.1, 0.2), 0.35)
+    end_lateral = min(max(state.lateral + rng.uniform(-0.3, 0.3), 0.05), 0.95)
+    distance = math.hypot(
+        (end_progress - state.progress) * PITCH_LENGTH_M,
+        (end_lateral - state.lateral) * PITCH_WIDTH_M,
+    )
+    origin, end = (
+        point(state, state.progress, state.lateral),
+        point(state, end_progress, end_lateral),
+    )
+    state, made = emit.stamp(
+        state,
+        lambda env: PassEvent(
+            **env,
+            type="PASS",
+            team_id=team.club,
+            player_id=keeper_.player_id,
+            origin=origin,
+            end=end,
+            outcome="complete",
+            receiver_id=receiver.player_id,
+            kind="ground",
+            speed_kmh=round(min(140.0, 30 + distance * 1.4), 1),
+        ),
+    )
+    moved = replace(
+        advance(state, 2.2 + distance / 16),
+        carrier=receiver,
+        progress=end_progress,
+        lateral=end_lateral,
+        last_passer=keeper_,
+        last_delivery="ground",
+        dribbled=False,
+    )
+    return moved, [made]
 
 
 def _pass_into_box(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
@@ -258,6 +307,7 @@ def _scripted_goal(
 ) -> Step:
     home = goal.club == state.home.club
     state, won = _win_ball(state, emit, rng, home)
+    state, played_out = _play_out_from_keeper(state, emit, rng)
     passer = state.carrier
     state, delivered = _pass_into_box(state, emit, rng)
     foot: BodyPart = rng.choice(("right_foot", "left_foot"))
@@ -285,9 +335,9 @@ def _scripted_goal(
     )
     if void is None:
         state, kick_off = kick_off_after_goal(state, emit, rng, home_scored=home)
-        return state, [*won, *delivered, shot, scored, *kick_off]
+        return state, [*won, *played_out, *delivered, shot, scored, *kick_off]
     state, reviewed = _var_overturn(state, emit, rng, goal=scored, void=void)
-    return state, [*won, *delivered, shot, scored, *reviewed]
+    return state, [*won, *played_out, *delivered, shot, scored, *reviewed]
 
 
 def _var_overturn(
@@ -380,8 +430,8 @@ def _red_card(state: MatchState, emit: Emitter, rng: random.Random, red: RedCard
 
 
 def _foul_by_attacker(state: MatchState, emit: Emitter, rng: random.Random) -> Step:
-    """A player of the side in possession fouls an opponent and is sent off; the opponents take a
-    free kick."""
+    """A player of the side in possession fouls an opponent and is sent off. The opponents take a
+    free kick there, or a penalty if the foul was in the offender's own box."""
     team, opponents = attackers(state), defenders(state)
     offender = rng.choice(
         [p for p in team.on_pitch if p != state.carrier and p.position is not Position.GOALKEEPER]
@@ -411,19 +461,34 @@ def _foul_by_attacker(state: MatchState, emit: Emitter, rng: random.Random) -> S
         ),
     )
     reduced = replace(team, on_pitch=tuple(p for p in team.on_pitch if p != offender))
-    state = with_side(state, state.home_in_possession, reduced)
+    state = advance(with_side(state, state.home_in_possession, reduced), 40)
+    # The opponents restart where the foul happened, seen from their end.
+    taking = not state.home_in_possession
+    progress, lateral = pitch_to_attacking(at.x, at.y, home=taking, period=state.period)
+    if zone_at(at, home=taking, period=state.period) is Zone.BOX:
+        state, awarded = restart(
+            state,
+            emit,
+            rng,
+            "penalty",
+            home_in_possession=taking,
+            progress=PENALTY_SPOT,
+            lateral=0.5,
+            cause="foul",
+        )
+        state, kick = penalty_kick(state, emit, rng)
+        return state, [committed, shown, *awarded, *kick]
     state, free_kick = restart(
-        advance(state, 40),
+        state,
         emit,
         rng,
         "free_kick",
-        home_in_possession=not state.home_in_possession,
-        progress=1.0 - state.progress,
-        lateral=1.0 - state.lateral,
+        home_in_possession=taking,
+        progress=progress,
+        lateral=lateral,
         cause="foul",
     )
-    events: list[MatchEvent] = [committed, shown, *free_kick]
-    return state, events
+    return state, [committed, shown, *free_kick]
 
 
 # --- After the final whistle ----------------------------------------------------------------------

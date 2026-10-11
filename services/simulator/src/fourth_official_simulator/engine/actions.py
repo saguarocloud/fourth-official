@@ -35,6 +35,7 @@ from fourth_official_simulator.engine.state import (
     pick,
     point,
     with_side,
+    zone_at,
 )
 from fourth_official_simulator.pitch import Zone, distance_to_goal, shooting_angle, zone_of
 from fourth_official_simulator.probabilities import (
@@ -182,7 +183,7 @@ def foul(
         )
         state = with_side(state, not state.home_in_possession, team)
     state = advance(state, rng.uniform(25, 45))
-    if zone_of(state.progress, state.lateral) is Zone.BOX:
+    if zone_at(at, home=state.home_in_possession, period=state.period) is Zone.BOX:
         state, awarded = restart(
             state,
             emit,

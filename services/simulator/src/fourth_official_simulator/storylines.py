@@ -7,6 +7,7 @@ leaves both its football in the event stream and a ground-truth record of what r
 """
 
 import itertools
+import re
 from dataclasses import dataclass, fields
 from typing import Literal
 
@@ -17,6 +18,12 @@ VarReason = Literal["VAR_OFFSIDE", "VAR_FOUL", "VAR_HANDBALL"]
 FIRST_MINUTE, LAST_MINUTE, HALF_TIME_MINUTE = 1, 89, 45
 # Scripted moments need room for their own football (a goal is followed by a kick-off).
 MIN_MINUTES_APART = 3
+# Natural reds come on top; more than two scripted ones per side would empty the pitch.
+MAX_SCRIPTED_REDS = 2
+# A VAR review takes up to about ninety seconds and must end before half-time.
+LAST_FIRST_HALF_VAR_MINUTE = 42
+MAX_TEXT = 120
+CLUB_CODE = re.compile(r"^[A-Z]{3}$")
 
 
 @dataclass(frozen=True, slots=True)
@@ -90,25 +97,41 @@ class Storyline:
     natural_goals: bool = True
 
     def __post_init__(self) -> None:
-        if not 0 < len(self.name) <= 120 or not self.name.isprintable():
-            raise ValueError("a storyline name is 1-120 printable characters")
+        _check_text(self.name, "storyline name")
+        for directive in self.directives:
+            _check_directive(directive)
+        self._check_moments()
+        self._check_targets()
+
+    def _check_moments(self) -> None:
         moments = sorted(self.moments, key=lambda m: m.minute)
-        for moment in moments:
-            _check_minute(moment.minute)
         for before, after in itertools.pairwise(moments):
             if after.minute - before.minute < MIN_MINUTES_APART:
                 raise ValueError(
                     f"scripted moments at {before.minute}' and {after.minute}' are too close"
                 )
-        for shift in self.shifts:
-            _check_minute(shift.minute)
+        for club in self.clubs():
+            reds = sum(1 for d in self.directives if isinstance(d, RedCard) and d.club == club)
+            if reds > MAX_SCRIPTED_REDS:
+                raise ValueError(f"{club} can be shown at most {MAX_SCRIPTED_REDS} scripted reds")
+
+    def _check_targets(self) -> None:
         goals = {(g.club, g.minute) for g in self.goals}
-        voided = {(v.club, v.goal_minute) for v in self.voids}
-        for target in [*voided, *((r.club, r.goal_minute) for r in self.reassignments)]:
+        voided = [(v.club, v.goal_minute) for v in self.voids]
+        reassigned = [(r.club, r.goal_minute) for r in self.reassignments]
+        for target in [*voided, *reassigned]:
             if target not in goals:
                 raise ValueError(f"no scripted goal for {target[0]} in minute {target[1]}")
-        if voided & {(r.club, r.goal_minute) for r in self.reassignments}:
+        if len(set(voided)) != len(voided) or len(set(reassigned)) != len(reassigned):
+            raise ValueError("a goal can be ruled out, or have its scorer reassigned, only once")
+        if set(voided) & set(reassigned):
             raise ValueError("a goal ruled out by VAR cannot have its scorer reassigned")
+        for _, minute in voided:
+            if period_of(minute) == 1 and minute > LAST_FIRST_HALF_VAR_MINUTE:
+                raise ValueError(
+                    f"VAR needs about two minutes: a goal in {minute}' would be decided after "
+                    "half-time"
+                )
 
     def clubs(self) -> frozenset[str]:
         return frozenset(d.club for d in self.directives)
@@ -151,9 +174,27 @@ def period_of(minute: int) -> Literal[1, 2]:
     return 1 if minute < HALF_TIME_MINUTE else 2
 
 
-def _check_minute(minute: int) -> None:
+def _check_minute(minute: object) -> None:
+    if type(minute) is not int:
+        raise ValueError(f"scripted minutes are a whole minute, got {minute!r}")
     if not FIRST_MINUTE <= minute <= LAST_MINUTE or minute == HALF_TIME_MINUTE:
         raise ValueError(
             f"scripted minutes run {FIRST_MINUTE}-{LAST_MINUTE}, not {HALF_TIME_MINUTE}; "
             f"got {minute}"
         )
+
+
+def _check_text(text: str, what: str) -> None:
+    if not 0 < len(text) <= MAX_TEXT or not text.isprintable():
+        raise ValueError(f"a {what} is 1-{MAX_TEXT} printable characters on one line")
+
+
+def _check_directive(directive: Directive) -> None:
+    if not CLUB_CODE.match(directive.club):
+        raise ValueError(f"{directive.club!r} is not a club code")
+    if isinstance(directive, VarVoid | ScorerReassigned):
+        _check_minute(directive.goal_minute)
+    else:
+        _check_minute(directive.minute)
+    if isinstance(directive, StyleShift):
+        _check_text(directive.label, "style shift label")

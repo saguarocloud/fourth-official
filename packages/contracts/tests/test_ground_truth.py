@@ -43,7 +43,7 @@ def truth(**overrides: object) -> dict[str, Any]:
                 "minute": 67,
                 "label": "HCY goal ruled out for offside",
                 "eventIds": ["m42-e1500", "m42-e1501", "m42-e1502"],
-                "correctionIds": ["c-004201"],
+                "correctionIds": ["c-m42-01"],
                 "expectedMetric": None,
                 "expectedDirection": None,
             },
@@ -74,6 +74,14 @@ def test_ground_truth_is_immutable() -> None:
         parsed.seed = 1  # type: ignore[misc]
 
 
+def test_a_tactical_shift_may_name_any_metric_or_none() -> None:
+    named = {"kind": "tactical_shift", "expectedMetric": "field_tilt", "expectedDirection": "up"}
+    unnamed = {"kind": "tactical_shift", "expectedMetric": None, "expectedDirection": None}
+
+    assert parse_ground_truth(story(1, **named)).storylines[1].expected_metric == "field_tilt"
+    assert parse_ground_truth(story(1, **unnamed)).storylines[1].expected_metric is None
+
+
 @pytest.mark.parametrize(
     ("wire", "message"),
     [
@@ -82,12 +90,19 @@ def test_ground_truth_is_immutable() -> None:
         (story(0, eventIds=["m7-e0101"]), "belongs to match"),
         (story(0, eventIds=["m42-e0101", "m42-e0101"]), "unique"),
         (story(0, eventIds=[]), "needs the events"),
-        (story(2, correctionIds=["c-004201", "c-004201"]), "unique"),
+        (story(2, correctionIds=["c-m42-01", "c-m42-01"]), "unique"),
         (story(2, correctionIds=[]), "needs its correction"),
         (story(1, expectedDirection=None), "together"),
         (story(0, label="line\nbreak"), "label"),
         (truth(seed=-1), "seed"),
         (story(0, minute=131), "minute"),
+        (story(1, expectedDirection="up"), "go down"),
+        (story(1, expectedMetric=None, expectedDirection=None), "go down"),
+        (story(0, expectedMetric="xg", expectedDirection="up"), "expects no metric"),
+        (story(1, eventIds=["m42-e0101"]), "cites no events"),
+        (story(0, correctionIds=["c-m42-01"]), "has no correction"),
+        (story(0, label="bidi \u202e override"), "label"),
+        (story(0, label="line \u2028 separator"), "label"),
     ],
 )
 def test_incoherent_ground_truth_is_refused(wire: dict[str, Any], message: str) -> None:
