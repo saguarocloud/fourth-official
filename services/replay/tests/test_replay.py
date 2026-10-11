@@ -1,0 +1,141 @@
+"""Replaying a match publishes its clock, moments, verified insights and corrections, in order."""
+
+from functools import cache
+
+import anyio
+
+from fourth_official_contracts import (
+    ClockEntry,
+    CorrectionEntry,
+    FeedEntry,
+    GoalEvent,
+    InsightEntry,
+    Moment,
+    MomentEntry,
+    parse_feed_entry,
+)
+from fourth_official_explain import Explanation, explain
+from fourth_official_match_data import demo_store
+from fourth_official_replay import FeedLog, ReplayConfig, replay
+from fourth_official_verifier import MatchFacts
+
+pauses: list[float] = []
+
+
+async def no_wait(seconds: float) -> None:
+    pauses.append(seconds)
+
+
+async def template_only(moment: Moment, facts: MatchFacts) -> Explanation:
+    return await explain(moment, facts, [])
+
+
+@cache
+def featured() -> tuple[FeedEntry, ...]:
+    record = demo_store().record("m42")
+    log = FeedLog("m42")
+
+    async def run() -> None:
+        await replay(record, log, template_only, config=ReplayConfig(speed=8.0), sleep=no_wait)
+
+    anyio.run(run)
+    return log.entries
+
+
+def of[E](kind: type[E]) -> list[E]:
+    return [e for e in featured() if isinstance(e, kind)]
+
+
+def test_entries_are_numbered_in_order_and_valid_on_the_wire() -> None:
+    entries = featured()
+
+    assert [e.entry_seq for e in entries] == list(range(1, len(entries) + 1))
+    for entry in entries:
+        assert parse_feed_entry(entry.to_wire()) == entry
+
+
+def test_every_detected_moment_is_published_and_then_explained() -> None:
+    moments = of(MomentEntry)
+    insights = of(InsightEntry)
+
+    assert {m.moment.moment_id for m in moments} == {i.insight.moment_id for i in insights}
+    first_seen = {m.moment.moment_id: m.entry_seq for m in moments}
+    assert all(i.entry_seq > first_seen[i.insight.moment_id] for i in insights)
+    assert all(i.verdict.passed and i.rendered.claims for i in insights)
+
+
+def test_the_clock_moves_forward_and_the_score_follows_the_goals() -> None:
+    clocks = of(ClockEntry)
+    record = demo_store().record("m42")
+    goals = sum(isinstance(e, GoalEvent) for e in record.match.events)
+
+    assert [c.as_of_seq for c in clocks] == sorted(c.as_of_seq for c in clocks)
+    final = clocks[-1]
+    assert final.as_of_seq == record.match.events[-1].seq
+    assert (final.score.home, final.score.away) == (2, 1)
+    assert goals == 4  # one of them was voided
+
+
+def test_the_voided_goal_leaves_the_score_once_var_has_decided() -> None:
+    record = demo_store().record("m42")
+    (decided,) = record.void_seqs().values()
+    clocks = of(ClockEntry)
+
+    before = [c for c in clocks if c.as_of_seq < decided][-1]
+    after = next(c for c in clocks if c.as_of_seq >= decided)
+    assert (before.score.home, before.score.away) == (2, 0)
+    assert (after.score.home, after.score.away) == (1, 0)
+
+
+def test_corrections_are_published_when_they_are_issued() -> None:
+    corrections = of(CorrectionEntry)
+    record = demo_store().record("m42")
+
+    assert [c.correction for c in corrections] == list(record.corrections)
+    void, amendment = corrections
+    last_clock = of(ClockEntry)[-1]
+    assert void.entry_seq < last_clock.entry_seq < amendment.entry_seq
+
+
+def test_replay_waits_scaled_and_capped_between_events() -> None:
+    featured()
+    config = ReplayConfig()
+
+    assert pauses
+    assert max(pauses) <= config.max_pause
+    assert min(pauses) >= 0
+
+
+def test_a_moment_that_cannot_be_explained_is_published_without_an_insight() -> None:
+    record = demo_store().record("m42")
+    log = FeedLog("m42")
+
+    async def nothing(moment: Moment, facts: MatchFacts) -> Explanation:
+        explained = await explain(moment, facts, [])
+        return Explanation(moment, None, explained.verdict, explained.attempts)
+
+    async def run() -> None:
+        await replay(record, log, nothing, sleep=no_wait)
+
+    anyio.run(run)
+
+    assert any(isinstance(e, MomentEntry) for e in log.entries)
+    assert not any(isinstance(e, InsightEntry) for e in log.entries)
+    assert log.finished
+
+
+def test_detecting_every_few_events_finds_the_same_moments_as_detecting_on_every_event() -> None:
+    record = demo_store().record("m42")
+    every = FeedLog("m42")
+
+    async def run() -> None:
+        await replay(
+            record, every, template_only, config=ReplayConfig(detect_every=1), sleep=no_wait
+        )
+
+    anyio.run(run)
+
+    def moments(entries: tuple[FeedEntry, ...]) -> list[Moment]:
+        return [e.moment for e in entries if isinstance(e, MomentEntry)]
+
+    assert moments(every.entries) == moments(featured())

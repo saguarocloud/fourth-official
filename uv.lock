@@ -10,6 +10,7 @@ members = [
     "fourth-official-explain",
     "fourth-official-match-data",
     "fourth-official-moments",
+    "fourth-official-replay",
     "fourth-official-simulator",
     "fourth-official-stats",
     "fourth-official-verifier",
@@ -499,13 +500,25 @@ name = "fourth-official-api"
 version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
+    { name = "azure-identity" },
     { name = "fastapi" },
+    { name = "fourth-official-contracts" },
+    { name = "fourth-official-explain" },
+    { name = "fourth-official-match-data" },
+    { name = "fourth-official-replay" },
+    { name = "fourth-official-verifier" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "azure-identity", specifier = ">=1.25,<2" },
     { name = "fastapi", specifier = ">=0.143" },
+    { name = "fourth-official-contracts", editable = "packages/contracts" },
+    { name = "fourth-official-explain", editable = "services/explain" },
+    { name = "fourth-official-match-data", editable = "services/match-data" },
+    { name = "fourth-official-replay", editable = "services/replay" },
+    { name = "fourth-official-verifier", editable = "services/verifier" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.54" },
 ]
 
@@ -579,6 +592,29 @@ dependencies = [
 requires-dist = [
     { name = "fourth-official-contracts", editable = "packages/contracts" },
     { name = "fourth-official-stats", editable = "services/stats-engine" },
+]
+
+[[package]]
+name = "fourth-official-replay"
+version = "0.1.0"
+source = { editable = "services/replay" }
+dependencies = [
+    { name = "fourth-official-contracts" },
+    { name = "fourth-official-explain" },
+    { name = "fourth-official-match-data" },
+    { name = "fourth-official-moments" },
+    { name = "fourth-official-stats" },
+    { name = "fourth-official-verifier" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fourth-official-contracts", editable = "packages/contracts" },
+    { name = "fourth-official-explain", editable = "services/explain" },
+    { name = "fourth-official-match-data", editable = "services/match-data" },
+    { name = "fourth-official-moments", editable = "services/moments" },
+    { name = "fourth-official-stats", editable = "services/stats-engine" },
+    { name = "fourth-official-verifier", editable = "services/verifier" },
 ]
 
 [[package]]

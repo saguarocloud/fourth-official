@@ -1,0 +1,959 @@
+{
+  "$defs": {
+    "Amendment": {
+      "additionalProperties": false,
+      "description": "Fields of the target event that change. Only the fields present on the wire change.",
+      "properties": {
+        "assistId": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Assistid"
+        },
+        "card": {
+          "anyOf": [
+            {
+              "enum": [
+                "yellow",
+                "second_yellow",
+                "red"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Card"
+        },
+        "clock": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MatchClock"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "ownGoal": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Owngoal"
+        },
+        "scorerId": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z]{3}-[0-9]{2}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Scorerid"
+        }
+      },
+      "title": "Amendment",
+      "type": "object"
+    },
+    "AttemptRecord": {
+      "additionalProperties": false,
+      "description": "One try at explaining a moment: who drafted, and how it ended.",
+      "properties": {
+        "agent": {
+          "pattern": "^[a-z][a-z-]{1,31}$",
+          "title": "Agent",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error"
+        },
+        "findings": {
+          "items": {
+            "enum": [
+              "MOMENT_MISMATCH",
+              "MALFORMED_INSIGHT",
+              "UNSUPPORTED_CHARACTER",
+              "BARE_NUMBER",
+              "RAW_NAME",
+              "UNVERIFIED_NAME",
+              "UNKNOWN_WORD",
+              "FUTURE_WORDING",
+              "UNKNOWN_PLAYER",
+              "UNKNOWN_CLUB",
+              "PLAYER_NOT_IN_EVIDENCE",
+              "MINUTE_NOT_IN_EVIDENCE",
+              "SNAPSHOT_NOT_FOUND",
+              "UNDEFINED_VALUE",
+              "EVIDENCE_NOT_FOUND",
+              "FUTURE_EVIDENCE",
+              "FUTURE_MINUTE",
+              "VOIDED_EVIDENCE",
+              "SUPERSEDED_EVIDENCE"
+            ],
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Findings",
+          "type": "array"
+        },
+        "model": {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+          "title": "Model",
+          "type": "string"
+        },
+        "number": {
+          "maximum": 99,
+          "minimum": 1,
+          "title": "Number",
+          "type": "integer"
+        },
+        "outcome": {
+          "enum": [
+            "passed",
+            "failed",
+            "error"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "agent",
+        "model",
+        "outcome",
+        "findings",
+        "error"
+      ],
+      "title": "AttemptRecord",
+      "type": "object"
+    },
+    "Claim": {
+      "additionalProperties": false,
+      "properties": {
+        "claimId": {
+          "pattern": "^cl-[0-9]{1,3}$",
+          "title": "Claimid",
+          "type": "string"
+        },
+        "evidence": {
+          "$ref": "#/$defs/Evidence"
+        },
+        "text": {
+          "maxLength": 280,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "stat",
+            "comparison",
+            "causal",
+            "milestone"
+          ],
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claimId",
+        "type",
+        "text",
+        "evidence"
+      ],
+      "title": "Claim",
+      "type": "object"
+    },
+    "ClockEntry": {
+      "additionalProperties": false,
+      "description": "The match clock and score as published so far (corrections in force applied).",
+      "properties": {
+        "asOfSeq": {
+          "maximum": 10000000,
+          "minimum": 1,
+          "title": "Asofseq",
+          "type": "integer"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "clock",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "score": {
+          "$ref": "#/$defs/Score"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "kind",
+        "asOfSeq",
+        "clock",
+        "score"
+      ],
+      "title": "ClockEntry",
+      "type": "object"
+    },
+    "CorrectionEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "correction": {
+          "discriminator": {
+            "mapping": {
+              "EVENT_AMENDED": "#/$defs/EventAmended",
+              "EVENT_VOIDED": "#/$defs/EventVoided"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/EventVoided"
+            },
+            {
+              "$ref": "#/$defs/EventAmended"
+            }
+          ],
+          "title": "Correction"
+        },
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "correction",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "kind",
+        "correction"
+      ],
+      "title": "CorrectionEntry",
+      "type": "object"
+    },
+    "EventAmended": {
+      "additionalProperties": false,
+      "description": "The event stands, with corrected details (for example, a reassigned scorer).",
+      "properties": {
+        "changes": {
+          "$ref": "#/$defs/Amendment"
+        },
+        "correctionId": {
+          "pattern": "^c-m[0-9]{1,12}-[0-9]{2,4}$",
+          "title": "Correctionid",
+          "type": "string"
+        },
+        "issuedAt": {
+          "format": "date-time",
+          "title": "Issuedat",
+          "type": "string"
+        },
+        "kind": {
+          "const": "EVENT_AMENDED",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "newVersion": {
+          "maximum": 1000,
+          "minimum": 2,
+          "title": "Newversion",
+          "type": "integer"
+        },
+        "reason": {
+          "enum": [
+            "VAR_OFFSIDE",
+            "VAR_FOUL",
+            "VAR_HANDBALL",
+            "ACCREDITATION_PANEL",
+            "PROVIDER_RESTATEMENT"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "targetEventId": {
+          "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+          "title": "Targeteventid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correctionId",
+        "matchId",
+        "reason",
+        "issuedAt",
+        "targetEventId",
+        "newVersion",
+        "kind",
+        "changes"
+      ],
+      "title": "EventAmended",
+      "type": "object"
+    },
+    "EventVoided": {
+      "additionalProperties": false,
+      "description": "The event no longer stands (for example, a goal disallowed by VAR).",
+      "properties": {
+        "correctionId": {
+          "pattern": "^c-m[0-9]{1,12}-[0-9]{2,4}$",
+          "title": "Correctionid",
+          "type": "string"
+        },
+        "issuedAt": {
+          "format": "date-time",
+          "title": "Issuedat",
+          "type": "string"
+        },
+        "kind": {
+          "const": "EVENT_VOIDED",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "newVersion": {
+          "maximum": 1000,
+          "minimum": 2,
+          "title": "Newversion",
+          "type": "integer"
+        },
+        "reason": {
+          "enum": [
+            "VAR_OFFSIDE",
+            "VAR_FOUL",
+            "VAR_HANDBALL",
+            "ACCREDITATION_PANEL",
+            "PROVIDER_RESTATEMENT"
+          ],
+          "title": "Reason",
+          "type": "string"
+        },
+        "targetEventId": {
+          "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+          "title": "Targeteventid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correctionId",
+        "matchId",
+        "reason",
+        "issuedAt",
+        "targetEventId",
+        "newVersion",
+        "kind"
+      ],
+      "title": "EventVoided",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "eventIds": {
+          "items": {
+            "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Eventids",
+          "type": "array"
+        },
+        "metricSnapshotIds": {
+          "items": {
+            "maxLength": 96,
+            "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Metricsnapshotids",
+          "type": "array"
+        }
+      },
+      "required": [
+        "eventIds",
+        "metricSnapshotIds"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "Finding": {
+      "additionalProperties": false,
+      "properties": {
+        "claimId": {
+          "anyOf": [
+            {
+              "pattern": "^cl-[0-9]{1,3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Claimid"
+        },
+        "code": {
+          "enum": [
+            "MOMENT_MISMATCH",
+            "MALFORMED_INSIGHT",
+            "UNSUPPORTED_CHARACTER",
+            "BARE_NUMBER",
+            "RAW_NAME",
+            "UNVERIFIED_NAME",
+            "UNKNOWN_WORD",
+            "FUTURE_WORDING",
+            "UNKNOWN_PLAYER",
+            "UNKNOWN_CLUB",
+            "PLAYER_NOT_IN_EVIDENCE",
+            "MINUTE_NOT_IN_EVIDENCE",
+            "SNAPSHOT_NOT_FOUND",
+            "UNDEFINED_VALUE",
+            "EVIDENCE_NOT_FOUND",
+            "FUTURE_EVIDENCE",
+            "FUTURE_MINUTE",
+            "VOIDED_EVIDENCE",
+            "SUPERSEDED_EVIDENCE"
+          ],
+          "title": "Code",
+          "type": "string"
+        },
+        "detail": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        }
+      },
+      "required": [
+        "claimId",
+        "code",
+        "detail"
+      ],
+      "title": "Finding",
+      "type": "object"
+    },
+    "Insight": {
+      "additionalProperties": false,
+      "properties": {
+        "asOfSeq": {
+          "maximum": 10000000,
+          "minimum": 1,
+          "title": "Asofseq",
+          "type": "integer"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/Claim"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Claims",
+          "type": "array"
+        },
+        "headline": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Headline",
+          "type": "string"
+        },
+        "insightId": {
+          "maxLength": 72,
+          "pattern": "^in-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}-a[0-9]{1,2}$",
+          "title": "Insightid",
+          "type": "string"
+        },
+        "locale": {
+          "const": "en",
+          "title": "Locale",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "momentId": {
+          "maxLength": 64,
+          "pattern": "^mo-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}$",
+          "title": "Momentid",
+          "type": "string"
+        },
+        "provenance": {
+          "$ref": "#/$defs/Provenance"
+        }
+      },
+      "required": [
+        "insightId",
+        "matchId",
+        "momentId",
+        "asOfSeq",
+        "locale",
+        "headline",
+        "claims",
+        "provenance"
+      ],
+      "title": "Insight",
+      "type": "object"
+    },
+    "InsightEntry": {
+      "additionalProperties": false,
+      "description": "A verified insight, its verdict, its rendered text and how it was reached.",
+      "properties": {
+        "attempts": {
+          "items": {
+            "$ref": "#/$defs/AttemptRecord"
+          },
+          "maxItems": 99,
+          "minItems": 1,
+          "title": "Attempts",
+          "type": "array"
+        },
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "insight": {
+          "$ref": "#/$defs/Insight"
+        },
+        "kind": {
+          "const": "insight",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "rendered": {
+          "$ref": "#/$defs/RenderedInsight"
+        },
+        "verdict": {
+          "$ref": "#/$defs/Verdict"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "kind",
+        "insight",
+        "verdict",
+        "rendered",
+        "attempts"
+      ],
+      "title": "InsightEntry",
+      "type": "object"
+    },
+    "MatchClock": {
+      "additionalProperties": false,
+      "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
+      "properties": {
+        "minute": {
+          "maximum": 104,
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Period",
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Second",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "period",
+        "minute",
+        "second"
+      ],
+      "title": "MatchClock",
+      "type": "object"
+    },
+    "MetricShift": {
+      "additionalProperties": false,
+      "description": "A metric that moved: its value in a baseline snapshot and in the current one.",
+      "properties": {
+        "after": {
+          "title": "After",
+          "type": "number"
+        },
+        "afterSnapshotId": {
+          "maxLength": 96,
+          "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+          "title": "Aftersnapshotid",
+          "type": "string"
+        },
+        "before": {
+          "title": "Before",
+          "type": "number"
+        },
+        "beforeSnapshotId": {
+          "maxLength": 96,
+          "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+          "title": "Beforesnapshotid",
+          "type": "string"
+        },
+        "metric": {
+          "enum": [
+            "possession",
+            "field_tilt",
+            "passes",
+            "pass_completion",
+            "shots",
+            "shots_on_target",
+            "xg",
+            "ppda",
+            "pressing_intensity",
+            "momentum",
+            "control_chaos"
+          ],
+          "title": "Metric",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metric",
+        "before",
+        "after",
+        "beforeSnapshotId",
+        "afterSnapshotId"
+      ],
+      "title": "MetricShift",
+      "type": "object"
+    },
+    "Moment": {
+      "additionalProperties": false,
+      "properties": {
+        "asOfSeq": {
+          "maximum": 10000000,
+          "minimum": 1,
+          "title": "Asofseq",
+          "type": "integer"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "club": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Club",
+          "type": "string"
+        },
+        "eventIds": {
+          "items": {
+            "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Eventids",
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "goal",
+            "big_chance",
+            "red_card",
+            "var_overturn",
+            "pressing_collapse",
+            "pressing_surge",
+            "momentum_swing",
+            "tactical_shift"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "metricSnapshotIds": {
+          "items": {
+            "maxLength": 96,
+            "pattern": "^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$",
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Metricsnapshotids",
+          "type": "array"
+        },
+        "momentId": {
+          "maxLength": 64,
+          "pattern": "^mo-m[0-9]{1,12}-[a-z_]{2,24}-[A-Z]{3}-s[0-9]{4,9}$",
+          "title": "Momentid",
+          "type": "string"
+        },
+        "shifts": {
+          "items": {
+            "$ref": "#/$defs/MetricShift"
+          },
+          "maxItems": 4,
+          "title": "Shifts",
+          "type": "array"
+        }
+      },
+      "required": [
+        "momentId",
+        "matchId",
+        "kind",
+        "club",
+        "asOfSeq",
+        "clock",
+        "eventIds",
+        "metricSnapshotIds",
+        "shifts"
+      ],
+      "title": "Moment",
+      "type": "object"
+    },
+    "MomentEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "kind": {
+          "const": "moment",
+          "title": "Kind",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "moment": {
+          "$ref": "#/$defs/Moment"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "kind",
+        "moment"
+      ],
+      "title": "MomentEntry",
+      "type": "object"
+    },
+    "Provenance": {
+      "additionalProperties": false,
+      "description": "Who produced the insight and how: recorded for every published item.",
+      "properties": {
+        "agent": {
+          "pattern": "^[a-z][a-z-]{1,31}$",
+          "title": "Agent",
+          "type": "string"
+        },
+        "model": {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+          "title": "Model",
+          "type": "string"
+        },
+        "producedBy": {
+          "enum": [
+            "model",
+            "template"
+          ],
+          "title": "Producedby",
+          "type": "string"
+        },
+        "promptVersion": {
+          "pattern": "^v[0-9]{1,3}\\.[0-9]{1,3}$",
+          "title": "Promptversion",
+          "type": "string"
+        }
+      },
+      "required": [
+        "agent",
+        "promptVersion",
+        "model",
+        "producedBy"
+      ],
+      "title": "Provenance",
+      "type": "object"
+    },
+    "RenderedInsight": {
+      "additionalProperties": false,
+      "description": "The insight as a viewer reads it: plain text, rendered by code from the references.",
+      "properties": {
+        "claims": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 5,
+          "minItems": 1,
+          "title": "Claims",
+          "type": "array"
+        },
+        "headline": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Headline",
+          "type": "string"
+        }
+      },
+      "required": [
+        "headline",
+        "claims"
+      ],
+      "title": "RenderedInsight",
+      "type": "object"
+    },
+    "Score": {
+      "additionalProperties": false,
+      "properties": {
+        "away": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Away",
+          "type": "integer"
+        },
+        "home": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Home",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "home",
+        "away"
+      ],
+      "title": "Score",
+      "type": "object"
+    },
+    "Verdict": {
+      "additionalProperties": false,
+      "properties": {
+        "findings": {
+          "items": {
+            "$ref": "#/$defs/Finding"
+          },
+          "maxItems": 64,
+          "title": "Findings",
+          "type": "array"
+        },
+        "insightId": {
+          "maxLength": 72,
+          "pattern": "^in-m[0-9]{1,12}-",
+          "title": "Insightid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "insightId",
+        "matchId",
+        "passed",
+        "findings"
+      ],
+      "title": "Verdict",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/feed-entry.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "discriminator": {
+    "mapping": {
+      "clock": "#/$defs/ClockEntry",
+      "correction": "#/$defs/CorrectionEntry",
+      "insight": "#/$defs/InsightEntry",
+      "moment": "#/$defs/MomentEntry"
+    },
+    "propertyName": "kind"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/ClockEntry"
+    },
+    {
+      "$ref": "#/$defs/MomentEntry"
+    },
+    {
+      "$ref": "#/$defs/InsightEntry"
+    },
+    {
+      "$ref": "#/$defs/CorrectionEntry"
+    }
+  ],
+  "title": "FeedEntry"
+}

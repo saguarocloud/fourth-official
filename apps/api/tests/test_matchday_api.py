@@ -1,0 +1,238 @@
+"""The matchday API: list matches, start the replay, read or stream each match's feed."""
+
+import json
+import time
+from collections.abc import AsyncIterator, Iterator
+from contextlib import asynccontextmanager
+
+import anyio
+import pytest
+from fastapi.testclient import TestClient
+
+from fourth_official_api import explainers, main, matchday_routes
+from fourth_official_api.explainers import foundry_drafters
+from fourth_official_api.main import create_app
+from fourth_official_api.settings import FoundrySettings, Settings
+from fourth_official_contracts import Moment, Provenance, parse_feed_entry
+from fourth_official_explain import Explanation, explain
+from fourth_official_match_data import demo_store
+from fourth_official_moments import detect
+from fourth_official_replay import Explainer, FeedLog, Matchday, ReplayConfig, facts_for
+from fourth_official_verifier import MatchFacts
+
+
+async def no_wait(seconds: float) -> None:
+    return None
+
+
+async def template_only(moment: Moment, facts: MatchFacts) -> Explanation:
+    return await explain(moment, facts, [])
+
+
+@pytest.fixture
+def client() -> Iterator[TestClient]:
+    day = Matchday(
+        demo_store(), template_only, config=ReplayConfig(), cooldown=600.0, sleep=no_wait
+    )
+    with TestClient(create_app(Settings(version="test"), matchday=day)) as client:
+        yield client
+
+
+def finish(client: TestClient) -> None:
+    deadline = time.monotonic() + 60
+    while time.monotonic() < deadline:
+        if all(m["state"] == "finished" for m in client.get("/api/matches").json()["matches"]):
+            return
+        time.sleep(0.2)
+    raise AssertionError("the matchday did not finish")
+
+
+def test_matches_are_listed_idle_before_the_matchday_starts(client: TestClient) -> None:
+    response = client.get("/api/matches")
+
+    assert response.status_code == 200
+    matches = response.json()["matches"]
+    assert [(m["matchId"], m["homeName"], m["state"]) for m in matches] == [
+        ("m42", "Harbour City", "idle"),
+        ("m43", "Kingsbridge Athletic", "idle"),
+        ("m44", "Calder Town", "idle"),
+    ]
+
+
+def test_starting_the_matchday_replays_and_fills_every_feed(client: TestClient) -> None:
+    started = client.post("/api/matchday")
+
+    assert started.status_code == 202
+    finish(client)
+    feed = client.get("/api/matches/m42/feed").json()
+    assert feed["finished"] is True
+    kinds = {parse_feed_entry(e).kind for e in feed["entries"]}
+    assert kinds == {"clock", "moment", "insight", "correction"}
+
+
+def test_a_second_start_is_refused_while_running_or_cooling_down(client: TestClient) -> None:
+    client.post("/api/matchday")
+
+    again = client.post("/api/matchday")
+
+    assert again.status_code == 409
+    assert "matchday" in again.json()["detail"]
+
+
+def test_the_feed_resumes_after_the_entries_a_client_has(client: TestClient) -> None:
+    client.post("/api/matchday")
+    finish(client)
+
+    everything = client.get("/api/matches/m42/feed").json()["entries"]
+    rest = client.get("/api/matches/m42/feed", params={"after": 5}).json()["entries"]
+
+    assert rest == everything[5:]
+    assert client.get("/api/matches/m42/feed").headers["cache-control"] == "no-store"
+
+
+def test_the_stream_sends_every_entry_as_a_server_sent_event(client: TestClient) -> None:
+    client.post("/api/matchday")
+    finish(client)
+
+    with client.stream("GET", "/api/matches/m43/stream", headers={"Last-Event-ID": "3"}) as stream:
+        assert stream.headers["content-type"].startswith("text/event-stream")
+        events = [e for e in stream.iter_text() for e in e.split("\n\n") if e.startswith("id:")]
+
+    ids = [int(e.split("\n")[0].removeprefix("id: ")) for e in events]
+    assert ids[0] == 4
+    assert ids == sorted(ids)
+    first = json.loads(events[0].split("data: ", 1)[1])
+    assert parse_feed_entry(first).entry_seq == 4
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/api/matches/m99/feed", "/api/matches/m99/stream", "/api/matches/nope/feed"],
+)
+def test_unknown_matches_are_not_found(client: TestClient, path: str) -> None:
+    assert client.get(path).status_code in {404, 422}
+
+
+def test_feed_parameters_are_validated(client: TestClient) -> None:
+    assert client.get("/api/matches/m42/feed", params={"after": -1}).status_code == 422
+    assert client.get("/api/matches/m42/feed", params={"after": "x"}).status_code == 422
+
+
+def test_without_foundry_the_api_starts_with_template_explanations() -> None:
+    with TestClient(create_app(Settings(version="test"))) as client:
+        assert client.get("/api/matches").status_code == 200
+
+
+def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    opened: list[str] = []
+
+    @asynccontextmanager
+    async def fake(settings: FoundrySettings) -> AsyncIterator[Explainer]:
+        opened.append(settings.project_endpoint)
+        yield template_only
+        opened.append("closed")
+
+    monkeypatch.setattr(main, "foundry_explainer", fake)
+    foundry = FoundrySettings(
+        project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
+        match_data_url="http://ca-match-data/mcp",
+        client_id="",
+    )
+
+    with TestClient(main.create_app(Settings(version="test", foundry=foundry))) as client:
+        assert client.get("/api/matches").status_code == 200
+
+    assert opened == [foundry.project_endpoint, "closed"]
+
+
+def test_the_foundry_explainer_builds_the_fast_then_fallback_analysts() -> None:
+    foundry = FoundrySettings(
+        project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
+        match_data_url="http://ca-match-data/mcp",
+        client_id="",
+    )
+
+    drafters = foundry_drafters(foundry, credential=FakeCredential())  # type: ignore[arg-type]
+
+    assert [d.provenance.model for d in drafters] == ["fast", "fallback"]
+    assert drafters[0].options == {"reasoning": {"effort": "minimal"}}
+    assert drafters[1].options == {}
+
+
+class FakeCredential:
+    async def get_token(self, *scopes: str, **kwargs: object) -> object:
+        raise AssertionError("no token may be requested")
+
+    async def close(self) -> None: ...
+
+    async def __aenter__(self) -> "FakeCredential":
+        return self
+
+    async def __aexit__(self, *exc: object) -> None: ...
+
+
+def test_the_foundry_explainer_opens_its_credential_and_drafters_and_explains(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    log: list[str] = []
+
+    class FakeDrafter:
+        provenance = Provenance(
+            agent="analyst", prompt_version="v1.1", model="fast", produced_by="model"
+        )
+
+        async def __aenter__(self) -> "FakeDrafter":
+            log.append("open")
+            return self
+
+        async def __aexit__(self, *exc: object) -> None:
+            log.append("close")
+
+        async def draft(self, request: object) -> object:
+            raise RuntimeError("service unavailable")
+
+    monkeypatch.setattr(explainers, "DefaultAzureCredential", lambda **_: FakeCredential())
+    monkeypatch.setattr(
+        explainers, "foundry_drafters", lambda settings, credential: [FakeDrafter()]
+    )
+    foundry = FoundrySettings(
+        project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
+        match_data_url="http://ca-match-data/mcp",
+        client_id="00000000-0000-0000-0000-000000000001",
+    )
+    record = demo_store().record("m42")
+    goal = next(m for m in detect(record.match)[1] if m.kind == "goal")
+
+    async def run() -> Explanation:
+        async with explainers.foundry_explainer(foundry) as explainer:
+            return await explainer(goal, facts_for(record))
+
+    explained = anyio.run(run)
+
+    assert log == ["open", "close"]
+    assert [a.outcome for a in explained.attempts] == ["error", "passed"]
+    assert explained.insight is not None
+
+
+def test_the_template_explainer_needs_no_model() -> None:
+    record = demo_store().record("m42")
+    goal = next(m for m in detect(record.match)[1] if m.kind == "goal")
+
+    explained = anyio.run(explainers.template_explainer, goal, facts_for(record))
+
+    assert explained.verdict.passed
+
+
+def test_an_idle_stream_sends_heartbeats(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(matchday_routes, "HEARTBEAT_SECONDS", 0.01)
+
+    async def first_chunk() -> str:
+        events = matchday_routes.events(FeedLog("m42"), 0)
+        try:
+            return await anext(events)
+        finally:
+            await events.aclose()
+
+    assert anyio.run(first_chunk) == ": keep-alive\n\n"

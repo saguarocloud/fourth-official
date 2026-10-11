@@ -11,6 +11,7 @@ from typing import Any
 
 from fourth_official_contracts.corrections import CORRECTION_ADAPTER
 from fourth_official_contracts.events import MATCH_EVENT_ADAPTER
+from fourth_official_contracts.feed import FEED_ENTRY_ADAPTER
 from fourth_official_contracts.ground_truth import GROUND_TRUTH_ADAPTER
 from fourth_official_contracts.insights import INSIGHT_ADAPTER
 from fourth_official_contracts.metrics import METRIC_SNAPSHOT_ADAPTER
@@ -47,6 +48,11 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             CORRECTION_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "correction.schema.json",
             "Correction",
+        ),
+        "feed-entry.schema.json": _with_header(
+            FEED_ENTRY_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "feed-entry.schema.json",
+            "FeedEntry",
         ),
         "ground-truth.schema.json": _with_header(
             GROUND_TRUTH_ADAPTER.json_schema(by_alias=True, mode="validation"),
