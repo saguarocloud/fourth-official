@@ -11,7 +11,7 @@ from fourth_official_api.explainers import foundry_explainer, template_explainer
 from fourth_official_api.matchday_routes import matchday_router
 from fourth_official_api.settings import Settings
 from fourth_official_match_data import MatchStore, demo_store
-from fourth_official_replay import Matchday, StartLedger
+from fourth_official_replay import Matchday, ReplayConfig, StartLedger
 
 SERVICE_NAME = "fourth-official-api"
 
@@ -63,7 +63,12 @@ def create_app(
                     if settings.foundry
                     else template_explainer
                 )
-                day = Matchday(store, explainer, ledger=ledger)
+                day = Matchday(
+                    store,
+                    explainer,
+                    config=ReplayConfig(speed=settings.replay_speed),
+                    ledger=ledger,
+                )
             app.state.matchday = day
             try:
                 yield

@@ -41,10 +41,31 @@ def _value(argument: str, facts: MatchFacts, as_of_seq: int, cited: Collection[s
     return format_value(snapshot.metric, snapshot.value)
 
 
-def _render_token(token: str, facts: MatchFacts, as_of_seq: int, cited: Collection[str]) -> str:
+# The last minute of each period before added time: 48 in the first half is "45+3'".
+_REGULATION_END = {1: 45, 2: 90}
+
+
+def _minute(minute: int, facts: MatchFacts, as_of_seq: int, events: Collection[str]) -> str:
+    """A minute as broadcast. Minutes from 45 to 59 exist in both halves, so the half comes from
+    the event the text cites at that minute, or else the latest event at it by the moment."""
+    at_minute = [e for e in facts.match.events if e.seq <= as_of_seq and e.clock.minute == minute]
+    cited = [e for e in at_minute if e.event_id in events]
+    chosen = (cited or at_minute)[-1:]
+    end = _REGULATION_END[chosen[0].clock.period] if chosen else max(_REGULATION_END.values())
+    return f"{end}+{minute - end}'" if minute > end else f"{minute}'"
+
+
+def _render_token(
+    token: str,
+    facts: MatchFacts,
+    as_of_seq: int,
+    *,
+    cited: Collection[str],
+    events: Collection[str],
+) -> str:
     kind, _, argument = token.partition(":")
     if kind == "minute":
-        return f"{int(argument)}'"
+        return _minute(int(argument), facts, as_of_seq, events)
     if kind == "score":
         home, away = facts.score_at(as_of_seq)
         return f"{home}{EN_DASH}{away}"
@@ -56,19 +77,39 @@ def _render_token(token: str, facts: MatchFacts, as_of_seq: int, cited: Collecti
     return names[argument]
 
 
-def render(text: str, facts: MatchFacts, *, as_of_seq: int, cited: Collection[str]) -> str:
-    """Render claim text at a moment, with only the snapshots it cites. Raises `RenderError` if
-    anything does not resolve: render only what the Verifier passed."""
+def render(
+    text: str,
+    facts: MatchFacts,
+    *,
+    as_of_seq: int,
+    cited: Collection[str],
+    events: Collection[str] = (),
+) -> str:
+    """Render claim text at a moment, with only the snapshots it cites (`cited`) and the events it
+    rests on (`events`). Raises `RenderError` if anything does not resolve: render only what the
+    Verifier passed."""
     claim_references(text)  # refuses malformed markup before anything is substituted
-    return _TOKEN.sub(lambda found: _render_token(found.group(1), facts, as_of_seq, cited), text)
+    return _TOKEN.sub(
+        lambda found: _render_token(found.group(1), facts, as_of_seq, cited=cited, events=events),
+        text,
+    )
 
 
 def render_insight(insight: Insight, facts: MatchFacts) -> tuple[str, tuple[str, ...]]:
     """The headline and every claim, rendered at the insight's moment from their own evidence."""
     every = {s for c in insight.claims for s in c.evidence.metric_snapshot_ids}
-    headline = render(insight.headline, facts, as_of_seq=insight.as_of_seq, cited=every)
+    events = {e for c in insight.claims for e in c.evidence.event_ids}
+    headline = render(
+        insight.headline, facts, as_of_seq=insight.as_of_seq, cited=every, events=events
+    )
     claims = tuple(
-        render(c.text, facts, as_of_seq=insight.as_of_seq, cited=c.evidence.metric_snapshot_ids)
+        render(
+            c.text,
+            facts,
+            as_of_seq=insight.as_of_seq,
+            cited=c.evidence.metric_snapshot_ids,
+            events=c.evidence.event_ids,
+        )
         for c in insight.claims
     )
     return headline, claims

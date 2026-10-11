@@ -4,9 +4,11 @@ from dataclasses import replace
 
 import pytest
 
+from events import shot
+from fourth_official_stats.prepare import prepare
 from fourth_official_stats.snapshots import SnapshotKey, snapshot
 from fourth_official_verifier import RenderError, format_value, render, render_insight
-from verifier_fixtures import FACTS, LATER_POSSESSION, MATCH, POSSESSION, insight
+from verifier_fixtures import CTX, EVENTS, FACTS, LATER_POSSESSION, MATCH, POSSESSION, insight
 
 
 def test_references_render_as_names_numbers_minutes_and_the_score() -> None:
@@ -17,6 +19,28 @@ def test_references_render_as_names_numbers_minutes_and_the_score() -> None:
         render(text, FACTS, as_of_seq=4, cited=())
         == f"{scorer} puts Harbour City ahead in the 12': 1\u20130."
     )
+
+
+@pytest.mark.parametrize(
+    ("minute", "period", "expected"),
+    [(44, 1, "44'"), (48, 1, "45+3'"), (48, 2, "48'"), (93, 2, "90+3'")],
+)
+def test_minutes_in_added_time_render_as_broadcast(minute: int, period: int, expected: str) -> None:
+    late = shot(8, minute, "NGT", period=period)
+    facts = replace(FACTS, match=prepare(CTX, (*EVENTS, late)))
+
+    assert render(f"{{{{minute:{minute}}}}}", facts, as_of_seq=8, cited=()) == expected
+
+
+def test_a_minute_both_halves_share_takes_the_half_of_the_event_it_cites() -> None:
+    first = shot(8, 47, "NGT", period=1)
+    second = shot(9, 47, "HCY", period=2)
+    facts = replace(FACTS, match=prepare(CTX, (*EVENTS, first, second)))
+    text = "{{minute:47}}"
+
+    assert render(text, facts, as_of_seq=9, cited=(), events={first.event_id}) == "45+2'"
+    assert render(text, facts, as_of_seq=9, cited=(), events={second.event_id}) == "47'"
+    assert render(text, facts, as_of_seq=9, cited=()) == "47'"
 
 
 def test_the_score_is_the_score_at_the_moment_without_voided_goals() -> None:

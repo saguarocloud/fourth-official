@@ -1,0 +1,530 @@
+/* Match Live: the match as a verified wire, in the fourth official's board language. ---------- */
+
+.match-live__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+/* Match keys: one square-cut key per match; the current one is pressed and lit. */
+.match-switcher ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.match-switcher__key {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-2);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition:
+    background var(--duration-ui) var(--ease-out),
+    color var(--duration-ui) var(--ease-out);
+}
+
+.match-switcher__key:hover {
+  background: var(--panel-3);
+  color: var(--ink-1);
+}
+
+.match-switcher__key[aria-current="page"] {
+  background: var(--panel-3);
+  color: var(--ink-1);
+  box-shadow: none;
+}
+
+.match-switcher__codes {
+  font-variant-numeric: tabular-nums;
+}
+
+/* A running match carries the on-air lamp; full time is a quiet label. */
+.match-switcher__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.match-switcher__state:empty {
+  display: none;
+}
+
+.match-switcher__state[data-state="running"] {
+  color: var(--ink-1);
+}
+
+.match-switcher__state[data-state="running"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--led-red);
+}
+
+.start-matchday {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2) var(--space-3);
+  max-width: 100%;
+}
+
+.start-matchday__icon {
+  width: 14px;
+  height: 14px;
+}
+
+.start-matchday__note {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+}
+
+.start-matchday__note::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+}
+
+.start-matchday__note[data-tone="amber"]::before {
+  background: var(--led-amber);
+}
+
+.start-matchday__note[data-tone="red"]::before {
+  background: var(--led-red);
+}
+
+/* Scoreboard: the board itself, recessed into its housing. */
+.live-board {
+  /* Capped so the wire still shows beneath the board on a wide screen. */
+  --scoreline-max: 44rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3) var(--space-5);
+  padding: var(--space-6);
+  margin-bottom: var(--space-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+}
+
+.live-board__scoreline {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+}
+
+.live-board__scoreline .led {
+  width: 100%;
+  max-width: var(--scoreline-max);
+  height: auto;
+}
+
+/* Each club's name sits under its code: the row spans the scoreline's own width. */
+.live-board__names {
+  justify-self: center;
+  width: 100%;
+  max-width: calc(var(--scoreline-max) + 2 * var(--space-5));
+  padding-inline: var(--space-5);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--ink-2);
+  font-size: var(--text-md);
+}
+
+.live-board__clock {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.live-board__minute {
+  min-width: 4ch;
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.live-board__state {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.live-board__lamp {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  transition: background var(--duration-light) var(--ease-out);
+}
+
+/* Live is on air: the lit tally lamp, its one sanctioned highlight. */
+.live-board__state[data-state="running"] {
+  color: var(--ink-1);
+}
+
+.live-board__state[data-state="running"] .live-board__lamp {
+  background: radial-gradient(circle at 35% 35%, #ff8a80, var(--led-red) 60%);
+}
+
+.live-board__state[data-state="failed"] .live-board__lamp {
+  background: var(--led-amber);
+}
+
+/* The wire -------------------------------------------------------------------------------- */
+.live-wire {
+  padding: var(--space-5) var(--space-6);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+}
+
+.live-wire__notice {
+  margin-bottom: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--led-amber);
+}
+
+.live-wire__empty {
+  max-width: 64ch;
+  padding: var(--space-5) 0;
+  color: var(--ink-2);
+}
+
+.live-wire__list {
+  display: grid;
+}
+
+.wire-item {
+  display: grid;
+  grid-template-columns: 7.5rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  border-top: 1px solid var(--hairline);
+}
+
+.wire-item:first-child {
+  border-top: 0;
+  padding-top: var(--space-2);
+}
+
+.wire-item__when {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+.wire-item__minute {
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.wire-item__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.wire-item__kind svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.wire-item__body {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.wire-item__headline {
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-1);
+}
+
+.wire-item__headline--pending {
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.wire-item__claims {
+  display: grid;
+  gap: var(--space-2);
+  max-width: 72ch;
+  color: var(--ink-1);
+}
+
+/* Retracted content is struck through in red: it went out, and it is no longer anyone's truth. */
+.wire-item[data-state="retracted"] .wire-item__headline,
+.wire-item[data-state="retracted"] .wire-item__claims {
+  color: var(--ink-2);
+  text-decoration: line-through;
+  text-decoration-color: var(--led-red);
+  text-decoration-thickness: 1px;
+}
+
+/* An amended item keeps what went out, struck in the amendment's violet, under the correction. */
+.wire-item__superseded-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.wire-item__claims[data-superseded="true"] {
+  color: var(--ink-2);
+  text-decoration: line-through;
+  text-decoration-color: var(--led-violet);
+  text-decoration-thickness: 1px;
+}
+
+/* Reached from a correction in the rail. */
+.wire-item:has(.wire-item__headline:target) {
+  outline: 1px solid var(--hairline-strong);
+  outline-offset: var(--space-2);
+  border-radius: var(--radius-key);
+}
+
+.wire-item__headline {
+  scroll-margin-top: var(--space-6);
+}
+
+.wire-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.wire-item__verifying {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.wire-item__verifying svg {
+  width: 14px;
+  height: 14px;
+  animation: wire-spin 900ms linear infinite;
+}
+
+@keyframes wire-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wire-item__provenance summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  cursor: pointer;
+  border-radius: var(--radius-key);
+  color: var(--ink-2);
+}
+
+.wire-item__provenance summary::-webkit-details-marker {
+  display: none;
+}
+
+.wire-item__chevron {
+  width: 14px;
+  height: 14px;
+  transition: transform var(--duration-light) var(--ease-out);
+}
+
+.wire-item__provenance[open] .wire-item__chevron {
+  transform: rotate(90deg);
+}
+
+.wire-item__provenance summary:hover {
+  color: var(--ink-1);
+}
+
+.wire-item__provenance ol {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+}
+
+.wire-item__provenance li {
+  display: grid;
+  grid-template-columns: 1.5rem 4.5rem minmax(0, 1fr);
+  gap: var(--space-2);
+  color: var(--ink-2);
+}
+
+.wire-item__provenance li[data-outcome="passed"] {
+  color: var(--ink-1);
+}
+
+/* A correction strap: what changed, on the item it changed. */
+.wire-item__correction {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+  color: var(--ink-1);
+  font-size: var(--text-sm);
+}
+
+.wire-item__correction-label {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.wire-item__correction[data-kind="EVENT_VOIDED"] .wire-item__correction-label {
+  color: var(--led-red);
+}
+
+.wire-item__correction[data-kind="EVENT_AMENDED"] .wire-item__correction-label {
+  color: var(--led-violet);
+}
+
+.wire-item--skeleton span {
+  display: block;
+  height: 14px;
+  border-radius: var(--radius-key);
+  background: var(--panel-2);
+}
+
+.wire-item--skeleton span:last-child {
+  height: 40px;
+}
+
+/* Rail -------------------------------------------------------------------------------------- */
+.live-rail__corrections .sub-board__summary {
+  color: var(--ink-1);
+  font-size: var(--text-md);
+}
+
+.live-rail__corrections a.sub-board__summary {
+  text-decoration: underline;
+  text-decoration-color: var(--hairline-strong);
+  text-underline-offset: 3px;
+}
+
+.live-rail__corrections a.sub-board__summary:hover {
+  text-decoration-color: currentColor;
+}
+
+.live-rail__corrections .sub-board__impact {
+  color: var(--ink-2);
+}
+
+/* On a phone the rail falls below the wire: the verdict line points to it. */
+.match-live__jump {
+  display: none;
+}
+.live-rail__corrections {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.live-rail__empty {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+@media (max-width: 767px) {
+  .live-board {
+    grid-template-columns: minmax(0, 1fr);
+    padding: var(--space-4);
+  }
+
+  .live-wire {
+    padding: var(--space-4);
+  }
+
+  .wire-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .wire-item__when {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-3);
+  }
+
+  .start-matchday {
+    justify-content: flex-start;
+  }
+
+  .match-live__jump {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--ink-1);
+    font-size: var(--text-sm);
+    text-decoration: underline;
+    text-decoration-color: var(--hairline-strong);
+    text-underline-offset: 3px;
+  }
+
+  .match-live__jump svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wire-item__verifying svg,
+  .wire-item__chevron {
+    animation: none;
+    transition: none;
+  }
+}

@@ -82,6 +82,13 @@
 }
 
 /* Key button: square-cut hardware key; the primary key is the lit one. ---------------------- */
+.key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  white-space: nowrap;
+}
+
 .key {
   display: inline-flex;
   align-items: center;

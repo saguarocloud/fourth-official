@@ -12,7 +12,8 @@
     "coverage": "vitest run --coverage",
     "typecheck": "next typegen && tsc --noEmit",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "contracts": "node scripts/contracts.mjs"
   },
   "dependencies": {
     "lucide-react": "1.55.0",
@@ -35,6 +36,7 @@
     "eslint-config-next": "16.4.0",
     "eslint-config-prettier": "10.1.8",
     "jsdom": "30.1.2",
+    "json-schema-to-typescript": "16.0.0",
     "prettier": "3.9.10",
     "prettier-plugin-tailwindcss": "0.8.1",
     "tailwindcss": "^4",

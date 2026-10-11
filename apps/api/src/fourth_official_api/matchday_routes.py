@@ -10,6 +10,7 @@ import asyncio
 import json
 import time
 from collections.abc import AsyncGenerator, Callable
+from datetime import UTC, datetime
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Header, HTTPException, Path, Query, Request, Response
@@ -80,6 +81,8 @@ async def events(
             yield f"id: {generation}:{entry.entry_seq}\nevent: {entry.kind}\ndata: {data}\n\n"
             after = entry.entry_seq
         if view.finished and after >= len(feed.entries):
+            # Tells the client the run is over, so it stops reconnecting until a new one starts.
+            yield f"event: end\ndata: {json.dumps({'generation': generation})}\n\n"
             return
         if not view.entries:
             yield ": keep-alive\n\n"
@@ -118,6 +121,23 @@ def matchday_router(
                 ).to_wire()
                 for status in _matchday(request).status()
             ]
+        }
+
+    @router.get("/matchday")
+    async def availability(request: Request, response: Response) -> dict[str, Any]:
+        """Whether a run may start now, so the studio can say so before anyone presses start."""
+        response.headers["Cache-Control"] = "no-store"
+        available = await _matchday(request).availability()
+        ready_at = (
+            None
+            if available.ready_at is None
+            else datetime.fromtimestamp(available.ready_at, UTC).isoformat()
+        )
+        return {
+            "ready": available.ready,
+            "blockedBy": available.blocked_by,
+            "reason": available.reason,
+            "readyAt": ready_at,
         }
 
     @router.post("/matchday", status_code=202)

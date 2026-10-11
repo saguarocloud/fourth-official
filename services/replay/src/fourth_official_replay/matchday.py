@@ -52,6 +52,17 @@ class MatchdayBusyError(RuntimeError):
 
 
 @dataclass(frozen=True, slots=True)
+class Availability:
+    """Whether a run may start now; if not, why (safe to show) and, when known, from when."""
+
+    ready: bool
+    blocked_by: Literal["running", "cooldown", "daily_limit"] | None = None
+    reason: str | None = None
+    # Epoch seconds from which a run may start; None while a run is under way.
+    ready_at: float | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class MatchStatus:
     match_id: str
     state: MatchState
@@ -99,15 +110,38 @@ class Matchday:
     def running(self) -> bool:
         return any(not run.done() for run in self._runs.values())
 
-    async def _check_can_start(self, now: float) -> None:
+    async def availability(self, *, now: float | None = None) -> Availability:
+        """Whether `start` would accept a run now, without starting one."""
+        moment = time.time() if now is None else now
         if self.running:
-            raise MatchdayBusyError("a matchday is already running")
-        today = await self._ledger.recent(now - DAY_SECONDS)
-        if today and now - max(today) < self._cooldown:
-            wait = int(self._cooldown - (now - max(today)))
-            raise MatchdayBusyError(f"the matchday can be replayed again in {wait} seconds")
+            return Availability(
+                ready=False, blocked_by="running", reason="a matchday is already running"
+            )
+        # A start counts against the day for a full 24 hours, and no longer.
+        today = sorted(
+            t for t in await self._ledger.recent(moment - DAY_SECONDS) if t > moment - DAY_SECONDS
+        )
+        cooled = today[-1] + self._cooldown if today else moment
         if len(today) >= self._runs_per_day:
-            raise MatchdayBusyError("the matchday has been replayed as often as allowed today")
+            return Availability(
+                ready=False,
+                blocked_by="daily_limit",
+                reason="the matchday has been replayed as often as allowed today",
+                ready_at=max(cooled, today[-self._runs_per_day] + DAY_SECONDS),
+            )
+        if moment < cooled:
+            return Availability(
+                ready=False,
+                blocked_by="cooldown",
+                reason=f"the matchday can be replayed again in {int(cooled - moment)} seconds",
+                ready_at=cooled,
+            )
+        return Availability(ready=True)
+
+    async def _check_can_start(self, now: float) -> None:
+        available = await self.availability(now=now)
+        if not available.ready:
+            raise MatchdayBusyError(available.reason)
 
     async def start(self, *, now: float | None = None) -> None:
         """Replay every match from the start. Refuses while a run is under way, during the
