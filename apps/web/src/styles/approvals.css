@@ -1,0 +1,333 @@
+/* Approvals: one held item owns the desk, read against English, the next one a key away. ----- */
+
+.approvals__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.approvals__move {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Reserved height: a message arriving never moves the desk. */
+.approvals__message {
+  min-height: 1.5rem;
+  margin-bottom: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+}
+
+.approvals__floor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  margin-bottom: var(--space-6);
+}
+
+/* Call sheet: the waiting tickets, oldest first. -------------------------------------------- */
+.tickets__count {
+  margin-left: var(--space-2);
+  color: var(--ink-1);
+}
+
+.tickets__empty {
+  padding: var(--space-5);
+  border: 1px dashed var(--hairline-strong);
+  border-radius: var(--radius-key);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+}
+
+.tickets__list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ticket {
+  display: grid;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+  color: var(--ink-2);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--duration-ui) var(--ease-out);
+}
+
+.ticket:hover {
+  background: var(--panel-2);
+}
+
+.ticket[aria-current="true"] {
+  background: var(--panel-2);
+  border-color: var(--hairline-strong);
+  box-shadow: inset 2px 0 0 var(--led-white);
+  color: var(--ink-1);
+}
+
+.ticket__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.ticket__code {
+  color: var(--ink-1);
+}
+
+.ticket__kind {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.ticket__icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Waiting is the one state here, so the time it has waited since carries the amber. */
+.ticket__since {
+  margin-left: auto;
+  color: var(--led-amber);
+  letter-spacing: 0;
+}
+
+.ticket__words {
+  font-size: var(--text-sm);
+  overflow-wrap: break-word;
+}
+
+/* Desk: the item as it will air, the English, why it waits, the two keys. ------------------ */
+.desk {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.desk__reading {
+  display: grid;
+  gap: var(--space-4);
+  align-content: start;
+}
+
+.desk__read,
+.desk__why {
+  padding: var(--space-4);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+}
+
+.desk__headline {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--ink-1);
+}
+
+.desk__claims {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--text-md);
+  color: var(--ink-2);
+}
+
+.desk__why p {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.desk__why p + p {
+  margin-top: var(--space-2);
+}
+
+.desk__why .desk__corrected {
+  display: flex;
+  gap: var(--space-2);
+  color: var(--ink-1);
+}
+
+.desk__why .desk__corrected::before {
+  content: "";
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 0.4em;
+  border-radius: 999px;
+  background: var(--led-red);
+}
+
+.desk__keys {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+}
+
+.desk__keys .key[data-intent="primary"] .key-cap {
+  border-color: rgb(0 0 0 / 0.25);
+  background: rgb(0 0 0 / 0.08);
+  color: var(--panel-0);
+}
+
+.desk__identity {
+  flex-basis: 100%;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.desk__reject {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2) var(--space-3);
+  align-items: center;
+  padding: var(--space-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+}
+
+.desk__reject label {
+  grid-column: 1 / -1;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.desk__reject input {
+  height: 36px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+  color: var(--ink-1);
+  font-size: var(--text-md);
+}
+
+.desk__reject input:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.desk__error {
+  grid-column: 1 / -1;
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+}
+
+/* Decisions log: the audit trail. ---------------------------------------------------------- */
+.decision-log__empty {
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+
+.decision-log__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.decision-log__table th {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline-strong);
+  font-weight: 500;
+  text-align: left;
+  color: var(--ink-2);
+}
+
+.decision-log__table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+  vertical-align: top;
+  color: var(--ink-1);
+}
+
+.decision-log__role {
+  color: var(--ink-3);
+}
+
+/* Wide: the call sheet beside the desk; the stage beside the reading. ---------------------- */
+@media (min-width: 1280px) {
+  .approvals__floor {
+    grid-template-columns: 18rem minmax(0, 1fr);
+  }
+
+  .desk {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+  }
+
+  .desk__stage {
+    grid-row: 1 / span 2;
+  }
+
+  .desk__keys,
+  .desk__reject {
+    grid-column: 2;
+  }
+}
+
+/* Phones: each decision is a card; the columns read as labelled lines. */
+@media (max-width: 720px) {
+  .decision-log__table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .decision-log__table,
+  .decision-log__table tbody,
+  .decision-log__table tr,
+  .decision-log__table td {
+    display: block;
+    width: 100%;
+  }
+
+  .decision-log__table tr {
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--hairline);
+  }
+
+  .decision-log__table td {
+    display: grid;
+    grid-template-columns: 6rem minmax(0, 1fr);
+    gap: var(--space-3);
+    padding: var(--space-1) 0;
+    border: 0;
+  }
+
+  .decision-log__table td::before {
+    content: attr(data-label);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    letter-spacing: var(--tracking-label);
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .decision-log__table td:empty {
+    display: none;
+  }
+
+  .desk__reject {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

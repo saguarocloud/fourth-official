@@ -64,6 +64,11 @@ export const MATCHES: MatchSummary[] = [
 
 type Listener = (event: MessageEvent<string>) => void;
 
+function idOf(data: unknown): string {
+  const seq = (data as { entrySeq?: unknown } | null)?.entrySeq;
+  return typeof seq === "number" ? `1:${seq}` : "";
+}
+
 /** An EventSource the test drives: `emit` delivers a named event, `fail` an error. */
 export class FakeEventSource {
   static readonly CONNECTING = 0;
@@ -95,8 +100,9 @@ export class FakeEventSource {
     this.onopen?.();
   }
 
-  emit(type: string, data: unknown): void {
-    const event = new MessageEvent<string>(type, { data: JSON.stringify(data) });
+  /** Delivers `data` with the API's event id (`generation:entrySeq`), run 1 unless given. */
+  emit(type: string, data: unknown, lastEventId = idOf(data)): void {
+    const event = new MessageEvent<string>(type, { data: JSON.stringify(data), lastEventId });
     for (const listener of this.listeners.get(type) ?? []) listener(event);
   }
 

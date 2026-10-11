@@ -221,11 +221,11 @@
   stroke-width: 3;
 }
 
+/* Top right, clear of the score bug at top left, at any size of stage. */
 .monitor__held {
   position: absolute;
-  top: calc(60 * var(--u));
-  left: 50%;
-  transform: translateX(-50%);
+  top: calc(108 * var(--u));
+  right: calc(192 * var(--u));
   padding: calc(8 * var(--u)) calc(20 * var(--u));
   border: calc(2 * var(--u)) solid var(--led-amber);
   background: rgb(7 9 11 / 0.85);

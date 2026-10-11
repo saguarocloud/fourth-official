@@ -15,11 +15,13 @@ export interface StreamState<V> {
   readonly matchId: string;
   readonly view: V;
   readonly connection: Connection;
+  /** The run being read (the feed's generation), once an event has said; a decision names it. */
+  readonly generation: number | null;
 }
 
 export type StreamAction =
   | { readonly type: "subscribe"; readonly matchId: string }
-  | { readonly type: "entry"; readonly entry: FeedEntry }
+  | { readonly type: "entry"; readonly entry: FeedEntry; readonly generation: number | null }
   | { readonly type: "reset"; readonly generation: number }
   | { readonly type: "connection"; readonly connection: Connection };
 
@@ -35,11 +37,20 @@ export function streamReducer<V>(
   return (state, action) => {
     switch (action.type) {
       case "subscribe":
-        return { matchId: action.matchId, view: folding.empty(0), connection: "connecting" };
+        return {
+          matchId: action.matchId,
+          view: folding.empty(0),
+          connection: "connecting",
+          generation: null,
+        };
       case "entry":
-        return { ...state, view: folding.apply(state.view, action.entry) };
+        return {
+          ...state,
+          view: folding.apply(state.view, action.entry),
+          generation: action.generation ?? state.generation,
+        };
       case "reset":
-        return { ...state, view: folding.empty(action.generation) };
+        return { ...state, view: folding.empty(action.generation), generation: action.generation };
       case "connection":
         return { ...state, connection: action.connection };
     }
@@ -47,6 +58,12 @@ export function streamReducer<V>(
 }
 
 const KINDS = ["clock", "moment", "insight", "correction", "tenant_item"] as const;
+
+/** The run an event belongs to, from its id (`generation:entrySeq`); null when it does not say. */
+function runOf(lastEventId: string): number | null {
+  const [run] = lastEventId.split(":");
+  return run && /^[0-9]{1,9}$/.test(run) ? Number(run) : null;
+}
 
 function generationOf(data: string): number {
   try {
@@ -75,6 +92,7 @@ export function useFeedStream<V>(
     matchId: id,
     view: folding.empty(0),
     connection: "connecting" as Connection,
+    generation: null,
   }));
   // Bumped to reopen a stream the browser gave up on.
   const [retry, setRetry] = useState(0);
@@ -89,7 +107,7 @@ export function useFeedStream<V>(
     let timer: ReturnType<typeof setTimeout> | undefined;
     const onEntry = (event: MessageEvent<string>) => {
       const entry = parseEntry(event.data, matchId);
-      if (entry !== null) dispatch({ type: "entry", entry });
+      if (entry !== null) dispatch({ type: "entry", entry, generation: runOf(event.lastEventId) });
     };
     for (const kind of KINDS) source.addEventListener(kind, onEntry);
     source.addEventListener("reset", (event: MessageEvent<string>) =>
@@ -118,5 +136,5 @@ export function useFeedStream<V>(
   // Until the subscription catches up, a new match shows nothing rather than the last one's feed.
   return state.matchId === matchId
     ? state
-    : { matchId, view: folding.empty(0), connection: "connecting" };
+    : { matchId, view: folding.empty(0), connection: "connecting", generation: null };
 }
