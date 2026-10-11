@@ -1,0 +1,58 @@
+name: deploy
+
+# Releases application images to the dev environment on every merge to main.
+# Infrastructure is provisioned separately by a person running `azd provision` (ADR-004);
+# this workflow's identity can push images and update container apps, nothing more.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # OIDC token for workload identity federation
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: deploy (dev)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: dev
+      url: ${{ vars.SERVICE_WEB_URI }}
+    env:
+      AZURE_ENV_NAME: ${{ vars.AZURE_ENV_NAME }}
+      AZURE_LOCATION: ${{ vars.AZURE_LOCATION }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      APP_VERSION: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: Azure/setup-azd@0b7e3a35ab00f2eee7080c845eb39c3f0ebfa553 # v2.4.0
+
+      - name: Sign in with workload identity federation
+        run: >
+          azd auth login
+          --client-id "${{ secrets.AZURE_CLIENT_ID }}"
+          --tenant-id "${{ secrets.AZURE_TENANT_ID }}"
+          --federated-credential-provider github
+
+      - name: Recreate the azd environment from provisioned values
+        run: |
+          azd env new "$AZURE_ENV_NAME" --subscription "$AZURE_SUBSCRIPTION_ID" --location "$AZURE_LOCATION" --no-prompt
+          azd env set AZURE_RESOURCE_GROUP "${{ vars.AZURE_RESOURCE_GROUP }}"
+          azd env set AZURE_CONTAINER_REGISTRY_ENDPOINT "${{ vars.AZURE_CONTAINER_REGISTRY_ENDPOINT }}"
+
+      - name: Build, push and release
+        run: azd deploy --all --no-prompt
+
+      - name: Smoke test api
+        run: scripts/smoke-deployed.sh "${{ vars.SERVICE_API_URI }}" fourth-official-api "$APP_VERSION"
+
+      - name: Smoke test web
+        run: scripts/smoke-deployed.sh "${{ vars.SERVICE_WEB_URI }}" fourth-official-web "$APP_VERSION"

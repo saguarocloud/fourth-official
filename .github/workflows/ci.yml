@@ -62,11 +62,46 @@ jobs:
       - name: Build
         run: npm run build
 
+  infra:
+    name: infra
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          enable-cache: true
+      - name: Install
+        run: |
+          uv sync --all-packages --locked
+          az bicep install
+      - name: Lint Bicep (warnings fail the build)
+        run: |
+          output="$(az bicep lint --file infra/main.bicep 2>&1)" || { echo "$output"; exit 1; }
+          if grep -qE "Warning|Error" <<<"$output"; then echo "$output"; exit 1; fi
+      - name: Policy tests
+        run: uv run pytest infra/tests --no-cov
+
+  containers:
+    name: containers
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build images
+        run: |
+          docker build -f apps/api/Dockerfile --build-arg APP_VERSION="$GITHUB_SHA" -t fo-api:ci .
+          docker build -f apps/web/Dockerfile --build-arg APP_VERSION="$GITHUB_SHA" -t fo-web:ci apps/web
+      - name: Smoke test images
+        run: |
+          scripts/smoke-container.sh fo-api:ci 8000 fourth-official-api "$GITHUB_SHA"
+          scripts/smoke-container.sh fo-web:ci 3000 fourth-official-web "$GITHUB_SHA"
+
   # Single stable name for the branch ruleset to require, however the jobs above evolve.
   ci-ok:
     name: ci-ok
     if: always()
-    needs: [python, web]
+    needs: [python, web, infra, containers]
     runs-on: ubuntu-latest
     steps:
       - name: All required jobs passed

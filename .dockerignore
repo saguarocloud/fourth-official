@@ -1,0 +1,13 @@
+**/.venv
+**/node_modules
+**/.next
+**/coverage
+**/__pycache__
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+.git
+.github
+.azure
+docs
+infra
