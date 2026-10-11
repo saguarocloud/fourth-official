@@ -40,6 +40,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Stats engine: restate snapshots when corrections change their events
 - [x] Moment Detector: event and pressing-shift moments with evidence (docs/moments.md)
 - [ ] Moment Detector: momentum swing and tactical shift rules
+- [x] Verifier, deterministic layer: claim markup, rendering, adversarial checks (ADR-006, docs/verifier.md)
+- [ ] Verifier, LLM judge layer (Foundry evaluation)
 
 - [ ] Simulator → Event Hubs → stats → Moment Detector → Analyst ⇄ Verifier → one tenant → Match Live UI, deployed with `azd up`
 - [ ] Attend Reactor livestream (Oct 14, 10:00)

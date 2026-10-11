@@ -10,6 +10,7 @@ members = [
     "fourth-official-moments",
     "fourth-official-simulator",
     "fourth-official-stats",
+    "fourth-official-verifier",
 ]
 
 [[package]]
@@ -239,6 +240,21 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [{ name = "fourth-official-contracts", editable = "packages/contracts" }]
+
+[[package]]
+name = "fourth-official-verifier"
+version = "0.1.0"
+source = { editable = "services/verifier" }
+dependencies = [
+    { name = "fourth-official-contracts" },
+    { name = "fourth-official-stats" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "fourth-official-contracts", editable = "packages/contracts" },
+    { name = "fourth-official-stats", editable = "services/stats-engine" },
+]
 
 [[package]]
 name = "h11"
