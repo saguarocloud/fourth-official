@@ -36,3 +36,38 @@ The featured demo match (m42) ran live against Foundry, through the MCP server o
 - Every moment ended with a verified insight.
 
 Failed drafts taught the Verifier's vocabulary and phrases, such as "final third", typographic hyphens and possessive references, with no loosening of the rules on numbers and names. The Proving Ground will measure first-attempt pass rates over many matches.
+
+## Measuring the Analyst
+
+`scripts/measure-analyst.py` runs the real Analyst over the demo matchday (17 moments across m42, m43 and m44), exactly as the API does, and reports the following:
+- first-attempt passes;
+- insights the model wrote;
+- template fallbacks;
+- model attempts;
+- the finding codes that refused drafts.
+
+The JSON report keeps every draft and every finding's detail for diagnosis. It spends model tokens, so it is run by hand, not in CI.
+
+Measured on 2026-10-11, same 17 moments:
+
+| | Prompt v1.1 | Prompt v1.2 |
+|---|---|---|
+| First-attempt passes | 4 (24%) | 12 (71%) |
+| Written by the model | 9 | 17 (all) |
+| Template fallbacks | 8 | 0 |
+| Model attempts (cost) | 66 | 23 |
+
+The gain came from the following:
+- **Retries see their own draft.** A retry used to get the Verifier's findings without the draft they were about, so each retry started over and made new mistakes. Now it edits the draft it was refused for.
+- **Prompt v1.2:**
+  - One or two claims.
+  - The only reference kinds there are.
+  - Never an ID or a measure (speed, distance) in the text.
+  - "Before the break" and "after the break" instead of halves.
+  - A worked example.
+  - How to fix a draft.
+- **Verifier vocabulary:** ordinary words the model reached for (receive, opportunity, opposing, prior...). Units of measure stay out.
+- **Sentence openers:** common headline words such as "Big chance". The list stays closed on purpose: ordinary words that are also surnames (Long, Young, White) never open a sentence, so a real player's name cannot pass as one.
+- **"Second yellow":** a count phrase, accepted only in a claim that cites a card event that was a second yellow. Anywhere else it is still a bare number.
+
+None of this loosened the rules on numbers, names or the future. The remaining refusals are mostly an unknown word or a club code written as text, and they are fixed on the next attempt. The `fast` model occasionally times out (20 s); the `fallback` model then writes the insight.
