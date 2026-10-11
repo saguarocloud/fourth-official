@@ -5,7 +5,6 @@ moment cites exactly the events and snapshots that show it, so the Analyst's exp
 Verifier's checks start from the same evidence.
 """
 
-import math
 from typing import Annotated, Literal
 
 from pydantic import Field, StringConstraints, TypeAdapter, model_validator
@@ -70,8 +69,6 @@ class MetricShift(WireModel):
 
     @model_validator(mode="after")
     def _snapshots_measure_the_metric(self) -> "MetricShift":
-        if not (math.isfinite(self.before) and math.isfinite(self.after)):
-            raise ValueError("shift values must be finite")
         if self.before_snapshot_id == self.after_snapshot_id:
             raise ValueError("before and after snapshots must differ")
         for snapshot_id in (self.before_snapshot_id, self.after_snapshot_id):
