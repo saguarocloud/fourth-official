@@ -13,6 +13,7 @@ Verifier checks the truth against the match.
 """
 
 import re
+import unicodedata
 from typing import Annotated, Literal
 
 from pydantic import Field, StringConstraints, TypeAdapter, model_validator
@@ -33,7 +34,7 @@ _ARGUMENT = {
     "value": re.compile(
         r"^ms-m[0-9]{1,12}-[a-z_]{2,24}-([A-Z]{3}|match)-(5m|15m|match)-s[0-9]{4,9}-v[0-9]{1,4}$"
     ),
-    "minute": re.compile(r"^[0-9]{1,3}$"),
+    "minute": re.compile(r"^(0|[1-9][0-9]{0,2})$"),
 }
 
 
@@ -47,7 +48,7 @@ def claim_references(text: str) -> tuple[tuple[ReferenceKind, str], ...]:
             continue
         pattern = _ARGUMENT.get(kind)
         if pattern is None or not pattern.match(argument):
-            raise ValueError(f"malformed markup {{{{{token[:40]}}}}}")
+            raise ValueError("malformed markup: references are {{kind:argument}} with a known kind")
         if kind == "minute" and int(argument) > MAX_MINUTE:
             raise ValueError(f"malformed markup: minute {argument} is beyond the match")
         references.append((kind, argument))
@@ -60,8 +61,12 @@ ClaimText = Annotated[str, StringConstraints(min_length=1, max_length=280)]
 HeadlineText = Annotated[str, StringConstraints(min_length=1, max_length=120)]
 
 
+# Control, format (bidirectional overrides, zero-width), separator and private-use characters.
+_REFUSED_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Co", "Cn", "Zl", "Zp"})
+
+
 def _single_line(text: str) -> None:
-    if any(ord(c) < 0x20 or ord(c) == 0x7F for c in text):
+    if any(unicodedata.category(c) in _REFUSED_CATEGORIES for c in text):
         raise ValueError("claim text must be a single line of printable characters")
 
 

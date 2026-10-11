@@ -18,11 +18,16 @@
         "code": {
           "enum": [
             "MOMENT_MISMATCH",
+            "UNSUPPORTED_CHARACTER",
             "BARE_NUMBER",
             "RAW_NAME",
             "UNVERIFIED_NAME",
+            "UNKNOWN_WORD",
+            "FUTURE_WORDING",
             "UNKNOWN_PLAYER",
             "UNKNOWN_CLUB",
+            "PLAYER_NOT_IN_EVIDENCE",
+            "MINUTE_NOT_IN_EVIDENCE",
             "SNAPSHOT_NOT_FOUND",
             "UNDEFINED_VALUE",
             "EVIDENCE_NOT_FOUND",

@@ -122,7 +122,10 @@ _TEMPLATES = {
 
 def template_insight(moment: Moment, facts: MatchFacts, *, attempt: int = 1) -> Insight:
     """A plain, verifiable insight for the moment, from its own evidence."""
-    headline, lines = _TEMPLATES.get(moment.kind, _shift)(moment, facts)
+    build = _TEMPLATES.get(moment.kind)
+    if build is None and not moment.shifts:
+        raise ValueError(f"no template for a {moment.kind} moment without a metric shift")
+    headline, lines = (build or _shift)(moment, facts)
     evidence = Evidence(event_ids=moment.event_ids, metric_snapshot_ids=moment.metric_snapshot_ids)
     return Insight(
         insight_id=insight_id_for(moment.moment_id, attempt=attempt),

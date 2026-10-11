@@ -19,7 +19,7 @@ from fourth_official_simulator.engine import play
 from fourth_official_stats.context import MatchContext
 from fourth_official_stats.prepare import PreparedMatch, prepare
 from fourth_official_stats.snapshots import SnapshotKey, snapshot
-from fourth_official_verifier import MatchFacts, render, template_insight, verify
+from fourth_official_verifier import MatchFacts, render_insight, template_insight, verify
 from verifier_fixtures import FACTS, GOAL_MOMENT
 
 
@@ -69,7 +69,7 @@ def test_a_goal_template_names_the_scorer_and_the_score() -> None:
     scored = facts.match.by_seq[goal.as_of_seq]
     assert isinstance(scored, GoalEvent)
 
-    rendered = render(template_insight(goal, facts).claims[0].text, facts, as_of_seq=goal.as_of_seq)
+    rendered = render_insight(template_insight(goal, facts), facts)[1][0]
 
     assert facts.player_names[scored.scorer_id] in rendered
     assert "1\u20130" in rendered
@@ -90,12 +90,11 @@ def test_a_var_overturn_may_cite_the_goal_it_rules_out_once_the_void_lands() -> 
     goal_moment = next(
         m for m in moments if m.kind == "goal" and m.event_ids[-1] == overturn.event_ids[0]
     )
-    voided = replace(facts, voided=frozenset({overturn.event_ids[0]}))
+    voided = replace(facts, voided={overturn.event_ids[0]: overturn.as_of_seq})
 
     assert verify(template_insight(overturn, voided), overturn, voided).passed
-    # Anything else that leans on the voided goal is now wrong.
-    stale = verify(template_insight(goal_moment, voided), goal_moment, voided)
-    assert {f.code for f in stale.findings} == {"VOIDED_EVIDENCE"}
+    # The goal's own insight was true when it was written; the correction cascade retracts it.
+    assert verify(template_insight(goal_moment, voided), goal_moment, voided).passed
 
 
 def test_a_template_for_an_unexpected_event_is_refused() -> None:
@@ -128,8 +127,14 @@ def test_other_shifts_have_templates_too(kind: str, words: str) -> None:
         shift = collapse.shifts[0].model_copy(update={"metric": "momentum"})
         shifted = shifted.model_copy(update={"shifts": (shift,)})
 
-    rendered = render(
-        template_insight(shifted, facts).claims[0].text, facts, as_of_seq=collapse.as_of_seq
-    )
+    rendered = render_insight(template_insight(shifted, facts), facts)[1][0]
 
     assert words in rendered
+
+
+def test_a_moment_with_no_template_and_no_shift_is_refused() -> None:
+    facts, moments = demo()[0]
+    goal = next(m for m in moments if m.kind == "goal")
+
+    with pytest.raises(ValueError, match="no template"):
+        template_insight(goal.model_copy(update={"kind": "momentum_swing"}), facts)

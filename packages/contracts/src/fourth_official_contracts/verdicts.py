@@ -14,12 +14,18 @@ FindingCode = Literal[
     # The insight is not about the moment it claims to explain.
     "MOMENT_MISMATCH",
     # A number or a name written as text instead of rendered from evidence.
+    "UNSUPPORTED_CHARACTER",
     "BARE_NUMBER",
     "RAW_NAME",
     "UNVERIFIED_NAME",
+    "UNKNOWN_WORD",
+    "FUTURE_WORDING",
     # A reference that does not resolve in the match.
     "UNKNOWN_PLAYER",
     "UNKNOWN_CLUB",
+    # A player or minute named that the cited events do not show.
+    "PLAYER_NOT_IN_EVIDENCE",
+    "MINUTE_NOT_IN_EVIDENCE",
     "SNAPSHOT_NOT_FOUND",
     "UNDEFINED_VALUE",
     "EVIDENCE_NOT_FOUND",

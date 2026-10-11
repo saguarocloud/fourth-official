@@ -128,16 +128,15 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Choice.** Free text with references (`fourth_official_contracts.Insight`).
 - **The contract** checks shape: markup is well-formed, every value referenced is cited in that claim's evidence, every claim has evidence, the text is one printable line, and provenance names the agent, prompt version and model alias.
 - **The deterministic Verifier** (`services/verifier`) checks truth against the match at the moment:
-  - no digits or number words in the text;
-  - no club or player names written out;
-  - no capitalised word that could be an unreferenced name (mid-sentence, only known terms such as VAR; at the start of a sentence, only common openers);
-  - every player, club and minute resolves and is not in the future;
+  - claim text is built from an allowlist, not checked against a denylist: printable ASCII, a curated football-English vocabulary that contains no names and no number words, and capitals only for known terms and a closed set of sentence openers;
+  - no club or player names are written out, in any case;
+  - every player and minute referenced appears in the claim's cited events, and nothing is in the future;
   - every cited event and snapshot exists, is not after the moment, and has not been voided or restated.
 - The score is rendered by code at the moment, without voided goals, so it is always right.
 - The Verifier returns a `Verdict` with typed findings, which go back to the Analyst as feedback and into the provenance record.
 
 **Consequences.**
 - Numbers are correct by construction, so the Verifier's job becomes deciding what may be referenced, which it can do exactly.
-- The opener and term lists are deliberately strict. An unusual opener costs a retry, never a wrong publication.
+- The vocabulary and opener lists are deliberately strict. An unusual word costs a retry, never a wrong publication; the Analyst's prompt asks for plain football English.
 - Localisation must keep the reference set unchanged; the post-localisation check compares it.
 - Whether a claim is *supported* by its evidence (no extra assertions) remains a judgement, and belongs to the LLM judge layer that runs after the deterministic checks.

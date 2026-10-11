@@ -104,6 +104,7 @@ from fourth_official_contracts.primitives import (
     match_of,
 )
 from fourth_official_contracts.verdicts import (
+    MAX_FINDINGS,
     VERDICT_ADAPTER,
     Finding,
     FindingCode,
@@ -121,6 +122,7 @@ __all__ = [
     "MATCH_EVENT_ADAPTER",
     "MATCH_EVENT_TYPES",
     "MAX_BALL_SPEED_KMH",
+    "MAX_FINDINGS",
     "METRIC_SNAPSHOT_ADAPTER",
     "MOMENT_ADAPTER",
     "PITCH_LENGTH_M",

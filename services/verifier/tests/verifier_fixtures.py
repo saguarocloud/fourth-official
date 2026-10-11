@@ -37,8 +37,10 @@ POSSESSION: MetricSnapshot = snapshot(
 LATER_POSSESSION: MetricSnapshot = snapshot(
     MATCH, as_of_seq=7, key=SnapshotKey("possession", "HCY", "match")
 )
+# The goal builder credits shirt 9, which the generated squad does not have: give it a player.
 PLAYERS = {
-    p.player_id: p.name for club in ("HCY", "NGT") for p in generate_squad(club, 2026).players
+    **{p.player_id: p.name for club in ("HCY", "NGT") for p in generate_squad(club, 2026).players},
+    "HCY-09": "Ines Okafor",
 }
 FACTS = MatchFacts(
     match=MATCH,
@@ -49,7 +51,7 @@ FACTS = MatchFacts(
 
 
 def insight_wire(
-    *claims: dict[str, Any], headline: str = "{{club:HCY}} strike first"
+    *claims: dict[str, Any], headline: str = "{{club:HCY}} take the lead"
 ) -> dict[str, Any]:
     return {
         "insightId": f"in-{GOAL_MOMENT.moment_id.removeprefix('mo-')}-a1",
@@ -64,7 +66,7 @@ def insight_wire(
                 "claimId": "cl-1",
                 "type": "stat",
                 "text": (
-                    "{{player:HCY-11}} puts {{club:HCY}} ahead in the {{minute:12}}: {{score}}."
+                    "{{player:HCY-09}} puts {{club:HCY}} ahead in the {{minute:12}}: {{score}}."
                 ),
                 "evidence": {"eventIds": ["m42-e0003", "m42-e0004"], "metricSnapshotIds": []},
             },
@@ -97,5 +99,5 @@ def claim(
     }
 
 
-def insight(*claims: dict[str, Any], headline: str = "{{club:HCY}} strike first") -> Insight:
+def insight(*claims: dict[str, Any], headline: str = "{{club:HCY}} take the lead") -> Insight:
     return parse_insight(insight_wire(*claims, headline=headline))

@@ -1,0 +1,98 @@
+# Words a claim may use outside references. Base forms only: plurals, -ed, -ing, -er and -ly
+# forms of these are accepted by rule. Deliberately excluded: every number or ordinal word (one,
+# first, half, brace, twice...), and anything that could be a name. A test checks the list against
+# the squad name pools. Extend freely with ordinary football English.
+
+# --- Function words ---------------------------------------------------------------------------
+a about above across after afterwards again against ahead all almost alone along already also
+although always among amongst an and another any anyone anything anywhere apart around as at
+away back be because been before behind being below beneath beside besides between beyond both
+but by can could despite did do does doing done down during each either else elsewhere enough
+even ever every everyone everything except far few for from further had has have having he her
+here hers herself him himself his how however if in inside instead into is it its itself just
+least less like little lot many may might more most much must near nearly neither never no nobody
+none nor not nothing now nowhere of off often on only onto or other others otherwise ought our
+ours out outside over own perhaps quite rather really same she should since so some somehow
+someone something sometimes somewhat soon still such than that the their theirs them themselves
+then there these they this those though through throughout thus till to together too toward
+towards under underneath unless until up upon us very was we were what whatever when whenever
+where whereas wherever whether which while who whole whom whose why with within without would
+yet you your
+don't didn't doesn't isn't wasn't weren't aren't can't couldn't won't wouldn't haven't hasn't
+hadn't shouldn't it's they're they've that's there's what's who's
+
+# --- Football: people, places, things -----------------------------------------------------------
+assist attack attacker backline ball bar bench block body box break build-up byline captain card
+centre chance channel clearance clock club coach comeback contest corner counter cross crossbar
+crowd cushion danger dead defence defender deficit deflection delivery direction dribble edge end
+equaliser error effort fan field final finish finisher flank flag foot footing form formation
+foul free-kick front gap game goal goalkeeper goalmouth goalpost ground hand handball head header
+height hold home host intensity interception keeper kick kick-off lead leader league left line
+lineup lob loss manager mark marker match midfield midfielder minute miss mistake moment momentum
+motion move movement net offside opener opponent opposition outlet pace pass passage passer
+patience penalty period phase pitch player playmaker pocket position possession post press
+presser pressure rebound record red referee reply restart result rhythm right run runner save
+scare score scoreline scorer scramble screen second-ball setback shape shot side spell spot squad star
+start stoppage striker strike substitute substitution switch tackle tactic team tempo territory
+threat throw-in tilt time touch touchline transition turnover upright var visitor volley wall
+whistle width wing winger winner yard yellow zone
+
+# --- Football: actions --------------------------------------------------------------------------
+add allow answer apply arrive ask attempt beat begin bend block blow book break bring build
+carry catch change chase check claim clear close collapse come commit complete concede connect
+continue control convert create cross cut deal decide deflect deliver deny dictate disallow
+dominate double-check draw drift drive drop ease earn edge end equalise escape expose face fade
+fail fall feed fight find finish fire fix flick float force foul gain get give go grab grow
+guide hand happen head help hit hold hunt hurry ignite improve increase keep kick knock lack land
+lay lead leave let level lift limit lose make manage mark match meet miss move need nod open
+outnumber overturn pass pick play pour press prevent protect pull punch push put rattle reach
+react read recover recycle reduce regain release remain replace reply rescue rest restore restrict
+retain return review rise roll rule run rush save score see send set settle shape shift shoot
+show sit slip slow snatch spark spend spread squeeze stand start stay step stop strike struggle
+suffer supply surge survive sweep switch take target tear test thread throw tilt tire track
+trail trigger try turn void wait waste win work wrap
+
+# --- Description --------------------------------------------------------------------------------
+able aggressive alert all-out ambitious angled anxious attacking awkward bad big bold brave brief
+brilliant busy calm careful central certain cheap clean clear clever clinical close
+comfortable compact composed confident constant controlled costly crisp crucial dangerous
+dead decisive deep defensive deliberate determined difficult direct disciplined dominant early
+easy effective efficient energetic entire exact excellent extra fast fierce fine firm fluent
+fortunate fresh frantic full generous good great hard heavy high honest huge important intense
+key large late level lively long loose low lucky major marginal neat nervous new nice old open
+organised patient perfect physical poor positive precise quick quiet rapid rare ready recent
+relentless remarkable rested rough safe sharp short simple slight slow small smart smooth soft
+solid sound stable steady stiff strong sudden superb sure sustained swift tame tidy tight tired
+top tough tricky true unbeaten unlucky urgent useful usual vital weak wide wild worse worst
+wrong
+
+# --- Everyday verbs, nouns and adjectives -----------------------------------------------------
+per provide act appear argue avoid become believe belong bring call care carry cause choose come consider
+count cover cry decide describe deserve end enjoy expect explain feel follow forget happen hate
+hear hope imagine include keep know learn like listen live look love matter mean mind need
+notice offer own plan prefer prove realise remember report seem sense show sign speak suggest
+suppose talk tell tend think trust turn understand use want watch wish wonder worry
+afternoon air answer area way week day evening night half-chance idea kind level life lot
+manner mood night part people place point problem question reaction reality response sort space
+state step style thing view voice word world
+afraid alive aware best better clear different due enough equal fair familiar famous fit free
+glad happy likely main obvious only possible proper real right serious similar special strange
+sorry total typical unusual whole worth
+
+# --- Irregular forms ---------------------------------------------------------------------------
+beaten bent began begun bore blew blown broke broken brought built caught chose chosen came drew
+drawn drove driven ate fell felt fought found flew forgot forgotten froze gave given got gotten
+went gone grew grown held hit hurt kept knew known laid led left lent lost made meant met paid
+put quit ran rang read rode rose said sat saw seen sent set shook shot shown shut slid sold
+sought spent split spoke spread stood stole struck stuck swept swung taught thought threw thrown
+told took taken tore torn understood woke won wore worn wove wrote written
+
+# --- Time and degree ----------------------------------------------------------------------------
+again ago already currently early earlier far finally first-time immediately instantly just
+largely lately late meanwhile mostly nearly now often previously quickly rarely
+recently roughly sharply shortly simply slightly suddenly today tonight usually
+
+# --- Analysis -----------------------------------------------------------------------------------
+account average balance better best change chaos comparison context control count deal decline
+difference drop evidence fact factor figure gain impact increase measure metric number pattern
+picture rate ratio reason sign signal share story sum swing trend value volume

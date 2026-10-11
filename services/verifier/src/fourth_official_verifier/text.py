@@ -1,62 +1,102 @@
-"""Checks on the words of a claim: no numbers or names written out instead of referenced."""
+"""Checks on the words of a claim, outside its references.
+
+Claim text is ordinary football English: printable ASCII (plus typographic quotes and dashes),
+words from the vocabulary allowlist, capitals only for known terms and a closed set of sentence
+openers, no numbers in any form, no names written out, and no wording about the future.
+"""
 
 import re
 from collections.abc import Iterable
+from dataclasses import dataclass, field
 
 from fourth_official_contracts import CLUB_NAMES
-from fourth_official_verifier.vocabulary import SENTENCE_OPENERS, TERMS
+from fourth_official_verifier.vocabulary import NUMBER_WORDS, SENTENCE_OPENERS, TERMS, known
 
 _TOKEN = re.compile(r"\{\{[^{}]*\}\}")
-_DIGITS = re.compile(r"[0-9]+")
-_NUMBER_WORDS = re.compile(
-    r"\b(two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|"
-    r"sixteen|seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|"
-    r"hundred|dozen|twice|thrice)\b",
+_TYPOGRAPHIC = str.maketrans(
+    {"\u2018": "'", "\u2019": "'", "\u201c": '"', "\u201d": '"', "\u2013": "-", "\u2014": "-"}
+)
+_ALLOWED = re.compile(r"^[\x20-\x7e]*$")
+# A number and anything stuck to it ("3", "2-0", "1st", "90th").
+_NUMBERS = re.compile(r"[0-9][0-9A-Za-z]*")
+_WORD = re.compile(r"[A-Za-z][A-Za-z'-]*")
+_SENTENCE_END = re.compile(r"[.!?;:]\s+|[.!?;:]$|\s-\s")
+# Wording that reaches past the moment an insight is about.
+_FUTURE = re.compile(
+    r"\b(will|eventually|later on|go on to|goes on to|went on to|full[- ]time|final whistle|"
+    r"final score|in the end)\b",
     re.IGNORECASE,
 )
-_SENTENCE = re.compile(r"[.!?;:]\s+|[.!?;:]$")
-# Words may contain apostrophes (straight or typographic) and hyphens.
-_WORD = re.compile("[^\\W\\d_][\\w'\u2019-]*")
-# Stands in for a reference so that it is not read as a word or a number.
-_HOLE = " \u2063 "
+# Stands in for a reference: not a word, not a number, and never the start of a sentence.
+_HOLE = " ⁣ "
 
 
-def without_markup(text: str) -> str:
-    return _TOKEN.sub(_HOLE, text)
+@dataclass(frozen=True, slots=True)
+class TextProblems:
+    unsupported: bool = False
+    numbers: list[str] = field(default_factory=list)
+    raw_names: list[str] = field(default_factory=list)
+    names: list[str] = field(default_factory=list)
+    unknown_words: list[str] = field(default_factory=list)
+    future: list[str] = field(default_factory=list)
 
 
-def bare_numbers(text: str) -> list[str]:
-    """Numbers written in the text instead of rendered from evidence."""
-    plain = without_markup(text)
-    return [*_DIGITS.findall(plain), *(m.group(0) for m in _NUMBER_WORDS.finditer(plain))]
+def _plain(text: str) -> str:
+    return _TOKEN.sub(_HOLE, text).translate(_TYPOGRAPHIC)
 
 
-def raw_names(text: str, player_names: Iterable[str]) -> list[str]:
-    """Club or player names written out instead of referenced."""
-    plain = without_markup(text)
-    names = [*CLUB_NAMES.values(), *player_names]
-    surnames = [n.split()[-1] for n in player_names if " " in n]
-    return [
-        name
-        for name in sorted({*names, *surnames}, key=len, reverse=True)
-        if re.search(rf"(?<!\w){re.escape(name)}(?!\w)", plain)
-    ]
+def _name_forms(player_names: Iterable[str]) -> set[str]:
+    forms = {n.casefold() for n in CLUB_NAMES.values()}
+    for name in player_names:
+        forms.add(name.casefold())
+        forms |= {part.casefold() for part in re.split(r"[\s-]+", name) if len(part) > 1}
+    return forms
 
 
-def unverified_names(text: str, known: Iterable[str]) -> list[str]:
-    """Capitalised words that could be names nobody referenced: anything mid-sentence that is
-    not a known term, and sentence openers that are not common words."""
-    plain = without_markup(text)
-    for name in sorted(known, key=len, reverse=True):
-        plain = re.sub(rf"(?<!\w){re.escape(name)}(?!\w)", _HOLE, plain)
-    found: list[str] = []
-    for sentence in _SENTENCE.split(plain):
-        words = _WORD.findall(sentence)
-        for index, word in enumerate(words):
-            if not word[0].isupper() or word in TERMS:
-                continue
-            opener = index == 0 and sentence.lstrip().startswith(word)
-            if opener and word.lower() in SENTENCE_OPENERS:
-                continue
-            found.append(word)
-    return found
+def _strip_names(plain: str, forms: set[str]) -> tuple[str, list[str]]:
+    found = []
+    for form in sorted(forms, key=len, reverse=True):
+        pattern = re.compile(rf"(?<![\w]){re.escape(form)}(?![\w])", re.IGNORECASE)
+        if pattern.search(plain):
+            found.append(form)
+            plain = pattern.sub(_HOLE, plain)
+    return plain, found
+
+
+def _sentence_starts(plain: str) -> set[int]:
+    starts = {0}
+    for end in _SENTENCE_END.finditer(plain):
+        starts.add(end.end())
+    return starts
+
+
+def _is_opener(match: re.Match[str], starts: set[int], plain: str) -> bool:
+    before = plain[: match.start()].rstrip(" \"'(")
+    return match.start() in starts or len(before) in starts or not before
+
+
+def check_text(text: str, player_names: Iterable[str]) -> TextProblems:
+    """Everything wrong with the words of a claim or headline."""
+    plain = _plain(text)
+    if not _ALLOWED.match(plain.replace(_HOLE, " ")):
+        return TextProblems(unsupported=True)
+    plain, raw = _strip_names(plain, _name_forms(player_names))
+    numbers = _NUMBERS.findall(plain)
+    plain = _NUMBERS.sub(_HOLE, plain)
+    names: list[str] = []
+    unknown: list[str] = []
+    starts = _sentence_starts(plain)
+    for match in _WORD.finditer(plain):
+        word = match.group(0).strip("'-")
+        lower = word.lower()
+        if lower in NUMBER_WORDS or any(part in NUMBER_WORDS for part in lower.split("-")):
+            numbers.append(word)
+        elif word in TERMS:
+            continue
+        elif word[0].isupper():
+            if not (_is_opener(match, starts, plain) and lower in SENTENCE_OPENERS):
+                names.append(word)
+        elif not known(lower):
+            unknown.append(word)
+    future = [m.group(0) for m in _FUTURE.finditer(plain)]
+    return TextProblems(False, numbers, raw, names, unknown, future)

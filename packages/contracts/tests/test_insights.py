@@ -100,6 +100,9 @@ def test_markup_is_read_back_as_references() -> None:
         (claim(1, evidence={"eventIds": ["m7-e0001"], "metricSnapshotIds": []}), "another match"),
         (claim(0, text="x" * 281), "at most 280"),
         (claim(0, text="two\nlines"), "single line"),
+        (claim(0, text="bidi \u202e override"), "single line"),
+        (claim(0, text="zero\u200bwidth"), "single line"),
+        (claim(1, text="Since {{minute:011}}, nothing."), "markup"),
         (
             INSIGHT | {"provenance": INSIGHT["provenance"] | {"promptVersion": "latest"}},
             "promptVersion",
