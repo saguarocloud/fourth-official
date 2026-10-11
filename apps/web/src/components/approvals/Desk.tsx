@@ -15,8 +15,6 @@ export interface DeskActions {
   readonly busy: boolean;
   readonly rejecting: boolean;
   readonly reasonError: string | null;
-  /** Move focus to the desk when it shows a new item (not on the page's first view). */
-  readonly focusOnShow: boolean;
   readonly onApprove: () => void;
   readonly onReject: () => void;
   readonly onCancel: () => void;
@@ -98,13 +96,9 @@ function Reject({ actions, prefill }: { actions: DeskActions; prefill: string })
 /** The held item as it will air on its partner, read against English, with why it waits and the
  * editor's two keys. */
 export function Desk({ item, view, tenant, actions }: DeskProps) {
-  const heading = useRef<HTMLHeadingElement>(null);
   const rejectKey = useRef<HTMLButtonElement>(null);
   const wasRejecting = useRef(actions.rejecting);
-  const { focusOnShow, rejecting } = actions;
-  useEffect(() => {
-    if (focusOnShow) heading.current?.focus();
-  }, [focusOnShow]);
+  const { rejecting } = actions;
   useEffect(() => {
     // Putting the reason away returns the editor to the key that opened it.
     if (wasRejecting.current && !rejecting) rejectKey.current?.focus();
@@ -128,7 +122,7 @@ export function Desk({ item, view, tenant, actions }: DeskProps) {
   const headline = item.rendered?.headline ?? "";
   return (
     <section className="desk" aria-labelledby="desk-heading">
-      <h2 id="desk-heading" className="sr-only" ref={heading} tabIndex={-1}>
+      <h2 id="desk-heading" className="sr-only" tabIndex={-1}>
         {`${partner.name}: ${headline}`}
       </h2>
       <div className="desk__stage">

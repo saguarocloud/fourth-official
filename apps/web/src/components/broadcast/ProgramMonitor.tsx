@@ -73,7 +73,8 @@ export function ProgramMonitor({
             {program.score && (
               <ScoreBug
                 item={program.score}
-                clock={mode === "program" && clock ? time : undefined}
+                // Program runs on the match clock; a preview stands outside time, so no time.
+                clock={mode === "preview" ? null : clock ? time : undefined}
               />
             )}
             {program.strap ? (

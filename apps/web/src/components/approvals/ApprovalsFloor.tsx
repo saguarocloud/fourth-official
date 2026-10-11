@@ -70,8 +70,9 @@ export function ApprovalsFloor(props: FloorProps) {
     index: 0,
   });
   const [decidedHere, setDecidedHere] = useState<string | null>(null);
-  const [moved, setMoved] = useState(false);
   const inFlight = useRef(false);
+  // Focus follows the editor's own actions only: set by a decision or a move, spent on use.
+  const focusNext = useRef(false);
 
   // The desk keeps its place: when its item leaves the queue, the one that took its place shows.
   const picked = queue.findIndex((i) => ticketKey(i) === chosen);
@@ -93,7 +94,6 @@ export function ApprovalsFloor(props: FloorProps) {
           const next = key === null ? "Nothing else waits." : "The next item is on the desk.";
           setMessage(`"${desk.item.rendered?.headline ?? ""}" was decided elsewhere. ${next}`);
         }
-        setMoved(true);
       }
     }
   }
@@ -103,10 +103,13 @@ export function ApprovalsFloor(props: FloorProps) {
     return () => clearTimeout(timer);
   }, [key]);
 
-  // With the desk empty after a decision, focus goes to the queue rather than to nowhere.
+  // After the editor's own decision or move, focus goes to the item now on the desk, or to the
+  // queue when nothing is left; an item arriving on its own never takes focus.
   useEffect(() => {
-    if (key === null && moved) document.getElementById("tickets-heading")?.focus();
-  }, [key, moved]);
+    if (!focusNext.current) return;
+    focusNext.current = false;
+    document.getElementById(key === null ? "tickets-heading" : "desk-heading")?.focus();
+  }, [key]);
 
   const blocked = closed || busy || generation === null || !settled;
 
@@ -124,6 +127,7 @@ export function ApprovalsFloor(props: FloorProps) {
     setBusy(false);
     const headline = target.rendered?.headline ?? "";
     if (outcome.ok) {
+      focusNext.current = true;
       setDecidedHere(targetKey);
       setSent((before) => new Set([...before, targetKey]));
       setMessage(
@@ -149,6 +153,7 @@ export function ApprovalsFloor(props: FloorProps) {
   function move(by: number) {
     const next = queue[Math.min(queue.length - 1, Math.max(0, index + by))];
     if (next) {
+      focusNext.current = ticketKey(next) !== key;
       setMessage("");
       setChosen(ticketKey(next));
     }
@@ -218,11 +223,12 @@ export function ApprovalsFloor(props: FloorProps) {
           moments={view.moments}
           current={key}
           onChoose={(next) => {
+            focusNext.current = next !== key;
             setMessage("");
             setChosen(next);
           }}
           onMove={move}
-          closed={closed}
+          closed={phase === "finished"}
         />
         {item && (
           <Desk
@@ -235,7 +241,6 @@ export function ApprovalsFloor(props: FloorProps) {
               busy,
               rejecting: rejectingFor === key,
               reasonError,
-              focusOnShow: moved,
               onApprove: approve,
               onReject: reject,
               onCancel: () => setRejectingFor(null),

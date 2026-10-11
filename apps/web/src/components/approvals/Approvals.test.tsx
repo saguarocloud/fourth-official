@@ -266,15 +266,42 @@ describe("Approvals", () => {
     );
   });
 
-  it("puts focus on the queue when the last item is decided", async () => {
-    await played(); // the fixture's held items: decide them all
-    for (const [n, item] of HELD.entries()) {
-      act(() =>
-        stream().emit("tenant_item", { ...decided(item!, "rejected"), entrySeq: NEXT + n }),
-      );
+  it("puts focus on the queue when the editor decides the last item", async () => {
+    const { fetch } = await played();
+    // Others decide everything but the first item, which no correction has touched.
+    const others = HELD.slice(1);
+    for (const [n, item] of others.entries()) {
+      act(() => stream().emit("tenant_item", { ...decided(item, "rejected"), entrySeq: NEXT + n }));
     }
+    await settle();
 
-    expect(screen.getByRole("heading", { name: /Waiting/ })).toHaveFocus();
+    fireEvent.keyDown(window, { key: "a" });
+
+    await waitFor(() => expect(posts(fetch)).toHaveLength(1));
+    await waitFor(() => expect(screen.getByRole("heading", { name: /Waiting/ })).toHaveFocus());
+  });
+
+  it("never pulls focus to an item that arrives on its own", async () => {
+    serve();
+    render(<Approvals />);
+    await screen.findByText("Harbour City v Northgate FC · Meridian League");
+    const elsewhere = screen.getByRole("link", { name: /HCY v NGT/ });
+    elsewhere.focus();
+
+    act(() => {
+      for (const entry of FEED) stream().emit(entry.kind, entry);
+    });
+    await screen.findByRole("button", { name: /Approve as T\. Ibarra/ });
+
+    expect(elsewhere).toHaveFocus();
+  });
+
+  it("before the match, the empty call sheet does not speak of full time", async () => {
+    serve(MATCHES.map((m) => ({ ...m, state: "idle" })));
+    render(<Approvals />);
+
+    await screen.findByText("Harbour City v Northgate FC · Meridian League");
+    expect(screen.queryByText(/Full time/)).not.toBeInTheDocument();
   });
 
   it("ignores a held key: one press, one decision", async () => {

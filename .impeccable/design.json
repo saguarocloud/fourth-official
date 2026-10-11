@@ -315,6 +315,11 @@
         "name": "gfx-in",
         "value": "360ms ease-out, fade and 24u rise",
         "purpose": "Broadcast Preview: a graphic animating in inside the monitor, as on air; none under reduced motion."
+      },
+      {
+        "name": "approvals-settle",
+        "value": "600ms (SETTLE_MS)",
+        "purpose": "Approvals: after the desk shows a different item, its keys and buttons wait this long, so no decision lands on an item the editor has not had time to see. A wait, not an animation; unchanged under reduced motion."
       }
     ],
     "breakpoints": [
@@ -341,6 +346,10 @@
       {
         "name": "preview-phone",
         "value": "720px"
+      },
+      {
+        "name": "approvals-beside",
+        "value": "1280px"
       }
     ],
     "partnerThemes": [
@@ -406,6 +415,24 @@
         "firstViewport": "Title and verdict naming who holds items; match keys and partner keys; the program monitor at full width; the rundown beneath, beside it from 1800px (minmax(0,1fr) minmax(44rem,1fr)) with the monitor sticky.",
         "keyboard": "1/2/3 partner on the monitor; G safe areas; Esc back to program. Ignored in fields and with Alt, Ctrl or Meta.",
         "phone": "At 720px and below: partner keys become a three-up grid reading cap and code; the monitor bar hides the locale; rundown rows become cards labelled by partner code; the table keeps explicit roles."
+      },
+      {
+        "name": "Approvals",
+        "path": "/approvals",
+        "rail": "none; main takes the rail's column from 1024px (data-rail=\"none\")",
+        "firstViewport": "Title and verdict naming how many wait and since which match minute; match keys; a polite message line (height reserved) naming the item just decided; the floor: the call sheet of waiting tickets at the left (18rem | 1fr from 1280px, stacking above the desk below) with K/J beside the 'Waiting' heading only when 2+ wait; the desk (7fr | 5fr from 1280px): the item on its partner's stage (the program monitor in preview, no guides, its own stageLabel), 'In English' (the English partner's version) or 'As written', 'Why it waits' (policy reason, evidence count, checked twice; a red-lamp line when a correction has since changed its facts), the A and R keys, the duty-editor (demo identity) line, the reject form; the decisions log beneath. Empty floor (data-empty): the call sheet spans the floor.",
+        "verdict": {
+          "loading": "Loading the matchday. (neutral)",
+          "idle": "This match has not started. Start the matchday from Match Live. (neutral)",
+          "running": "N items wait for an editor; the oldest since 61'. (amber) / Nothing waits for an editor. N decisions this match. (green once decided, else neutral)",
+          "finished": "Full time. N held items stayed off air. / Full time. Nothing waits for an editor; N decisions this match. (neutral)",
+          "failed": "This match's replay stopped. Held items stay off air. (red)",
+          "unavailable": "The match service is unavailable. Retrying every few seconds. (red)"
+        },
+        "keyboard": "A approve; R reject (opens a one-line reason, prefilled 'A correction changed this item's facts' for a corrected item); Esc cancel (visible Esc cap on Cancel); J/K next/previous. Ignored on key repeat, with Shift, Alt, Ctrl or Meta, during IME composition and while typing; the keystroke is consumed by the shortcut. E (edit and approve) is not offered.",
+        "safety": "After the desk shows a different item, keys and buttons wait 600ms (settle); also while a request is in flight, outside a running match and before the run is known. An item decided here leaves the queue at once. When the item on the desk is decided elsewhere, the desk keeps its place, shows the item that took it and the message line says so. A corrected item can only be rejected.",
+        "focus": "After a decision, the new item's desk heading; after Cancel, the R key; the 'Waiting' heading when the queue empties.",
+        "phone": "At 720px and below the decisions log becomes cards of labelled lines; the table keeps explicit roles."
       }
     ]
   },
@@ -510,7 +537,7 @@
       "name": "Program Monitor",
       "kind": "custom",
       "refersTo": "program-monitor",
-      "description": "Broadcast Preview: a bar (Program/Preview tally, partner, LED clock) over a 16:9 stage authored at 1920x1080 (--u = 100cqw/1920) on a placeholder pitch, no video. Graphics in the partner's own look and Barlow Condensed: lower third with the policy's exact disclosure label, correction strap preempting it, score bug on the match clock in program. Safe areas: action 90% dashed, title 80% dotted; they differ by dash pattern, not hue.",
+      "description": "Broadcast Preview: a bar (Program/Preview tally, partner, LED clock) over a 16:9 stage authored at 1920x1080 (--u = 100cqw/1920) on a placeholder pitch, no video. Graphics in the partner's own look and Barlow Condensed: lower third with the policy's exact disclosure label, correction strap preempting it, score bug on the match clock in program. Safe areas: action 90% dashed, title 80% dotted; they differ by dash pattern, not hue. An optional stageLabel replaces the stage's default spoken label (the Approvals desk uses it to say the words are on the desk as text).",
       "html": "<section class=\"ds-mon\"><header class=\"ds-mon__bar\"><span class=\"ds-mon__mode\"><span class=\"ds-mon__tally\" data-lit=\"true\"></span>Program</span><span class=\"ds-mon__partner\">Northlight Sport <span>English · en-GB</span></span><span class=\"ds-mon__clock\">61:04</span></header><div class=\"ds-mon__frame\"><div class=\"ds-mon__stage\" data-tenant=\"northlight-sport\" role=\"img\" aria-label=\"Northlight Sport on air now\"><div class=\"ds-gfx-bug\"><span>ARD</span><span class=\"ds-gfx-bug__score\">2-1</span><span>KES</span><span>61:04</span></div><div class=\"ds-gfx-third\"><div class=\"ds-gfx-third__headline\">Okafor doubles the lead<span class=\"ds-gfx-badge\">AI-assisted</span></div><p class=\"ds-gfx-third__line\">A second in eight minutes as Ardmore press higher.</p></div><span class=\"ds-mon__guide\" data-area=\"action\"></span><span class=\"ds-mon__guide\" data-area=\"title\"></span></div></div></section>",
       "css": ".ds-mon { width:640px; border:1px solid #20272d; border-radius:2px; background:#0d1013; font-family:var(--font-ui, Geist, system-ui, sans-serif); } .ds-mon__bar { display:flex; align-items:center; gap:16px; padding:8px 12px; border-bottom:1px solid #20272d; color:#e9edf0; font-size:13px; } .ds-mon__mode { display:inline-flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-mon__tally { width:10px; height:10px; border-radius:999px; background:rgb(255 255 255 / 0.07); } .ds-mon__tally[data-lit=true] { background:radial-gradient(circle at 35% 35%, #ff8a80 0 18%, #ff4a3d 45%); } .ds-mon__partner { margin-right:auto; } .ds-mon__partner span { margin-left:12px; font-size:11px; color:#7c8791; } .ds-mon__clock { font-family:'Geist Mono', ui-monospace, monospace; color:#f2f5f7; font-variant-numeric:tabular-nums; } .ds-mon__frame { padding:12px; background:#07090b; } .ds-mon__stage { --u:calc(100cqw / 1920); --gfx-panel:#0e1a2b; --gfx-accent:#3ddc97; --gfx-on-accent:#0e1a2b; position:relative; container-type:inline-size; aspect-ratio:16 / 9; overflow:hidden; background:radial-gradient(ellipse at 50% 40%, #1a4a2c 0%, #123620 55%, #0b2615 100%); font-family:'Barlow Condensed', var(--font-ui, Geist), sans-serif; color:#ffffff; } .ds-gfx-bug { position:absolute; top:calc(108 * var(--u)); left:calc(192 * var(--u)); display:flex; background:var(--gfx-panel); font-size:calc(34 * var(--u)); font-weight:700; line-height:1; } .ds-gfx-bug > span { padding:calc(12 * var(--u)) calc(18 * var(--u)); } .ds-gfx-bug__score { background:var(--gfx-accent); color:var(--gfx-on-accent); } .ds-gfx-third { position:absolute; left:calc(192 * var(--u)); right:calc(480 * var(--u)); bottom:calc(120 * var(--u)); display:grid; animation:ds-gfx-in 360ms cubic-bezier(0.16,1,0.3,1) both; } .ds-gfx-third__headline { display:flex; align-items:center; gap:calc(20 * var(--u)); justify-self:start; padding:calc(14 * var(--u)) calc(28 * var(--u)); background:var(--gfx-accent); color:var(--gfx-on-accent); font-size:calc(46 * var(--u)); font-weight:700; line-height:1.1; } .ds-gfx-third__line { margin:0; padding:calc(16 * var(--u)) calc(28 * var(--u)); background:var(--gfx-panel); font-size:calc(36 * var(--u)); font-weight:500; } .ds-gfx-badge { padding:calc(4 * var(--u)) calc(10 * var(--u)); border:calc(2 * var(--u)) solid currentColor; font-family:var(--font-ui, Geist, system-ui, sans-serif); font-size:calc(20 * var(--u)); font-weight:600; } .ds-mon__guide { position:absolute; pointer-events:none; } .ds-mon__guide[data-area=action] { inset:5%; border:1px dashed rgb(255 255 255 / 0.45); } .ds-mon__guide[data-area=title] { inset:10%; border:1px dotted rgb(255 255 255 / 0.35); } @keyframes ds-gfx-in { from { opacity:0; transform:translateY(calc(24 * var(--u))); } } @media (prefers-reduced-motion: reduce) { .ds-gfx-third { animation:none; } }"
     },
@@ -521,6 +548,30 @@
       "description": "Broadcast Preview: the monitor's text equivalent. Rows newest first: time, moment (kind icon and label; corrections add their title), then one column per partner that never moves. Each partner cell is a button that previews that partner's version, with the shared lamp: Queued, On air, Published (aired), Pending approval, Dropped.",
       "html": "<table class=\"ds-rd\"><thead><tr><th>Time</th><th>Moment</th><th data-current=\"true\">NLS</th><th>TRA</th></tr></thead><tbody><tr data-selected=\"true\"><td class=\"ds-rd__time\">61'</td><th scope=\"row\"><span class=\"ds-rd__label\">Goal</span></th><td data-current=\"true\"><button class=\"ds-rd__pick\"><span class=\"ds-rd__lamp\" data-tone=\"red\">On air</span><span class=\"ds-rd__words\">Okafor doubles the lead</span></button></td><td><button class=\"ds-rd__pick\"><span class=\"ds-rd__lamp\" data-tone=\"amber\">Pending approval</span><span class=\"ds-rd__words\" lang=\"es-MX\">Okafor amplía la ventaja</span></button></td></tr></tbody></table>",
       "css": ".ds-rd { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:640px; border-collapse:collapse; table-layout:fixed; font-size:13px; color:#e9edf0; } .ds-rd thead th { padding:8px 12px; border-bottom:1px solid #2d363e; font-size:11px; font-weight:600; letter-spacing:0.08em; text-align:left; text-transform:uppercase; color:#7c8791; } .ds-rd thead th[data-current=true] { color:#e9edf0; } .ds-rd tbody tr { border-bottom:1px solid #20272d; } .ds-rd tbody tr[data-selected=true] { background:#151a1e; box-shadow:inset 2px 0 0 #f2f5f7; } .ds-rd td, .ds-rd tbody th { padding:12px; vertical-align:top; text-align:left; font-weight:400; } .ds-rd td[data-current=true] { background:rgb(255 255 255 / 0.025); } .ds-rd__time { font-weight:500; font-variant-numeric:tabular-nums; } .ds-rd__label { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-rd__pick { display:grid; gap:2px; width:100%; padding:0; border:0; background:none; color:inherit; font:inherit; text-align:left; cursor:pointer; } .ds-rd__pick:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-rd__lamp { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; } .ds-rd__lamp[data-tone=red] { color:#ff4a3d; } .ds-rd__lamp[data-tone=amber] { color:#ffb43a; } .ds-rd__words { color:#a1abb4; }"
+    },
+    {
+      "name": "Ticket",
+      "kind": "button",
+      "refersTo": "ticket",
+      "description": "Approvals: one call-sheet entry, oldest first. Head line of 11px uppercase labels: partner code ink-1, kind icon and label ink-3, and at the right the minute it has waited since in amber (waiting is a state); the partner's words beneath in 13px ink-2 in their own lang. Current (aria-current): panel-2, strong hairline edge, 2px board-white inset rule, ink-1.",
+      "html": "<ul class=\"ds-tk\"><li><button class=\"ds-tk__t\" aria-current=\"true\"><span class=\"ds-tk__head\"><span class=\"ds-tk__code\">TRA</span><span>Goal</span><span class=\"ds-tk__since\">61'</span></span><span class=\"ds-tk__words\" lang=\"es-MX\">Okafor amplía la ventaja</span></button></li><li><button class=\"ds-tk__t\" aria-current=\"false\"><span class=\"ds-tk__head\"><span class=\"ds-tk__code\">TRA</span><span>Big chance</span><span class=\"ds-tk__since\">64'</span></span><span class=\"ds-tk__words\" lang=\"es-MX\">Mensah, al palo</span></button></li></ul>",
+      "css": ".ds-tk { display:grid; gap:8px; width:288px; margin:0; padding:0; list-style:none; } .ds-tk__t { font-family:var(--font-ui, Geist, system-ui, sans-serif); display:grid; gap:4px; width:100%; padding:8px 12px; border:1px solid #20272d; border-radius:2px; background:#0d1013; color:#a1abb4; text-align:left; cursor:pointer; transition:background 160ms cubic-bezier(0.16,1,0.3,1); } .ds-tk__t:hover { background:#151a1e; } .ds-tk__t[aria-current=true] { background:#151a1e; border-color:#2d363e; box-shadow:inset 2px 0 0 #f2f5f7; color:#e9edf0; } .ds-tk__t:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-tk__head { display:flex; align-items:center; gap:8px; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-tk__code { color:#e9edf0; } .ds-tk__since { margin-left:auto; color:#ffb43a; letter-spacing:0; font-variant-numeric:tabular-nums; } .ds-tk__words { font-size:13px; overflow-wrap:break-word; }"
+    },
+    {
+      "name": "Reject Form",
+      "kind": "custom",
+      "refersTo": "reject-form",
+      "description": "Approvals: opened by R. Label, full-width one-line input (focused on open; prefilled for a corrected item), an error as role=alert led by the red lamp, then Send rejection (danger key) and Esc Cancel (aria-keyshortcuts=Escape).",
+      "html": "<form class=\"ds-rj\"><label for=\"ds-rj-reason\">Reason for rejecting</label><input id=\"ds-rj-reason\" aria-invalid=\"true\" aria-describedby=\"ds-rj-error\"><p id=\"ds-rj-error\" class=\"ds-rj__error\" role=\"alert\">Give a reason of one line, without links.</p><div class=\"ds-rj__keys\"><button type=\"submit\" class=\"ds-rj__danger\">Send rejection</button><button type=\"button\" class=\"ds-rj__key\" aria-keyshortcuts=\"Escape\"><span class=\"ds-rj__cap\" aria-hidden=\"true\">Esc</span>Cancel</button></div></form>",
+      "css": ".ds-rj { font-family:var(--font-ui, Geist, system-ui, sans-serif); display:grid; gap:8px; width:420px; padding:16px; border:1px solid #2d363e; border-radius:2px; background:#0d1013; } .ds-rj label { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-rj input { height:36px; padding:0 12px; border:1px solid #2d363e; border-radius:2px; background:#07090b; color:#e9edf0; font:inherit; font-size:14px; } .ds-rj input:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-rj__error { display:flex; gap:8px; margin:0; font-size:13px; color:#e9edf0; } .ds-rj__error::before { content:''; flex:none; width:8px; height:8px; margin-top:0.4em; border-radius:999px; background:#ff4a3d; } .ds-rj__keys { display:flex; gap:8px; } .ds-rj__danger, .ds-rj__key { display:inline-flex; align-items:center; gap:8px; height:36px; padding:0 16px; border:1px solid #2d363e; border-radius:2px; background:#151a1e; box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:#e9edf0; font:inherit; font-size:13px; font-weight:500; cursor:pointer; } .ds-rj__danger { color:#ff4a3d; border-color:color-mix(in oklab, #ff4a3d 45%, #2d363e); } .ds-rj__cap { display:inline-grid; place-items:center; min-width:18px; height:18px; padding:0 4px; border:1px solid #2d363e; border-radius:2px; background:#07090b; font-family:'Geist Mono', ui-monospace, monospace; font-size:10px; color:#7c8791; }"
+    },
+    {
+      "name": "Decisions Log",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Approvals: the audit trail, newest first. Studio time (Europe/London, hh:mm, matching the top-bar clock), partner, the item in its own language, Approved/Rejected as text, Now with the shared status lamp, the editor with ' · duty editor (demo identity)', and the reason. On phones (720px and below) each row is a card of labelled lines; the table keeps explicit roles (table, rowgroup, row, cell).",
+      "html": "<table class=\"ds-dl\" role=\"table\"><thead><tr><th scope=\"col\">Decided (studio time)</th><th scope=\"col\">Partner</th><th scope=\"col\">Item</th><th scope=\"col\">Decision</th><th scope=\"col\">Now</th><th scope=\"col\">Editor</th><th scope=\"col\">Reason</th></tr></thead><tbody role=\"rowgroup\"><tr role=\"row\"><td role=\"cell\" data-label=\"Decided\" class=\"ds-dl__num\">19:42</td><td role=\"cell\" data-label=\"Partner\">Tribuna Austral</td><td role=\"cell\" data-label=\"Item\" lang=\"es-MX\">Okafor amplía la ventaja</td><td role=\"cell\" data-label=\"Decision\">Rejected</td><td role=\"cell\" data-label=\"Now\"><span class=\"ds-dl__lamp\">Dropped</span></td><td role=\"cell\" data-label=\"Editor\">T. Ibarra<span class=\"ds-dl__role\"> · duty editor (demo identity)</span></td><td role=\"cell\" data-label=\"Reason\">A correction changed this item's facts</td></tr></tbody></table>",
+      "css": ".ds-dl { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:100%; border-collapse:collapse; font-size:13px; color:#e9edf0; } .ds-dl th { padding:8px 12px; border-bottom:1px solid #2d363e; font-weight:500; text-align:left; color:#a1abb4; } .ds-dl td { padding:8px 12px; border-bottom:1px solid #20272d; vertical-align:top; } .ds-dl__num { font-variant-numeric:tabular-nums; } .ds-dl__lamp { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-dl__role { color:#7c8791; } @media (max-width:720px) { .ds-dl thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); } .ds-dl, .ds-dl tbody, .ds-dl tr, .ds-dl td { display:block; width:100%; } .ds-dl tr { padding:8px 0; border-bottom:1px solid #20272d; } .ds-dl td { display:grid; grid-template-columns:6rem minmax(0,1fr); gap:12px; padding:4px 0; border:0; } .ds-dl td::before { content:attr(data-label); font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-dl td:empty { display:none; } }"
     }
   ],
   "narrative": {
@@ -589,7 +640,9 @@
       "**Do** keep what went out visible: strike retracted text in red, and keep amended claims struck in violet under \"As published\".",
       "**Do** let a key's label carry its state (Starting…, Matchday running, Ready in m:ss) rather than hiding why it is disabled.",
       "**Do** give every keyboard shortcut a visible key cap and `aria-keyshortcuts`.",
-      "**Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows."
+      "**Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows.",
+      "**Do** name the duty editor as a demo identity wherever a decision names an editor; this demo has no sign-in.",
+      "**Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read."
     ],
     "donts": [
       "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
