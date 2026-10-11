@@ -1,0 +1,64 @@
+/*
+ * Fourth Official design tokens. One neutral chrome (anodised panel blacks) and colour used only
+ * as signal light, in the manner of the fourth official's LED board and a broadcast gallery.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Panels: page, surface, raised key. */
+  --panel-0: #07090b;
+  --panel-1: #0d1013;
+  --panel-2: #151a1e;
+  --panel-3: #1c2227;
+  --hairline: #20272d;
+  --hairline-strong: #2d363e;
+
+  /* Ink: primary 15.8:1, secondary 7.6:1, tertiary 4.6:1 on --panel-1. */
+  --ink-1: #e9edf0;
+  --ink-2: #a1abb4;
+  --ink-3: #7c8791;
+
+  /* Signal lights. Each state owns one; never decoration. */
+  --led-green: #3ee07f;
+  --led-red: #ff4a3d;
+  --led-amber: #ffb43a;
+  --led-blue: #63b4ff;
+  --led-violet: #bc9dff;
+  --led-white: #f2f5f7;
+  --led-off: rgb(255 255 255 / 0.07);
+
+  /* Type. */
+  --font-ui: var(--font-geist-sans), system-ui, sans-serif;
+  --font-data: var(--font-geist-mono), ui-monospace, monospace;
+  --text-xs: 0.6875rem; /* 11px: panel labels */
+  --text-sm: 0.8125rem; /* 13px: dense UI */
+  --text-md: 0.875rem; /* 14px: body */
+  --text-lg: 1rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --tracking-label: 0.08em;
+
+  /* Space (4px base), shape, motion. */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --radius-key: 2px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-ui: 160ms;
+  --duration-light: 220ms;
+
+  --focus-ring: 0 0 0 2px var(--panel-0), 0 0 0 4px var(--led-white);
+}
+
+@theme inline {
+  --color-panel-0: var(--panel-0);
+  --color-panel-1: var(--panel-1);
+  --color-panel-2: var(--panel-2);
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --font-sans: var(--font-ui);
+  --font-mono: var(--font-data);
+}

@@ -1,0 +1,28 @@
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { NavRail } from "./NavRail";
+
+describe("NavRail", () => {
+  it("marks the current screen", () => {
+    render(<NavRail current="/" />);
+
+    expect(screen.getByRole("link", { name: "Control Room" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("lists screens that are not built yet without linking to them", () => {
+    render(<NavRail current="/" />);
+
+    expect(screen.queryByRole("link", { name: /Corrections/ })).toBeNull();
+    expect(screen.getByText("Corrections")).toBeInTheDocument();
+  });
+
+  it("is a labelled primary navigation landmark", () => {
+    render(<NavRail current="/" />);
+
+    expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
+  });
+});

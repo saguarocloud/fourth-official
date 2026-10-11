@@ -1,0 +1,34 @@
+import { render, screen, within } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+
+import { DEMO_MATCHDAY } from "@/fixtures/matchday";
+
+import { ActivityFeed } from "./ActivityFeed";
+
+describe("ActivityFeed", () => {
+  it("announces new entries politely", () => {
+    render(<ActivityFeed entries={DEMO_MATCHDAY.activity} partners={DEMO_MATCHDAY.partners} />);
+
+    expect(screen.getByRole("log", { name: "Live activity" })).toHaveAttribute(
+      "aria-live",
+      "polite",
+    );
+  });
+
+  it("shows each entry's state, partner and match minute", () => {
+    const entry = DEMO_MATCHDAY.activity[0]!;
+    render(<ActivityFeed entries={[entry]} partners={DEMO_MATCHDAY.partners} />);
+    const item = screen.getByRole("listitem");
+
+    expect(within(item).getByText(entry.text)).toBeInTheDocument();
+    expect(item.querySelector("time")).not.toBeNull();
+  });
+
+  it("explains what will appear before anything has happened", () => {
+    render(<ActivityFeed entries={[]} partners={DEMO_MATCHDAY.partners} />);
+
+    expect(
+      screen.getByText(/Published items, approvals and corrections appear here/),
+    ).toBeInTheDocument();
+  });
+});

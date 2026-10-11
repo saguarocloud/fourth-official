@@ -1,0 +1,200 @@
+/* Panel heading: the silk-screened label on a hardware panel. It is the heading, not a kicker. */
+.panel-heading {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: var(--space-3);
+}
+
+/* Status lamp -------------------------------------------------------------------------------- */
+.status-lamp {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.status-lamp__icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.status-lamp[data-tone="green"] .status-lamp__icon {
+  color: var(--led-green);
+}
+.status-lamp[data-tone="red"] .status-lamp__icon {
+  color: var(--led-red);
+}
+.status-lamp[data-tone="amber"] .status-lamp__icon {
+  color: var(--led-amber);
+}
+.status-lamp[data-tone="violet"] .status-lamp__icon {
+  color: var(--led-violet);
+}
+.status-lamp[data-tone="muted"] .status-lamp__icon {
+  color: var(--ink-3);
+}
+
+/* Tally light -------------------------------------------------------------------------------- */
+.tally {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.tally__lamp {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--hairline-strong);
+  transition:
+    background var(--duration-light) var(--ease-out),
+    border-color var(--duration-light) var(--ease-out);
+}
+
+.tally[data-live="true"] {
+  color: var(--led-red);
+}
+
+.tally[data-live="true"] .tally__lamp {
+  background: var(--led-red);
+  border-color: var(--led-red);
+}
+
+/* Key button: square-cut hardware key; the primary key is the lit one. ---------------------- */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--hairline-strong);
+  border-radius: var(--radius-key);
+  background: var(--panel-2);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  color: var(--ink-1);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--duration-ui) var(--ease-out),
+    border-color var(--duration-ui) var(--ease-out),
+    transform var(--duration-ui) var(--ease-out);
+}
+
+.key[data-size="sm"] {
+  height: 28px;
+  padding: 0 var(--space-3);
+}
+
+.key:hover:not(:disabled) {
+  background: var(--panel-3);
+}
+
+.key:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+.key[data-intent="primary"] {
+  background: var(--led-white);
+  border-color: var(--led-white);
+  color: var(--panel-0);
+}
+
+.key[data-intent="primary"]:hover:not(:disabled) {
+  background: #ffffff;
+}
+
+.key[data-intent="danger"] {
+  color: var(--led-red);
+  border-color: color-mix(in oklab, var(--led-red) 45%, var(--hairline-strong));
+}
+
+.key[data-intent="quiet"] {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ink-2);
+}
+
+.key:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.key__cap {
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  font-family: var(--font-data);
+  font-size: var(--text-xs);
+  opacity: 0.7;
+}
+
+.key__spinner {
+  width: 14px;
+  height: 14px;
+  animation: key-spin 0.9s linear infinite;
+}
+
+@keyframes key-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Data table --------------------------------------------------------------------------------- */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.data-table__caption {
+  text-align: left;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-2);
+  padding-bottom: var(--space-2);
+}
+
+.data-table th {
+  text-align: left;
+  font-weight: 500;
+  color: var(--ink-2);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline-strong);
+}
+
+.data-table td {
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--hairline);
+}
+
+.data-table tbody tr:hover td {
+  background: var(--panel-2);
+}
+
+.data-table [data-numeric] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-table__empty {
+  color: var(--ink-2);
+  text-align: center;
+  padding: var(--space-5);
+}
