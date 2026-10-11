@@ -23,7 +23,7 @@ jobs:
         with:
           enable-cache: true
       - name: Install
-        run: uv sync --all-packages --frozen
+        run: uv sync --all-packages --locked
       - name: Lint
         run: uv run ruff check --output-format=github .
       - name: Format
@@ -49,6 +49,8 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
       - name: Install
         run: npm ci
+      - name: Audit production dependencies
+        run: npm audit --omit=dev --audit-level=high
       - name: Lint
         run: npm run lint
       - name: Format

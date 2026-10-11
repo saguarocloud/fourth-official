@@ -13,6 +13,7 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Tooling and CI pull request (api and web skeletons, quality gates)
 - [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow)
 - [ ] Design system pull request (impeccable)
+- [ ] Security headers on web and api (CSP, frame options, referrer policy)
 - [ ] Open decisions settled: names and collision check, team, Teams route, brand, languages
 - [ ] Budget ($100/month) and resource groups provisioned via `azd provision`
 - [ ] Upgrade subscription to pay-as-you-go (before the credit expires around Nov 6)

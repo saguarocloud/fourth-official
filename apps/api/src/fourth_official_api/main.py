@@ -11,6 +11,8 @@ SERVICE_NAME = "fourth-official-api"
 
 
 class Health(BaseModel):
+    """Liveness payload returned by `GET /healthz`."""
+
     model_config = ConfigDict(frozen=True)
 
     status: Literal["ok"]
@@ -19,6 +21,7 @@ class Health(BaseModel):
 
 
 def create_app(settings: Settings) -> FastAPI:
+    """Build the API with explicit settings, so tests never depend on process environment."""
     app = FastAPI(title="Fourth Official API", version=settings.version)
 
     @app.get("/healthz", response_model=Health, tags=["ops"])
