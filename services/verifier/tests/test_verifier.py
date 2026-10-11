@@ -211,7 +211,6 @@ def test_club_codes_written_out_must_be_references() -> None:
     assert "RAW_NAME" in codes(insight(claim("HCY take the lead.", events=GOAL)))
 
 
-
 @pytest.mark.parametrize(
     "text",
     [
