@@ -23,6 +23,8 @@ export function contentSecurityPolicy({ dev }: Mode): string {
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'unsafe-inline'${dev ? " 'unsafe-eval'" : ""}`,
+    // Inline scripts must run; inline event-handler attributes never need to.
+    "script-src-attr 'none'",
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self'",
@@ -31,7 +33,8 @@ export function contentSecurityPolicy({ dev }: Mode): string {
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'",
-    "upgrade-insecure-requests",
+    // Production only: some browsers would upgrade a plain-http localhost and break the page.
+    ...(dev ? [] : ["upgrade-insecure-requests"]),
   ];
   return directives.join("; ");
 }

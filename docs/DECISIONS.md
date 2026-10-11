@@ -192,10 +192,10 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Choice.**
 - **Web (`apps/web/src/lib/securityHeaders.ts`, every response):**
   - a CSP that allows only this origin for scripts, styles, images, fonts and connections;
-  - `object-src 'none'`, `frame-ancestors 'none'`, `base-uri` and `form-action` limited to this origin, and `upgrade-insecure-requests`;
+  - `object-src 'none'`, `frame-ancestors 'none'`, `script-src-attr 'none'` (no inline event handlers), `base-uri` and `form-action` limited to this origin, and `upgrade-insecure-requests` in production;
   - `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, HSTS for two years, `Cross-Origin-Opener-Policy: same-origin`, and a Permissions-Policy that turns off camera, microphone, geolocation, payment and USB.
 - **Scripts need `'unsafe-inline'`.** Nonces need per-request rendering, which Partial Prerendering rules out. Hashes cannot list scripts whose content varies. Subresource Integrity covers only external files. Checked in a browser, a strict `script-src 'self'` blocked every page's inline data scripts, 14 to 47 per page, and the pages never became interactive. `'unsafe-eval'` is allowed in development only.
-- **API (`apps/api/src/fourth_official_api/security.py`):** a plain ASGI middleware, so event streams pass through unbuffered. Every response gets nosniff, `DENY`, `no-referrer`, HSTS and `Cross-Origin-Resource-Policy: same-origin`. JSON answers also get `default-src 'none'; frame-ancestors 'none'`. The interactive docs (`/docs`, `/redoc`) load their own assets, so they keep everything but the policy.
+- **API (`apps/api/src/fourth_official_api/security.py`):** a plain ASGI middleware, so event streams pass through unbuffered. It sets each header, replacing any value a route set, so only one is ever sent. Every response gets nosniff, `DENY`, `no-referrer`, HSTS and `Cross-Origin-Resource-Policy: same-origin`. JSON answers also get `default-src 'none'; frame-ancestors 'none'`. The interactive docs (`/docs`, `/redoc`) load their own assets, so they keep everything but the policy.
 
 **Consequences.**
 - The XSS risk `'unsafe-inline'` leaves is small:

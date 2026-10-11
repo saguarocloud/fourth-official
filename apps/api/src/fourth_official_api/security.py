@@ -7,6 +7,7 @@ docs load their own scripts and styles, so they keep every protection but the po
 
 from collections.abc import Collection
 
+from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 PROTECTIONS: tuple[tuple[bytes, bytes], ...] = (
@@ -28,11 +29,17 @@ class SecurityHeaders:
         if scope["type"] != "http":
             await self._app(scope, receive, send)
             return
-        added = PROTECTIONS if scope["path"] in self._docs_paths else (*PROTECTIONS, POLICY)
+        path = scope["path"]
+        docs = any(path == p or path.startswith(f"{p}/") for p in self._docs_paths)
+        added = PROTECTIONS if docs else (*PROTECTIONS, POLICY)
 
         async def with_protections(message: Message) -> None:
             if message["type"] == "http.response.start":
-                message = {**message, "headers": [*message.get("headers", []), *added]}
+                message = {**message, "headers": list(message.get("headers", []))}
+                headers = MutableHeaders(scope=message)
+                # Set, not append: ours replace any a route set, so one value is ever sent.
+                for name, value in added:
+                    headers[name.decode()] = value.decode()
             await send(message)
 
         await self._app(scope, receive, with_protections)

@@ -28,6 +28,16 @@ describe("contentSecurityPolicy", () => {
     expect(policy.has("upgrade-insecure-requests")).toBe(true);
   });
 
+  it("blocks inline event handlers even though inline scripts run", () => {
+    expect(directives(contentSecurityPolicy({ dev: false })).get("script-src-attr")).toEqual([
+      "'none'",
+    ]);
+  });
+
+  it("upgrades insecure requests in production only, so plain http works locally", () => {
+    expect(contentSecurityPolicy({ dev: true })).not.toContain("upgrade-insecure-requests");
+  });
+
   it("never allows eval in production, only in development", () => {
     expect(contentSecurityPolicy({ dev: false })).not.toContain("unsafe-eval");
     expect(contentSecurityPolicy({ dev: true })).toContain("'unsafe-eval'");
