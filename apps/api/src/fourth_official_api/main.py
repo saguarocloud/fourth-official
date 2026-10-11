@@ -10,6 +10,7 @@ from pydantic import BaseModel, ConfigDict
 from fourth_official_api.explainers import foundry_explainer, template_explainer
 from fourth_official_api.matchday_routes import matchday_router
 from fourth_official_api.settings import Settings
+from fourth_official_api.start_ledger import blob_start_ledger
 from fourth_official_match_data import MatchStore, demo_store
 from fourth_official_replay import Matchday, ReplayConfig, StartLedger
 
@@ -52,8 +53,13 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
             day = matchday
+            starts = ledger
+            if starts is None and settings.start_ledger is not None:
+                starts = await stack.enter_async_context(
+                    blob_start_ledger(settings.start_ledger.url, settings.start_ledger.client_id)
+                )
             if day is None:
-                if settings.foundry and ledger is None:
+                if settings.foundry and starts is None:
                     # Model spend is bounded by the matchday's guards, which must survive restarts.
                     raise RuntimeError(
                         "the Analyst needs a durable start ledger; none is configured"
@@ -67,7 +73,8 @@ def create_app(
                     store,
                     explainer,
                     config=ReplayConfig(speed=settings.replay_speed),
-                    ledger=ledger,
+                    ledger=starts,
+                    runs_per_day=settings.runs_per_day,
                 )
             app.state.matchday = day
             try:

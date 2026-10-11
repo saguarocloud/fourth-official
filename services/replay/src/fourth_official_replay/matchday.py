@@ -13,6 +13,7 @@ opened the feed earlier follow the new run.
 
 import asyncio
 import time
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal, Protocol
 
@@ -31,7 +32,10 @@ class StartLedger(Protocol):
 
     async def recent(self, since: float) -> tuple[float, ...]: ...
 
-    async def record(self, started: float) -> None: ...
+    async def claim(self, started: float, check: Callable[[tuple[float, ...]], None]) -> None:
+        """Record `started` if `check` accepts the starts held at that moment (it raises if
+        not). Atomic: no start recorded elsewhere can slip between the check and the record."""
+        ...
 
 
 class InMemoryLedger:
@@ -43,7 +47,8 @@ class InMemoryLedger:
     async def recent(self, since: float) -> tuple[float, ...]:
         return tuple(t for t in self._starts if t >= since)
 
-    async def record(self, started: float) -> None:
+    async def claim(self, started: float, check: Callable[[tuple[float, ...]], None]) -> None:
+        check(self._starts)
         self._starts = (*self._starts[-(DEFAULT_RUNS_PER_DAY * 2) :], started)
 
 
@@ -107,20 +112,17 @@ class Matchday:
         return "failed" if run.cancelled() or run.exception() else "finished"
 
     @property
+    def runs_per_day(self) -> int:
+        return self._runs_per_day
+
+    @property
     def running(self) -> bool:
         return any(not run.done() for run in self._runs.values())
 
-    async def availability(self, *, now: float | None = None) -> Availability:
-        """Whether `start` would accept a run now, without starting one."""
-        moment = time.time() if now is None else now
-        if self.running:
-            return Availability(
-                ready=False, blocked_by="running", reason="a matchday is already running"
-            )
+    def _judge(self, starts: tuple[float, ...], moment: float) -> Availability:
+        """The guards over the starts recorded so far, ignoring a run under way."""
         # A start counts against the day for a full 24 hours, and no longer.
-        today = sorted(
-            t for t in await self._ledger.recent(moment - DAY_SECONDS) if t > moment - DAY_SECONDS
-        )
+        today = sorted(t for t in starts if t > moment - DAY_SECONDS)
         cooled = today[-1] + self._cooldown if today else moment
         if len(today) >= self._runs_per_day:
             return Availability(
@@ -138,8 +140,17 @@ class Matchday:
             )
         return Availability(ready=True)
 
-    async def _check_can_start(self, now: float) -> None:
-        available = await self.availability(now=now)
+    async def availability(self, *, now: float | None = None) -> Availability:
+        """Whether `start` would accept a run now, without starting one."""
+        moment = time.time() if now is None else now
+        if self.running:
+            return Availability(
+                ready=False, blocked_by="running", reason="a matchday is already running"
+            )
+        return self._judge(await self._ledger.recent(moment - DAY_SECONDS), moment)
+
+    def _refuse_unless_ready(self, starts: tuple[float, ...], moment: float) -> None:
+        available = self._judge(starts, moment)
         if not available.ready:
             raise MatchdayBusyError(available.reason)
 
@@ -148,8 +159,11 @@ class Matchday:
         cooldown, and beyond the daily budget."""
         moment = time.time() if now is None else now
         async with self._lock:
-            await self._check_can_start(moment)
-            await self._ledger.record(moment)
+            if self.running:
+                raise MatchdayBusyError("a matchday is already running")
+            await self._ledger.claim(
+                moment, lambda starts: self._refuse_unless_ready(starts, moment)
+            )
             records = {match_id: self._store.record(match_id) for match_id in self._feeds}
             for feed in self._feeds.values():
                 await feed.reset()

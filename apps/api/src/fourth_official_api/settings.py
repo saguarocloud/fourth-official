@@ -4,6 +4,8 @@ import os
 import re
 from dataclasses import dataclass
 
+from fourth_official_replay.matchday import DEFAULT_RUNS_PER_DAY
+
 DEFAULT_VERSION = "dev"
 DEFAULT_REPLAY_SPEED = 8.0
 MAX_REPLAY_SPEED = 120.0
@@ -16,6 +18,21 @@ MATCH_DATA_URL = re.compile(
     r"https://[a-z0-9][a-z0-9.-]{1,240}\.azurecontainerapps\.io/mcp"
     r"|http://(127\.0\.0\.1|localhost)(:[0-9]{1,5})?/mcp"
 )
+
+# One blob in Azure Storage, addressed without any key or signature: access is by identity.
+START_LEDGER_URL = re.compile(
+    r"https://[a-z0-9]{3,24}\.blob\.core\.windows\.net/[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])/"
+    r"(?!\.{1,2}$)[A-Za-z0-9._-]{1,128}"
+)
+
+
+@dataclass(frozen=True, slots=True)
+class StartLedgerSettings:
+    """Where the matchday's starts are kept, so its spend guards survive restarts."""
+
+    url: str
+    # The client ID of the app's managed identity (empty: the developer's own credential).
+    client_id: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +54,10 @@ class Settings:
     foundry: FoundrySettings | None = None
     # How many times faster than real time the matchday replays.
     replay_speed: float = DEFAULT_REPLAY_SPEED
+    # None: starts are kept in memory, which only template runs (costing nothing) may rely on.
+    start_ledger: StartLedgerSettings | None = None
+    # How many matchday runs may start in any 24 hours: the ceiling on model spend per day.
+    runs_per_day: int = DEFAULT_RUNS_PER_DAY
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -47,6 +68,8 @@ class Settings:
             version=version or DEFAULT_VERSION,
             foundry=_foundry_from_env(),
             replay_speed=_speed_from_env(),
+            start_ledger=_ledger_from_env(),
+            runs_per_day=_runs_from_env(),
         )
 
 
@@ -77,3 +100,23 @@ def _speed_from_env() -> float:
     if not 1.0 <= speed <= MAX_REPLAY_SPEED:
         raise ValueError(f"REPLAY_SPEED must be between 1 and {MAX_REPLAY_SPEED:g}")
     return speed
+
+
+def _ledger_from_env() -> StartLedgerSettings | None:
+    url = os.environ.get("START_LEDGER_URL", "").strip()
+    if not url:
+        return None
+    if not START_LEDGER_URL.fullmatch(url):
+        raise ValueError("START_LEDGER_URL must be a blob URL in Azure Storage, without a query")
+    return StartLedgerSettings(url=url, client_id=os.environ.get("AZURE_CLIENT_ID", "").strip())
+
+
+def _runs_from_env() -> int:
+    raw = os.environ.get("MATCHDAY_RUNS_PER_DAY", "").strip()
+    if not raw:
+        return DEFAULT_RUNS_PER_DAY
+    if not raw.isdigit() or not 1 <= int(raw) <= DEFAULT_RUNS_PER_DAY:
+        raise ValueError(
+            f"MATCHDAY_RUNS_PER_DAY must be a whole number from 1 to {DEFAULT_RUNS_PER_DAY}"
+        )
+    return int(raw)

@@ -15,7 +15,8 @@ from fastapi.testclient import TestClient
 from fourth_official_api import explainers, main, matchday_routes
 from fourth_official_api.explainers import foundry_drafters
 from fourth_official_api.main import create_app
-from fourth_official_api.settings import FoundrySettings, Settings
+from fourth_official_api.settings import FoundrySettings, Settings, StartLedgerSettings
+from fourth_official_api.start_ledger import LedgerError
 from fourth_official_contracts import Moment, Provenance, parse_feed_entry
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
@@ -115,7 +116,7 @@ def test_availability_tells_the_studio_when_it_may_start(client: TestClient) -> 
 def test_availability_says_from_when_in_utc() -> None:
     started = time.time() - 100.0
     ledger = InMemoryLedger()
-    anyio.run(ledger.record, started)
+    anyio.run(ledger.claim, started, lambda _: None)
     day = Matchday(demo_store(), template_only, cooldown=600.0, ledger=ledger, sleep=no_wait)
 
     with TestClient(create_app(Settings(version="test"), matchday=day)) as client:
@@ -194,6 +195,42 @@ def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
         assert client.get("/api/matches").status_code == 200
 
     assert opened == [foundry.project_endpoint, "closed"]
+
+
+def test_a_configured_start_ledger_is_opened_at_startup_and_lets_the_analyst_run(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    opened: list[str] = []
+
+    @asynccontextmanager
+    async def fake_explainer(settings: FoundrySettings) -> AsyncIterator[Explainer]:
+        yield template_only
+
+    @asynccontextmanager
+    async def fake_ledger(url: str, client_id: str) -> AsyncIterator[InMemoryLedger]:
+        opened.append(url)
+        yield InMemoryLedger()
+        opened.append("closed")
+
+    monkeypatch.setattr(main, "foundry_explainer", fake_explainer)
+    monkeypatch.setattr(main, "blob_start_ledger", fake_ledger)
+    settings = Settings(
+        version="test",
+        foundry=FoundrySettings(
+            project_endpoint="https://ais-abc.services.ai.azure.com/api/projects/p",
+            match_data_url="http://127.0.0.1:8100/mcp",
+            client_id="",
+        ),
+        start_ledger=StartLedgerSettings(url="https://st.blob.core.windows.net/c/b", client_id=""),
+        runs_per_day=6,
+    )
+
+    with TestClient(main.create_app(settings)) as client:
+        assert client.get("/api/matchday").json()["ready"] is True
+        day: Matchday = client.app.state.matchday  # type: ignore[attr-defined]
+        assert day.runs_per_day == 6
+
+    assert opened == ["https://st.blob.core.windows.net/c/b", "closed"]
 
 
 def test_the_foundry_explainer_builds_the_fast_then_fallback_analysts() -> None:
@@ -432,3 +469,28 @@ def test_a_finished_run_ends_its_stream_with_an_end_event(client: TestClient) ->
         chunks = list(stream.iter_text())
 
     assert "".join(chunks).rstrip().endswith('event: end\ndata: {"generation": 1}')
+
+
+class BrokenLedger:
+    async def recent(self, since: float) -> tuple[float, ...]:
+        raise LedgerError("the start ledger is unavailable")
+
+    async def claim(self, started: float, check: object) -> None:
+        raise LedgerError("the start ledger is unavailable")
+
+
+def test_an_unavailable_start_ledger_is_a_503_and_starts_nothing(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    day = Matchday(demo_store(), template_only, ledger=BrokenLedger(), sleep=no_wait)
+
+    with TestClient(create_app(Settings(version="test"), matchday=day)) as client:
+        availability = client.get("/api/matchday")
+        started = client.post("/api/matchday", headers=START)
+
+    for response in (availability, started):
+        assert response.status_code == 503
+        assert response.headers["cache-control"] == "no-store"
+        assert response.json() == {"detail": "the matchday cannot be started right now"}
+    assert [m.state for m in day.status()] == ["idle"] * 3
+    assert any("start ledger" in r.getMessage() for r in caplog.records)

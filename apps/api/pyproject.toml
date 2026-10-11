@@ -12,6 +12,7 @@ dependencies = [
   "fourth-official-verifier",
   "azure-identity>=1.25,<2",
   "uvicorn[standard]>=0.54",
+  "azure-storage-blob[aio]>=12.26,<13",
 ]
 
 [tool.uv.sources]
