@@ -1,5 +1,6 @@
 """The detector over whole simulated matches: complete, contract-valid, incremental and quick."""
 
+import sys
 import time
 from functools import cache
 
@@ -65,8 +66,10 @@ def test_shift_moments_are_rare_in_ordinary_matches() -> None:
 def test_a_whole_match_is_detected_quickly() -> None:
     whole = match(7001)
     # CPU time of this process, not wall time: CI runs tests in parallel on shared machines, and
-    # waiting for a core is not the detector being slow.
+    # waiting for a core is not the detector being slow. Coverage tracing slows every line
+    # several-fold, so the budget widens while a tracer is attached.
+    budget = 2.0 * (10 if sys.gettrace() is not None or "coverage" in sys.modules else 1)
     start = time.process_time()
     detect(whole)
 
-    assert time.process_time() - start < 2.0
+    assert time.process_time() - start < budget
