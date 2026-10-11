@@ -32,3 +32,9 @@ An `Insight` explains one `Moment` through up to five typed claims (`stat`, `com
 
 - A verdict passes only with no findings, and lists every finding (up to 64) with the claim it concerns.
 - The seeded adversarial tests are wrong numbers, invented players, wrong scorelines and future leakage, and every one is blocked.
+
+## Template fallback
+
+When no model insight passes after its retries (and after the fallback model), `template_insight(moment, facts)` builds a plain insight from the moment's own evidence. Each moment kind has one template, written only with references, so templates pass verification by construction. A test checks this for every moment on the demo matchday. Templates avoid number words ("ten men", "five minutes"), because the Verifier rightly treats those as numbers.
+
+An insight explaining a VAR overturn may cite the goal it ruled out even after the `EVENT_VOIDED` correction has landed. Any other insight citing that goal fails with `VOIDED_EVIDENCE`, which is how the correction cascade finds published items to fix.

@@ -63,8 +63,10 @@ def _text_findings(
                 yield _finding(claim_id, "UNDEFINED_VALUE", f"{argument} has no value to quote")
 
 
-def _evidence_findings(insight: Insight, facts: MatchFacts) -> Iterator[Finding]:
+def _evidence_findings(insight: Insight, moment: Moment, facts: MatchFacts) -> Iterator[Finding]:
     events = {e.event_id: e for e in facts.match.events}
+    # Explaining a VAR overturn means citing the event it ruled out.
+    explained = set(moment.event_ids) if moment.kind == "var_overturn" else set()
     for claim in insight.claims:
         for event_id in claim.evidence.event_ids:
             event = events.get(event_id)
@@ -72,7 +74,7 @@ def _evidence_findings(insight: Insight, facts: MatchFacts) -> Iterator[Finding]
                 yield _finding(claim.claim_id, "EVIDENCE_NOT_FOUND", f"no event {event_id}")
             elif event.seq > insight.as_of_seq:
                 yield _finding(claim.claim_id, "FUTURE_EVIDENCE", f"{event_id} is after the moment")
-            elif event_id in facts.voided:
+            elif event_id in facts.voided and event_id not in explained:
                 yield _finding(claim.claim_id, "VOIDED_EVIDENCE", f"{event_id} was voided")
         for snapshot_id in claim.evidence.metric_snapshot_ids:
             snapshot = facts.snapshots.get(snapshot_id)
@@ -95,7 +97,7 @@ def _findings(insight: Insight, moment: Moment, facts: MatchFacts) -> Iterator[F
     yield from _text_findings(None, insight.headline, moment, facts)
     for claim in insight.claims:
         yield from _text_findings(claim.claim_id, claim.text, moment, facts)
-    yield from _evidence_findings(insight, facts)
+    yield from _evidence_findings(insight, moment, facts)
 
 
 def verify(insight: Insight, moment: Moment, facts: MatchFacts) -> Verdict:
