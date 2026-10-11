@@ -23,7 +23,7 @@ interface Screen {
 const SCREENS: readonly Screen[] = [
   { label: "Control Room", href: "/", icon: LayoutGrid, available: true },
   { label: "Match Live", href: "/match", icon: Activity, available: true },
-  { label: "Broadcast Preview", href: "/preview", icon: MonitorPlay, available: false },
+  { label: "Broadcast Preview", href: "/preview", icon: MonitorPlay, available: true },
   { label: "Approvals", href: "/approvals", icon: ClipboardCheck, available: false },
   { label: "Corrections", href: "/corrections", icon: Undo2, available: false },
   { label: "Provenance", href: "/provenance", icon: FileBadge, available: false },

@@ -5,17 +5,19 @@ import type { MatchSummary } from "./types";
 interface MatchSwitcherProps {
   readonly matches: readonly MatchSummary[];
   readonly current: string;
+  /** The screen the keys switch matches on. */
+  readonly path?: "/match" | "/preview";
 }
 
 /** The matchday's matches, one key each; the current one is lit. */
-export function MatchSwitcher({ matches, current }: MatchSwitcherProps) {
+export function MatchSwitcher({ matches, current, path = "/match" }: MatchSwitcherProps) {
   return (
     <nav aria-label="Matches" className="match-switcher">
       <ul>
         {matches.map((match) => (
           <li key={match.matchId}>
             <Link
-              href={`/match?match=${match.matchId}`}
+              href={`${path}?match=${match.matchId}`}
               className="match-switcher__key"
               aria-current={match.matchId === current ? "page" : undefined}
               scroll={false}

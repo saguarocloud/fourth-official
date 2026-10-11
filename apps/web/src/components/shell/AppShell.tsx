@@ -17,7 +17,7 @@ interface AppShellProps {
 /** Gallery layout: status bar across the top, screens on the left, live rail on the right. */
 export function AppShell({ current, summary, studio, replay, rail, children }: AppShellProps) {
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-rail={rail ? undefined : "none"}>
       <a href="#main" className="skip-link">
         Skip to content
       </a>

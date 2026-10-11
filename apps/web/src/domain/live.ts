@@ -105,10 +105,33 @@ export function foldFeed(entries: readonly FeedEntry[], generation = 1): LiveMat
   return entries.reduce(applyEntry, emptyLive(generation));
 }
 
-const KINDS = new Set(["clock", "moment", "insight", "correction"]);
+const KINDS = new Set(["clock", "moment", "insight", "correction", "tenant_item"]);
 
 /** A feed entry from the stream, or null if it is not one for this match. The server is ours and
  * validates everything it sends; this guards the shape the reducer relies on. */
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isClock(value: unknown): boolean {
+  return isRecord(value) && ["period", "minute", "second"].every((k) => Number.isInteger(value[k]));
+}
+
+/** A partner's item carries the fields the Broadcast Preview reads before it renders: whose it is,
+ * and an overlay with an id, a template and its in and out times. */
+function isTenantItem(entry: Record<string, unknown>): boolean {
+  const { overlay } = entry;
+  return (
+    typeof entry.tenantId === "string" &&
+    isRecord(overlay) &&
+    typeof overlay.itemId === "string" &&
+    isRecord(overlay.content) &&
+    typeof overlay.content.template === "string" &&
+    isClock(overlay.inAt) &&
+    isClock(overlay.outAt)
+  );
+}
+
 export function parseEntry(raw: string, matchId: string): FeedEntry | null {
   let value: unknown;
   try {
@@ -120,6 +143,7 @@ export function parseEntry(raw: string, matchId: string): FeedEntry | null {
   const entry = value as Record<string, unknown>;
   if (entry.matchId !== matchId || !KINDS.has(String(entry.kind))) return null;
   if (typeof entry.entrySeq !== "number" || !Number.isInteger(entry.entrySeq)) return null;
+  if (entry.kind === "tenant_item" && !isTenantItem(entry)) return null;
   return value as FeedEntry;
 }
 
