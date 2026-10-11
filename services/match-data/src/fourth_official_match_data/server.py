@@ -15,6 +15,8 @@ from mcp.server.fastmcp.exceptions import ToolError
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import ToolAnnotations
 from pydantic import Field
+from starlette.requests import Request
+from starlette.responses import JSONResponse, Response
 
 from fourth_official_contracts import MetricName, MetricSnapshot, MetricWindow
 from fourth_official_match_data import tools
@@ -33,6 +35,7 @@ INSTRUCTIONS = (
     "Numbers come from the stats engine; quote them by snapshot ID, never recompute them."
 )
 READ_ONLY = ToolAnnotations(readOnlyHint=True, destructiveHint=False, openWorldHint=False)
+SERVICE_NAME = "fourth-official-match-data"
 LOOPBACK = ("127.0.0.1:*", "localhost:*", "[::1]:*")
 
 MatchId = Annotated[str, Field(pattern=r"^m[0-9]{1,12}$", description="Match ID, e.g. m42")]
@@ -69,9 +72,11 @@ def create_server(
     host: str = "127.0.0.1",
     port: int = 8100,
     allowed_hosts: Sequence[str] = (),
+    version: str = "dev",
 ) -> FastMCP:
     """The server over `store`. Over HTTP it answers only to loopback and `allowed_hosts` (the
-    public host names it is served under), which guards against DNS rebinding."""
+    public host names it is served under), which guards against DNS rebinding. `GET /healthz`
+    answers on any host, so the platform's probes reach it by address."""
     security = TransportSecuritySettings(
         enable_dns_rebinding_protection=True,
         allowed_hosts=[*LOOPBACK, *allowed_hosts],
@@ -84,6 +89,15 @@ def create_server(
         port=port,
         transport_security=security,
     )
+
+    async def healthz(request: Request) -> Response:
+        return JSONResponse(
+            {"status": "ok", "service": SERVICE_NAME, "version": version},
+            headers={"Cache-Control": "no-store"},
+        )
+
+    # Registered by call, not as a decorator: the SDK's decorator is untyped.
+    server.custom_route("/healthz", methods=["GET"])(healthz)
 
     @server.tool(annotations=READ_ONLY)
     def list_matches() -> MatchList:

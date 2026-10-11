@@ -102,10 +102,12 @@ jobs:
         run: |
           docker build -f apps/api/Dockerfile --build-arg APP_VERSION="$GITHUB_SHA" -t fo-api:ci .
           docker build -f apps/web/Dockerfile --build-arg APP_VERSION="$GITHUB_SHA" -t fo-web:ci apps/web
+          docker build -f services/match-data/Dockerfile --build-arg APP_VERSION="$GITHUB_SHA" -t fo-match-data:ci .
       - name: Smoke test images
         run: |
           scripts/smoke-container.sh fo-api:ci 8000 fourth-official-api "$GITHUB_SHA"
           scripts/smoke-container.sh fo-web:ci 3000 fourth-official-web "$GITHUB_SHA"
+          scripts/smoke-container.sh fo-match-data:ci 8100 fourth-official-match-data "$GITHUB_SHA"
       - name: Scan api image for vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
@@ -117,6 +119,13 @@ jobs:
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: fo-web:ci
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: "1"
+      - name: Scan match-data image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: fo-match-data:ci
           severity: CRITICAL,HIGH
           ignore-unfixed: true
           exit-code: "1"

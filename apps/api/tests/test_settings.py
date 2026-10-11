@@ -3,6 +3,7 @@ import dataclasses
 import pytest
 
 from fourth_official_api.settings import Settings
+from fourth_official_replay.matchday import DEFAULT_RUNS_PER_DAY
 
 
 def test_version_comes_from_app_version_env(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -110,4 +111,69 @@ def test_replay_speed_is_validated(monkeypatch: pytest.MonkeyPatch, value: str) 
     monkeypatch.setenv("REPLAY_SPEED", value)
 
     with pytest.raises(ValueError, match="REPLAY_SPEED"):
+        Settings.from_env()
+
+
+LEDGER = "https://stfoabc123.blob.core.windows.net/matchday/starts.json"
+
+
+def test_the_start_ledger_comes_from_the_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("START_LEDGER_URL", LEDGER)
+    monkeypatch.setenv("AZURE_CLIENT_ID", "00000000-0000-0000-0000-000000000001")
+
+    ledger = Settings.from_env().start_ledger
+
+    assert ledger is not None
+    assert (ledger.url, ledger.client_id) == (LEDGER, "00000000-0000-0000-0000-000000000001")
+
+
+def test_without_a_start_ledger_url_there_is_none(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("START_LEDGER_URL", raising=False)
+
+    assert Settings.from_env().start_ledger is None
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://stfoabc123.blob.core.windows.net/matchday/starts.json",
+        "https://evil.example/matchday/starts.json",
+        "https://stfoabc123.blob.core.windows.net.evil.example/matchday/starts.json",
+        "https://stfoabc123.blob.core.windows.net/matchday/starts.json?sig=x",
+        "https://stfoabc123.blob.core.windows.net/matchday",
+        "https://stfoabc123.blob.core.windows.net/matchday/..",
+    ],
+)
+def test_a_start_ledger_url_must_be_a_blob_in_azure_storage(
+    monkeypatch: pytest.MonkeyPatch, url: str
+) -> None:
+    monkeypatch.setenv("START_LEDGER_URL", url)
+
+    with pytest.raises(ValueError, match="START_LEDGER_URL"):
+        Settings.from_env()
+
+
+def test_the_daily_allowance_of_runs_comes_from_the_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("MATCHDAY_RUNS_PER_DAY", "6")
+
+    assert Settings.from_env().runs_per_day == 6
+
+
+def test_the_daily_allowance_defaults_to_the_matchday_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("MATCHDAY_RUNS_PER_DAY", raising=False)
+
+    assert Settings.from_env().runs_per_day == DEFAULT_RUNS_PER_DAY
+
+
+@pytest.mark.parametrize("value", ["0", "25", "six", "1.5"])
+def test_the_daily_allowance_must_be_a_whole_number_up_to_the_default(
+    monkeypatch: pytest.MonkeyPatch, value: str
+) -> None:
+    monkeypatch.setenv("MATCHDAY_RUNS_PER_DAY", value)
+
+    with pytest.raises(ValueError, match="MATCHDAY_RUNS_PER_DAY"):
         Settings.from_env()

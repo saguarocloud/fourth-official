@@ -163,3 +163,19 @@ One entry per decision: context, options, choice, consequences. Newest last.
 **Consequences.**
 - The fallback is a different model family, so a systematic failure of one model is less likely to repeat.
 - When quota for a stronger model arrives, it becomes the `fast` or a new `quality` deployment without code changes.
+
+## ADR-008: The matchday's spend guards live in one blob, claimed atomically
+
+**Date:** 2026-10-11 · **Status:** Accepted
+
+**Context.** Starting a matchday spends model tokens, so the API refuses a start while a run is under way, during a 15-minute cooldown and beyond 24 starts a day. Those guards need to know when runs started. The API scales to zero, and a deploy briefly overlaps two revisions, so starts held in memory are forgotten or seen by only one process.
+
+**Choice.**
+- **Store:** one JSON blob (`{"starts": [...]}`, the latest 48) in a Standard LRS storage account (plan §10.4), named by `START_LEDGER_URL`.
+- **Access:** keyless. Shared-key access is off, and the API's managed identity holds Storage Blob Data Contributor on the one container. The URL may carry no query, so no SAS can be configured.
+- **Atomic claim:** `StartLedger.claim(started, check)` reads the starts and their ETag, runs the guards on what it read, and writes the new start only `If-Match` that ETag (or only if the blob does not exist yet). Losing the race is a `409` ("another start was recorded at the same moment"), never a second run.
+- **Fail closed:** a ledger that cannot be parsed stops every start. With the Analyst configured, the API refuses to start at all without a durable ledger.
+
+**Consequences.**
+- Cost is a few blob operations per start: negligible.
+- Cosmos DB (planned for state) could hold the ledger later; the `StartLedger` protocol keeps that a swap, not a rewrite.

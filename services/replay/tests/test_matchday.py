@@ -1,5 +1,7 @@
 """The matchday: starts the demo's replays, one run at a time, and serves each match's feed."""
 
+from collections.abc import Callable
+
 import anyio
 import pytest
 
@@ -229,3 +231,21 @@ def test_when_the_cooldown_ends_inside_a_spent_day_the_day_decides() -> None:
 
     assert blocked.blocked_by == "daily_limit"
     assert blocked.ready_at == 24 * 60 * 60.0
+
+
+def test_a_start_is_claimed_against_the_starts_the_ledger_holds_at_that_moment() -> None:
+    class LateLedger(InMemoryLedger):
+        """Another process records a start just before this one claims."""
+
+        async def claim(self, started: float, check: Callable[[tuple[float, ...]], None]) -> None:
+            await super().claim(started - 1.0, lambda _: None)
+            await super().claim(started, check)
+
+    day = Matchday(demo_store(), template_only, sleep=no_wait, cooldown=600.0, ledger=LateLedger())
+
+    async def run() -> None:
+        await day.start(now=1000.0)
+
+    with pytest.raises(MatchdayBusyError, match="again in"):
+        anyio.run(run)
+    assert [m.state for m in day.status()] == ["idle"] * 3

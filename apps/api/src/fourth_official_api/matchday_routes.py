@@ -8,6 +8,7 @@ over instead of skipping entries.
 
 import asyncio
 import json
+import logging
 import time
 from collections.abc import AsyncGenerator, Callable
 from datetime import UTC, datetime
@@ -17,10 +18,12 @@ from fastapi import APIRouter, Header, HTTPException, Path, Query, Request, Resp
 from fastapi.responses import StreamingResponse
 from starlette.types import Receive, Scope, Send
 
+from fourth_official_api.start_ledger import LedgerError
 from fourth_official_contracts import WireModel
 from fourth_official_replay import FeedLog, Matchday, MatchdayBusyError
 
 # A reader with nothing new still hears from the server this often, so proxies keep it open.
+logger = logging.getLogger(__name__)
 HEARTBEAT_SECONDS = 15.0
 # A stream ends after this long; clients reconnect with Last-Event-ID and lose nothing.
 STREAM_LIFETIME_SECONDS = 30 * 60.0
@@ -102,6 +105,17 @@ class _SlotResponse(StreamingResponse):
             self._release()
 
 
+def _ledger_unavailable() -> HTTPException:
+    """Fail closed when the start ledger cannot be reached: nothing starts, and the cause is
+    logged here rather than shown to the studio."""
+    logger.exception("the start ledger is unavailable")
+    return HTTPException(
+        status_code=503,
+        detail="the matchday cannot be started right now",
+        headers={"Cache-Control": "no-store"},
+    )
+
+
 def matchday_router(
     summaries: dict[str, dict[str, str]], *, allowed_origins: frozenset[str] = frozenset()
 ) -> APIRouter:
@@ -127,7 +141,10 @@ def matchday_router(
     async def availability(request: Request, response: Response) -> dict[str, Any]:
         """Whether a run may start now, so the studio can say so before anyone presses start."""
         response.headers["Cache-Control"] = "no-store"
-        available = await _matchday(request).availability()
+        try:
+            available = await _matchday(request).availability()
+        except LedgerError:
+            raise _ledger_unavailable() from None
         ready_at = (
             None
             if available.ready_at is None
@@ -160,6 +177,8 @@ def matchday_router(
             raise HTTPException(
                 status_code=409, detail=str(busy), headers={"Cache-Control": "no-store"}
             ) from None
+        except LedgerError:
+            raise _ledger_unavailable() from None
         return {"status": "started"}
 
     @router.get("/matches/{match_id}/feed")
