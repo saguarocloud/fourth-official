@@ -1,0 +1,41 @@
+# Secrets and environment (tenant/subscription IDs live in azd env, never in git)
+.env
+.env.*
+!.env.example
+.azure/
+*.pem
+*.key
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+out/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+pnpm-debug.log*
+
+# Editors and OS
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local model cache and eval scratch output (committed reports live in eval/reports/)
+.model-cache/
+eval/runs/
