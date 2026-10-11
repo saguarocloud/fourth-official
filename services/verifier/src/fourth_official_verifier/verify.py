@@ -16,6 +16,7 @@ from fourth_official_contracts import (
     Finding,
     FindingCode,
     Insight,
+    LocalizedInsight,
     MatchEvent,
     Moment,
     Verdict,
@@ -23,6 +24,7 @@ from fourth_official_contracts import (
     club_of,
 )
 from fourth_official_verifier.facts import MatchFacts
+from fourth_official_verifier.languages import ENGLISH, LANGUAGES, Language
 from fourth_official_verifier.text import SECOND_YELLOW, TextProblems, check_text
 
 MAX_DETAIL = 200
@@ -67,13 +69,15 @@ def _word_findings(claim_id: str | None, problems: TextProblems) -> Iterator[Fin
             yield _finding(claim_id, code, f"{why}: {_examples(found)}")
 
 
-def _evidenced(text: str, events: Iterable[MatchEvent]) -> list[re.Pattern[str]]:
+def _evidenced(
+    text: str, events: Iterable[MatchEvent], language: Language
+) -> list[re.Pattern[str]]:
     """Count phrases the cited events state: a second yellow, for the player the text names (if
     it names one)."""
     named = {argument for kind, argument in claim_references(text) if kind == "player"}
     cards = [e for e in events if isinstance(e, CardEvent) and e.card == "second_yellow"]
     if any(not named or card.player_id in named for card in cards):
-        return [SECOND_YELLOW]
+        return [SECOND_YELLOW[language.locale]]
     return []
 
 
@@ -119,7 +123,9 @@ def _reference_findings(  # noqa: PLR0917 - one claim's text and its context
                 yield _finding(claim_id, "UNDEFINED_VALUE", f"{argument} has no value to quote")
 
 
-def _evidence_findings(insight: Insight, moment: Moment, facts: MatchFacts) -> Iterator[Finding]:
+def _evidence_findings(
+    insight: Insight | LocalizedInsight, moment: Moment, facts: MatchFacts
+) -> Iterator[Finding]:
     events = {e.event_id: e for e in facts.match.events}
     # Explaining a VAR overturn means citing the event it ruled out.
     explained = set(moment.event_ids) if moment.kind == "var_overturn" else set()
@@ -147,7 +153,9 @@ def _evidence_findings(insight: Insight, moment: Moment, facts: MatchFacts) -> I
                 )
 
 
-def _findings(insight: Insight, moment: Moment, facts: MatchFacts) -> Iterator[Finding]:
+def _findings(
+    insight: Insight | LocalizedInsight, moment: Moment, facts: MatchFacts
+) -> Iterator[Finding]:
     if (insight.moment_id, insight.as_of_seq) != (moment.moment_id, moment.as_of_seq):
         yield _finding(None, "MOMENT_MISMATCH", f"insight is not about {moment.moment_id}")
         return
@@ -157,21 +165,34 @@ def _findings(insight: Insight, moment: Moment, facts: MatchFacts) -> Iterator[F
     def cited(event_ids: Iterable[str]) -> list[MatchEvent]:
         return [events[e] for e in event_ids if e in events]
 
+    language = LANGUAGES[insight.locale] if isinstance(insight, LocalizedInsight) else ENGLISH
     every = cited(e for c in insight.claims for e in c.evidence.event_ids)
     yield from _word_findings(
-        None, check_text(insight.headline, players, evidenced=_evidenced(insight.headline, every))
+        None,
+        check_text(
+            insight.headline,
+            players,
+            evidenced=_evidenced(insight.headline, every, language),
+            language=language,
+        ),
     )
     yield from _reference_findings(None, insight.headline, every, moment, facts)
     for claim in insight.claims:
         own = cited(claim.evidence.event_ids)
         yield from _word_findings(
-            claim.claim_id, check_text(claim.text, players, evidenced=_evidenced(claim.text, own))
+            claim.claim_id,
+            check_text(
+                claim.text,
+                players,
+                evidenced=_evidenced(claim.text, own, language),
+                language=language,
+            ),
         )
         yield from _reference_findings(claim.claim_id, claim.text, own, moment, facts)
     yield from _evidence_findings(insight, moment, facts)
 
 
-def verify(insight: Insight, moment: Moment, facts: MatchFacts) -> Verdict:
+def verify(insight: Insight | LocalizedInsight, moment: Moment, facts: MatchFacts) -> Verdict:
     """Check every fact in the insight against the match as it stood at the moment."""
     findings: list[Finding] = []
     for finding in _findings(insight, moment, facts):

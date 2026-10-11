@@ -1,0 +1,35 @@
+# German football nouns: the capitalised words a German claim may use outside references.
+# German capitalises every noun, so an allowlist of nouns is how an invented name is caught:
+# any capitalised word that is not one of these (or a compound of them) is reported as a name.
+# Lowercase, one per line or space-separated. Compounds of these stems are accepted
+# (Ballgewinn = ball + gewinn), with a linking s or n allowed between stems (Spielstand).
+# A test checks the list against the squad name pools. Never add a number (zwei, doppel...).
+
+# --- The game ---------------------------------------------------------------------------------
+spiel spiele spieler spielerin partie begegnung mannschaft team heimelf gegentor
+tor tore treffer chance chancen gelegenheit möglichkeit gefahr ball bälle besitz
+gewinn verlust eroberung pressing gegenpressing druck tempo rhythmus kontrolle dominanz
+intensität dynamik momentum wucht wende phase moment szene situation aktion
+führung ausgleich rückstand vorsprung stand ergebnis sieg niederlage remis
+
+# --- People -----------------------------------------------------------------------------------
+gegner gast gäste gastgeber heim heimteam stürmer verteidiger torwart torhüter keeper
+schiedsrichter trainer fans publikum zuschauer kapitän joker schütze torschütze
+
+# --- Places and lines -------------------------------------------------------------------------
+strafraum raum räume lücke lücken seite flügel zentrum mitte mittelfeld abwehr verteidigung
+angriff sturm linie grundlinie torlinie mittellinie  platz rasen feld spielfeld
+distanz tiefe breite kette netz latte pfosten winkel ecke bahn außenbahn
+
+# --- Actions and events -----------------------------------------------------------------------
+pass pässe zuspiel flanke schuss schüsse abschluss kopfball kopf fuß parade vorlage
+konter umschaltspiel umschalten ballgewinn ballverlust zweikampf zweikämpfe duell foul
+elfmeter strafstoß freistoß eckball einwurf abstoß anstoß abseits karte gelb rot
+platzverweis videobeweis video beweis entscheidung wechsel einwechslung auswechslung
+nachschuss abpraller fehlpass fehler kontakt kontakte lauf sprint aufbau spielaufbau
+
+# --- Measures and analysis --------------------------------------------------------------------
+quote anteil wert werte statistik daten effizienz verwertung zahl
+pause spielzeit nachspielzeit minute minuten beginn ende anfang
+glück pech antwort reaktion vorteil nachteil überzahl unterzahl ordnung struktur
+bewegung formation sicherheit ruhe kraft energie luft schwung einsatz

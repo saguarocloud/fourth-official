@@ -52,3 +52,43 @@ Tests guarantee that no word in the vocabulary or the openers matches a part of 
 When no model insight passes after its retries (and after the fallback model), `template_insight(moment, facts)` builds a plain insight from the moment's own evidence. Each moment kind has one template, written only with references, so templates pass verification by construction. A test checks this for every moment on the demo matchday. Templates avoid number words ("ten men", "five minutes"), because the Verifier rightly treats those as numbers.
 
 An insight explaining a VAR overturn may cite the goal it ruled out even after the `EVENT_VOIDED` correction has landed. Any other insight citing that goal fails with `VOIDED_EVIDENCE`, which is how the correction cascade finds published items to fix.
+
+## Other languages
+
+Partners read insights in their own language: Northlight Sport in English, Tribuna Austral in Spanish (es-MX), Rheinblick Sport in German (de-DE). A localised insight is checked by the same `verify()`, which picks the language from the insight's locale (`languages.py`, ADR-010).
+
+Every language keeps the same guarantees:
+- **No number written out:** no digit outside a reference, and no number word. That includes ordinals and counts such as "doblete", "primera mitad", "zweimal", "Doppelpack" and "erste Halbzeit".
+- **No name written out:** any name from either squad is a `RAW_NAME`. Any capitalised word that is not a known term is an `UNVERIFIED_NAME`. Spanish allows capitals only on a closed set of sentence openers and terms such as VAR. German capitalises every noun, so it has an allowlist of football nouns (`nouns_de.txt`) and accepts compounds of them ("Ballgewinn", "Torchance", "Spielstand"). A test checks that no squad name could pass as an opener or a noun.
+- **Nothing about later:**
+  - Spanish: "va a", "irá", "será", "pronto", "al final", and any verb in the future tense (-rá, -rán, -remos).
+  - German: "wird", "werden", "bald", "später", "nächste", "Schlusspfiff", "Endstand".
+- **Printable characters of the language only:** accents, ñ, ¡¿ in Spanish; umlauts, ß and „…“ quotation marks in German.
+- **"Second yellow":** accepted in every language only where the cited card was a second yellow for the player named ("segunda amarilla", "zweite Gelbe Karte").
+
+Spanish and German have no lowercase word allowlist, because a localised insight may not add facts at all. Its claims, evidence and references must match the canonical English insight, and that check comes with the Localizer.
+
+Number words are matched by pattern as well as by list, because both languages build numerals freely. The patterns are applied after folding case, accents and ß, so "dieciseis" and "dreissig" are caught too:
+- Spanish: compounds ("veinticuatro", "quinientos"), ordinals including fused forms ("decimoquinto"), and counts ("cuarteto", "un par").
+- German: compounds ("dreiundzwanzig", "zweihundert"), ordinal endings ("zehnte", "dreißigste"), "-mal", counts ("Zweier", "Viererkette"), and "doppel-", "halb-" and "-hälfte".
+
+The near and far post ("primer palo", "segundo palo") name places, so they pass, as "the final third" does in English. Two adversarial review rounds probed for bypasses; every string they found is now a test.
+
+Some costs are accepted. Each one costs a rephrase, never a wrong claim on air:
+- German "wird" is refused even where it means "becomes" ("wird schwächer"), and "gleich" even where it means "equally", because telling them from the future needs grammar.
+- "Die Elf" (the team), "Halbzeit" and "primera parte" (first half) are refused as counts. German claims say "Pause", as English claims say "the break".
+- An unfamiliar German compound noun is refused until it is added to the list.
+- German "noch" is allowed: refusing it would refuse "noch immer" (still), so "er trifft noch" is a known gap.
+
+## Numbers in each locale
+
+Code formats every value for the reader's locale from CLDR data (Babel):
+
+| | en-GB | es-MX | de-DE |
+|---|---|---|---|
+| Decimal | 0.28 | 0.28 | 0,28 |
+| Percentage | 54% | 54% | 54 % |
+| Thousands | 1,234 | 1,234 | 1.234 |
+| Score | 2–1 | 2–1 | 2:1 |
+
+Mexican Spanish writes a decimal point, as CLDR records, not the comma used in Spain. Minutes read the same everywhere: 61', 45+3'.
