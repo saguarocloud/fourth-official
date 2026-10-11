@@ -3,7 +3,7 @@ reading the match through the Match Data MCP server."""
 
 import json
 from collections.abc import Awaitable, Callable, Mapping
-from contextlib import AbstractAsyncContextManager
+from contextlib import AbstractAsyncContextManager, AsyncExitStack
 from dataclasses import dataclass, field
 from typing import Any, Literal, cast
 
@@ -12,6 +12,7 @@ from agent_framework.foundry import FoundryChatClient
 from azure.core.credentials_async import AsyncTokenCredential
 
 from fourth_official_contracts import Provenance
+from fourth_official_explain.bounds import MomentBound
 from fourth_official_explain.drafts import InsightDraft
 from fourth_official_explain.pipeline import DraftRequest
 from fourth_official_explain.prompts import Prompt
@@ -30,8 +31,8 @@ class DraftError(RuntimeError):
     """The model answered without a usable structured draft."""
 
 
-# Runs the agent on one message with options; returns the agent's response.
-RunAgent = Callable[[str, ChatOptions[Any]], Awaitable[object]]
+# Runs the agent on one message, with options, bounded to a moment; returns the agent's response.
+RunAgent = Callable[[str, ChatOptions[Any], int], Awaitable[object]]
 
 
 def request_message(request: DraftRequest) -> str:
@@ -56,30 +57,41 @@ def request_message(request: DraftRequest) -> str:
     return "\n".join(lines)
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class AgentDrafter:
-    """Drafts insights with an Agent Framework agent and its structured output."""
+    """Drafts insights with an Agent Framework agent and its structured output.
+
+    It is an async context manager that owns its tools' connections (the Match Data MCP session),
+    so a session is opened and closed in the same task, and every connection opened is closed even
+    if a later one fails.
+    """
 
     run: RunAgent
     provenance: Provenance
     # Model-specific options, such as reasoning effort for reasoning models.
     options: Mapping[str, object] = field(default_factory=dict)
-    # Connections the agent's tools need (the Match Data MCP session). Entered with the drafter,
-    # so a session is opened and closed in the same task.
     connections: tuple[AbstractAsyncContextManager[object], ...] = ()
+    _stack: AsyncExitStack | None = field(default=None, init=False, repr=False)
 
     async def __aenter__(self) -> "AgentDrafter":
-        for connection in self.connections:
-            await connection.__aenter__()
+        stack = AsyncExitStack()
+        try:
+            for connection in self.connections:
+                await stack.enter_async_context(connection)
+        except BaseException:
+            await stack.aclose()
+            raise
+        self._stack = stack
         return self
 
     async def __aexit__(self, *exc: object) -> None:
-        for connection in reversed(self.connections):
-            await connection.__aexit__(None, None, None)
+        stack, self._stack = self._stack, None
+        if stack is not None:
+            await stack.__aexit__(*exc)  # type: ignore[arg-type]
 
     async def draft(self, request: DraftRequest) -> InsightDraft:
         options = cast("ChatOptions[Any]", {**self.options, "response_format": InsightDraft})
-        response = await self.run(request_message(request), options)
+        response = await self.run(request_message(request), options, request.moment.as_of_seq)
         value = getattr(response, "value", None)
         if not isinstance(value, InsightDraft):
             raise DraftError("the model returned no structured draft")
@@ -96,8 +108,10 @@ def foundry_analyst(
     credential: AsyncTokenCredential,
     reasoning_effort: Literal["minimal", "low", "medium"] | None = None,
 ) -> AgentDrafter:
-    """The Analyst on a Foundry model deployment (`alias` is the configured name, such as `fast`),
-    with the Match Data MCP server's read-only tools and nothing else."""
+    """The caller owns `credential` and closes it after the drafter.
+
+    The Analyst on a Foundry model deployment (`alias` is the configured name, such as `fast`),
+        with the Match Data MCP server's read-only tools and nothing else."""
     client = FoundryChatClient(
         project_endpoint=project_endpoint, model=deployment, credential=credential
     )
@@ -110,8 +124,10 @@ def foundry_analyst(
     )
     agent = Agent(client, prompt.text, name="analyst", tools=[match_data])
 
-    async def run(message: str, options: ChatOptions[Any]) -> object:
-        return await agent.run(message, stream=False, options=options)
+    async def run(message: str, options: ChatOptions[Any], as_of_seq: int) -> object:
+        return await agent.run(
+            message, stream=False, options=options, middleware=[MomentBound(as_of_seq)]
+        )
 
     provenance = Provenance(
         agent=prompt.agent, prompt_version=prompt.version, model=alias, produced_by="model"

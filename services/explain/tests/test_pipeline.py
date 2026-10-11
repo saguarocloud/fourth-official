@@ -176,3 +176,27 @@ def test_with_no_model_at_all_every_moment_still_gets_a_verified_insight(kind: s
 
     assert result.insight is not None
     assert result.verdict.passed
+
+
+def test_a_bug_in_a_drafter_surfaces_instead_of_hiding_behind_the_template() -> None:
+    goal = moment("goal")
+
+    with pytest.raises(AttributeError):
+        run(goal, Scripted(FAST, [AttributeError("bug")]))
+
+
+def test_model_failures_are_logged_with_their_cause(caplog: pytest.LogCaptureFixture) -> None:
+    goal = moment("goal")
+
+    run(goal, Scripted(FAST, [RuntimeError("service unavailable")]))
+
+    assert any("failed on attempt 1" in r.getMessage() and r.exc_info for r in caplog.records)
+
+
+def test_more_attempts_than_insight_ids_can_number_are_refused() -> None:
+    goal = moment("goal")
+    facts, _ = featured()
+    many = [Scripted(FAST, []) for _ in range(34)]
+
+    with pytest.raises(ValueError, match="model attempts"):
+        anyio.run(lambda: explain(goal, facts, many))

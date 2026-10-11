@@ -199,7 +199,7 @@ def test_headlines_may_open_with_a_football_noun() -> None:
     "text",
     [
         "{{club:HCY}} work the ball into the final third before the goal.",
-        "{{club:HCY}} strike before the second half begins.",
+        "{{club:HCY}} reach the final-third and the Final Third.",
         "{{club:HCY}} score with a right\u2011foot shot.",
     ],
 )
@@ -209,3 +209,18 @@ def test_football_phrases_and_typographic_hyphens_pass(text: str) -> None:
 
 def test_club_codes_written_out_must_be_references() -> None:
     assert "RAW_NAME" in codes(insight(claim("HCY take the lead.", events=GOAL)))
+
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "{{player:HCY-09}} scores for the first time at {{minute:12}}.",
+        "{{club:HCY}} lead for the first time.",
+        "{{club:HCY}} score in the second half.",
+        "{{club:HCY}} lead at half time.",
+        "{{club:HCY}} were better in the first_half.",
+    ],
+)
+def test_phrases_about_time_and_counts_are_still_refused(text: str) -> None:
+    assert codes(insight(claim(text, events=GOAL))) != []

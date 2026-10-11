@@ -61,10 +61,9 @@ def _plain(text: str) -> str:
     return _POSSESSIVE_TOKEN.sub(_HOLE, text).translate(_TYPOGRAPHIC)
 
 
-# Football phrases that contain a number word but state no count: they name a place or a time.
-_FIXED_PHRASES = re.compile(
-    r"\b(final third|first half|second half|half[- ]time|first[- ]time)\b", re.IGNORECASE
-)
+# Football phrases that contain a number word but state no count. Only places qualify: phrases
+# about time ("first half", "for the first time") make claims the Verifier cannot check.
+_PLACE_PHRASES = re.compile(r"\bfinal[ -]third\b", re.IGNORECASE)
 
 
 def _name_forms(player_names: Iterable[str]) -> set[str]:
@@ -103,7 +102,7 @@ def check_text(text: str, player_names: Iterable[str]) -> TextProblems:
     if not _ALLOWED.match(plain.replace(_HOLE, " ")):
         return TextProblems(unsupported=True)
     plain, raw = _strip_names(plain, _name_forms(player_names))
-    plain = _FIXED_PHRASES.sub(lambda m: m.group(0).replace(" ", "_").replace("-", "_"), plain)
+    plain = _PLACE_PHRASES.sub(_HOLE, plain)
     numbers = _NUMBERS.findall(plain)
     plain = _NUMBERS.sub(_HOLE, plain)
     names: list[str] = []

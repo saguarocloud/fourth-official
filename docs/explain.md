@@ -12,6 +12,11 @@ moment ─▶ briefing ─▶ Analyst (fast) ─▶ Verifier ─┬─ pass ─�
   - It reads the match through the Match Data MCP server (`MCPStreamableHTTPTool`, read-only tools only), and returns an `InsightDraft` as structured output.
   - The `fast` alias (gpt-5-mini) runs with minimal reasoning effort; the `fallback` alias is gpt-4.1-mini (ADR-007).
   - A drafter is an async context manager that owns its MCP session, so the session opens and closes in the same task.
+- **Held to the moment:** a per-run Agent Framework function middleware (`MomentBound`) rewrites every Match Data tool call so it cannot read past the moment being explained. This holds even during a replay, a retry or a backfill, when more of the match has been published.
+- **Errors:** model and service failures are logged with their cause and recorded as `error` attempts before moving on. Programming errors (`AttributeError`, `TypeError`…) are never hidden behind a fallback.
+- **Attempt budget:** at most 98 model attempts are allowed per moment, which is checked up front, so the template's attempt number always fits the insight ID.
+- **Credentials:** the caller owns the Entra credential and closes it after the drafters.
+- **Supply chain:** dependencies resolve to GA Agent Framework packages. One beta comes in transitively, `azure-ai-inference` (via `agent-framework-foundry`), which has no stable release yet.
 - **Briefing:** every request carries the moment, its evidence events, the events just before it and the score at the moment. That is usually enough, so most drafts need no tool call. The tools remain available for metric values and older play.
 - **Prompt:** versioned files with front matter (`prompts/analyst/v1.1.md`). The version is recorded in each insight's provenance.
 - **Pipeline** (`pipeline.py`):

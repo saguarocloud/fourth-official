@@ -3,6 +3,7 @@ model, and fall back to the deterministic template. Every attempt is recorded fo
 """
 
 import asyncio
+import logging
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Literal, Protocol
@@ -23,6 +24,11 @@ from fourth_official_verifier import MatchFacts, template_insight, verify
 
 RETRIES = 2
 TIMEOUT_SECONDS = 20.0
+# Insight IDs number attempts with two digits, and the template needs the last one.
+MAX_ATTEMPTS = 99
+# Failures that are bugs in our code, not a model or service failing: these always surface.
+PROGRAMMING_ERRORS = (AttributeError, NameError, TypeError, ImportError, AssertionError)
+logger = logging.getLogger(__name__)
 Outcome = Literal["passed", "failed", "error"]
 
 
@@ -40,7 +46,7 @@ class Briefing:
     score: tuple[int, int]
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(frozen=True, slots=True, kw_only=True)
 class DraftRequest:
     moment: Moment
     attempt: int
@@ -122,6 +128,8 @@ async def explain(
     timeout: float = TIMEOUT_SECONDS,
 ) -> Explanation:
     """The best verified insight for the moment, and the record of how it was reached."""
+    if len(drafters) * (1 + retries) >= MAX_ATTEMPTS:
+        raise ValueError(f"at most {MAX_ATTEMPTS - 1} model attempts fit before the template")
     attempts: list[Attempt] = []
     briefing = brief(moment, facts)
     for drafter in drafters:
@@ -129,12 +137,23 @@ async def explain(
         feedback: tuple[Finding, ...] = ()
         for _ in range(1 + retries):
             number = len(attempts) + 1
-            request = DraftRequest(moment, number, feedback, briefing)
+            request = DraftRequest(
+                moment=moment, attempt=number, feedback=feedback, briefing=briefing
+            )
             try:
                 # A timeout in the same task: MCP sessions must close in the task that opened them.
                 async with asyncio.timeout(timeout):
                     draft = await drafter.draft(request)
+            except PROGRAMMING_ERRORS:
+                raise  # a bug is not a model failure: never hide it behind a fallback
             except Exception as failure:
+                logger.warning(
+                    "drafter %s failed on attempt %d for %s",
+                    provenance.model,
+                    number,
+                    moment.moment_id,
+                    exc_info=failure,
+                )
                 attempts.append(
                     Attempt(
                         number,

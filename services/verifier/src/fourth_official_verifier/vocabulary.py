@@ -17,9 +17,9 @@ SENTENCE_OPENERS = frozenset(
     a after all an at before both by despite each every few for from here however in into it its
     many meanwhile more neither no nobody not nothing on only over possession pressing pressure
     since that the their there these they this those through under when while with without
-    as once until across against along among around behind beyond inside outside within
+    as until across against along among around behind beyond inside outside within
     goal goals penalty chance chances save saved red card cards press collapse surge lead
-    equaliser winner comeback control chaos momentum danger pressure tempo shift switch
+    equaliser winner comeback control chaos momentum danger tempo shift switch
     offside overturned ruled disallowed denied missed late early
     """.split()  # noqa: SIM905 - a word list reads best as text
 )
@@ -40,8 +40,6 @@ NUMBER_WORDS = frozenset(
 # Only verb and plural inflections are derived. Agent nouns, comparatives and adverbs (-er, -est,
 # -ly) are listed explicitly: derived freely they make surnames ("hunter", "turner", "holder").
 _SUFFIXES = ("s", "es", "ed", "d", "ing")
-# Fixed football phrases, joined by the text check before words are read.
-_PHRASES = frozenset({"final_third", "first_half", "second_half", "half_time", "first_time"})
 
 
 # Sections whose words are used as written: function words and irregular forms do not inflect
@@ -90,7 +88,7 @@ def _bases(word: str) -> set[str]:
 @cache
 def known(word: str) -> bool:
     """Whether a lowercase word is ordinary football English from the list."""
-    if word in words() or _bases(word) & _inflectable() or word in _PHRASES:
+    if word in words() or _bases(word) & _inflectable():
         return True
     for possessive in ("'s", "s'"):
         if word.endswith(possessive) and known(word[: -len(possessive)] or "-"):

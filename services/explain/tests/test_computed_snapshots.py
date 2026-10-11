@@ -9,7 +9,10 @@ def test_a_served_snapshot_is_found_by_its_id() -> None:
     collapse = next(m for m in moments if m.kind == "pressing_collapse")
 
     for snapshot_id in collapse.metric_snapshot_ids:
-        assert facts.snapshots[snapshot_id].snapshot_id == snapshot_id
+        found = facts.snapshots.get(snapshot_id)
+        assert found is not None
+        assert found.snapshot_id == snapshot_id
+        assert snapshot_id in facts.snapshots  # type: ignore[operator]
 
 
 def test_ids_that_do_not_name_a_first_version_snapshot_of_this_match_are_absent() -> None:
@@ -26,5 +29,13 @@ def test_ids_that_do_not_name_a_first_version_snapshot_of_this_match_are_absent(
         "not a snapshot id",
     ):
         assert snapshots.get(missing) is None
-    assert len(snapshots) == 0
-    assert list(snapshots) == []
+    assert 42 not in snapshots
+
+
+def test_lookups_for_different_matches_are_never_equal() -> None:
+    facts, _ = featured()
+    other = ComputedSnapshots(facts.match)
+
+    lookup: object = facts.snapshots
+    assert lookup != other
+    assert lookup != {}
