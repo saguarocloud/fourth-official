@@ -42,12 +42,18 @@ if ! current="$(gh api "$ENV_API" 2>"$errors")"; then
     exit 1
   fi
 fi
-jq -n --argjson current "$current" '{
-  wait_timer: ([$current.protection_rules[]? | select(.type == "wait_timer") | .wait_timer][0] // 0),
-  prevent_self_review: ([$current.protection_rules[]? | select(.type == "required_reviewers") | .prevent_self_review][0] // false),
-  reviewers: ([$current.protection_rules[]? | select(.type == "required_reviewers") | .reviewers[]? | {type, id: .reviewer.id}]),
-  deployment_branch_policy: {protected_branches: false, custom_branch_policies: true}
-}' | gh api -X PUT "$ENV_API" --input - >/dev/null
+# Reviewer and wait-timer fields are sent only when the environment already has them: on a
+# private repository without GitHub Enterprise, sending them at all (even empty) is refused.
+jq -n --argjson current "$current" '
+  ([$current.protection_rules[]? | select(.type == "required_reviewers")][0]) as $review
+  | ([$current.protection_rules[]? | select(.type == "wait_timer") | .wait_timer][0]) as $wait
+  | {deployment_branch_policy: {protected_branches: false, custom_branch_policies: true}}
+  + (if $wait == null then {} else {wait_timer: $wait} end)
+  + (if $review == null then {} else {
+      prevent_self_review: ($review.prevent_self_review // false),
+      reviewers: [$review.reviewers[]? | {type, id: .reviewer.id}]
+    } end)
+' | gh api -X PUT "$ENV_API" --input - >/dev/null
 
 # Exactly one branch policy: remove anything else, then ensure the deploy branch is present.
 policies="$(gh api "$ENV_API/deployment-branch-policies" --jq '.branch_policies[] | "\(.id) \(.name)"')"
