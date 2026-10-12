@@ -18,7 +18,7 @@ from fourth_official_explain import Explanation, explain
 from fourth_official_explain.analyst import Meter
 from fourth_official_explain.production import ANALYST, MODELS, analyst_drafters
 from fourth_official_match_data import MatchStore
-from fourth_official_proving.models import match_data_server, project_endpoint
+from fourth_official_proving.models import match_data_server, preflight, project_endpoint
 from fourth_official_proving.runner import Explainer
 from fourth_official_verifier import MatchFacts
 
@@ -45,6 +45,7 @@ def _with_models(prompt: tuple[str, str]) -> Opener:
         async with AsyncExitStack() as stack:
             url = await stack.enter_async_context(match_data_server(store))
             credential = await stack.enter_async_context(DefaultAzureCredential())
+            await preflight(endpoint, credential)
             drafters = analyst_drafters(
                 project_endpoint=endpoint,
                 match_data_url=url,

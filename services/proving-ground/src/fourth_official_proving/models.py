@@ -8,13 +8,17 @@ as long as the run.
 
 import asyncio
 import os
+import re
 import socket
 from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from http import HTTPStatus
 from types import MappingProxyType
+from typing import Protocol
 from urllib.parse import urlsplit
 
+import httpx
 import uvicorn
 
 from fourth_official_explain.analyst import TokenCount
@@ -79,6 +83,54 @@ def project_endpoint() -> str:
     if parts.scheme != "https" or not host.endswith(FOUNDRY_HOST_SUFFIX):
         raise FoundryUnavailableError("FOUNDRY_PROJECT_ENDPOINT must be a Foundry project URL")
     return endpoint
+
+
+# The scope the Foundry project endpoint accepts (as azure-ai-projects uses).
+FOUNDRY_SCOPE = "https://ai.azure.com/.default"
+PREFLIGHT_MODEL = "fast"
+PREFLIGHT_SECONDS = 60.0
+_MAX_REASON = 300
+_IDENTIFIER = re.compile(r"[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}")
+
+
+class AccessTokenLike(Protocol):
+    @property
+    def token(self) -> str: ...
+
+
+class TokenSource(Protocol):
+    async def get_token(self, *scopes: str) -> AccessTokenLike: ...
+
+
+def _reason(response: httpx.Response) -> str:
+    try:
+        error = response.json().get("error", {})
+        reason = f"{error.get('code', '')}: {error.get('message', '')}"
+    except (ValueError, AttributeError):
+        reason = response.text
+    # Foundry names the principal it refused: an identifier, kept out of public CI logs.
+    return _IDENTIFIER.sub("<id>", reason)[:_MAX_REASON]
+
+
+async def preflight(
+    endpoint: str,
+    credential: TokenSource,
+    *,
+    transport: httpx.AsyncBaseTransport | None = None,
+) -> None:
+    """One small call to the first model before a run, so a run the models refuse stops at once
+    with Foundry's own reason (which names any permission missing), not after every draft."""
+    token = await credential.get_token(FOUNDRY_SCOPE)
+    async with httpx.AsyncClient(transport=transport, timeout=PREFLIGHT_SECONDS) as client:
+        response = await client.post(
+            f"{endpoint.rstrip('/')}/openai/v1/responses",
+            headers={"Authorization": f"Bearer {token.token}"},
+            json={"model": PREFLIGHT_MODEL, "input": "Reply with OK.", "max_output_tokens": 16},
+        )
+    if response.status_code >= HTTPStatus.BAD_REQUEST:
+        raise FoundryUnavailableError(
+            f"the models refused the preflight call: {response.status_code} {_reason(response)}"
+        )
 
 
 class _QuietServer(uvicorn.Server):

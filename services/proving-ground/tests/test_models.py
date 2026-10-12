@@ -1,9 +1,11 @@
 """Model configurations: a local Match Data server over the benchmark, and what a run costs."""
 
 import asyncio
+import json
 
 import httpx
 import pytest
+from azure.core.credentials import AccessToken
 
 from fourth_official_explain.analyst import TokenCount
 from fourth_official_match_data import store_of
@@ -13,6 +15,7 @@ from fourth_official_proving.models import (
     CostMeter,
     FoundryUnavailableError,
     match_data_server,
+    preflight,
     project_endpoint,
 )
 from fourth_official_simulator.benchmark import benchmark_matches
@@ -97,3 +100,44 @@ def test_the_server_stops_even_when_the_run_fails() -> None:
 
 def test_a_meter_that_heard_of_no_call_knows_no_cost() -> None:
     assert CostMeter().cost_usd() is None
+
+
+class FixedToken:
+    async def get_token(self, *scopes: str, **kwargs: object) -> AccessToken:
+        assert scopes == ("https://ai.azure.com/.default",)
+        return AccessToken("t0ken", 0)
+
+
+ENDPOINT = "https://ais-x.services.ai.azure.com/api/projects/proj"
+
+
+def answering(status: int, body: object) -> httpx.MockTransport:
+    def handle(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/api/projects/proj/openai/v1/responses"
+        assert request.headers["authorization"] == "Bearer t0ken"
+        assert json.loads(request.content)["model"] == "fast"
+        return httpx.Response(status, json=body)
+
+    return httpx.MockTransport(handle)
+
+
+def test_the_preflight_passes_when_the_model_answers() -> None:
+    asyncio.run(preflight(ENDPOINT, FixedToken(), transport=answering(200, {"id": "resp_1"})))
+
+
+def test_a_refusal_stops_the_run_with_foundrys_reason_and_no_identifiers() -> None:
+    body = {
+        "error": {
+            "code": "PermissionDenied",
+            "message": "The principal `0f1e2d3c-4b5a-6978-8a9b-0c1d2e3f4a5b` lacks the required "
+            "data action `Microsoft.CognitiveServices/accounts/AIServices/responses/write`.",
+        }
+    }
+
+    with pytest.raises(FoundryUnavailableError) as refused:
+        asyncio.run(preflight(ENDPOINT, FixedToken(), transport=answering(403, body)))
+
+    message = str(refused.value)
+    assert "403 PermissionDenied" in message
+    assert "AIServices/responses/write" in message
+    assert "0f1e2d3c" not in message
