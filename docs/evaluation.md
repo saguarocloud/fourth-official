@@ -70,7 +70,7 @@ A candidate is compared with the production baseline over the same benchmark and
 - any partner item resting on a corrected event is still on air as it was;
 - storyline recall drops more than 3 points;
 - the share of model-written insights drops more than 5 points (a prompt the Verifier keeps refusing falls back to the template);
-- p95 latency grows more than 15%.
+- p95 latency grows more than 15% and by more than 5 seconds. On the smoke subset p95 is the slowest few model calls, which vary by seconds between identical runs; the degraded candidate still fails it by 10 seconds.
 
 Rates are compared exactly, as integer cross-products of their counts, and rounded only for display. `gate` exits 1 when it blocks and 2 when it cannot judge: a scorecard it cannot read (missing, over 1 MiB, not JSON, not a scorecard) or two scorecards of different benchmarks. Free text in a scorecard (claims, reasons, details) is one printable line; a page shows it as text, never as markup.
 

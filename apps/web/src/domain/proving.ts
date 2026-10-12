@@ -179,7 +179,7 @@ const RULE_TEXT: Readonly<Record<Rule, RuleText>> = {
   },
   latency_p95: {
     title: "Time to explain (p95)",
-    rule: "may grow 15%",
+    rule: "may grow 15% and 5 s",
     figure: (c) => latencyOf(c, "p95"),
   },
 };

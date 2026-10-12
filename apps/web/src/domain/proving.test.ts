@@ -121,7 +121,7 @@ describe("poll", () => {
     expect(latency).toMatchObject({
       candidate: "32.3 s",
       baseline: "22.1 s",
-      allowance: "Rule: may grow 15%",
+      allowance: "Rule: may grow 15% and 5 s",
     });
     expect(untrue).toMatchObject({
       candidate: "0 of 206",
@@ -138,7 +138,7 @@ describe("verdictLine", () => {
       text:
         "The Release Gate blocks Analyst prompt v1.4 against production's v1.2 on 2 of 7 rules: " +
         "written by the model, 29.1% against 98.7% (may drop 5 points); " +
-        "time to explain (p95), 32.3 s against 22.1 s (may grow 15%).",
+        "time to explain (p95), 32.3 s against 22.1 s (may grow 15% and 5 s).",
     });
   });
 
