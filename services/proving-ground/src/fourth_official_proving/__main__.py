@@ -18,7 +18,13 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from fourth_official_contracts import GateVerdict, Scorecard, parse_gate_verdict, parse_scorecard
+from fourth_official_contracts import (
+    GateVerdict,
+    InsightEntry,
+    Scorecard,
+    parse_gate_verdict,
+    parse_scorecard,
+)
 from fourth_official_match_data import store_of
 from fourth_official_proving.configurations import CONFIGURATIONS, Runnable
 from fourth_official_proving.gate import gate
@@ -83,6 +89,19 @@ def _run(args: argparse.Namespace) -> None:
     except FoundryUnavailableError as error:
         sys.stderr.write(f"Proving Ground: {error}\n")
         raise SystemExit(CANNOT_JUDGE) from error
+    if runnable.uses_models and not any(
+        entry.insight.provenance.produced_by == "model"
+        for run in runs
+        for entry in run.entries
+        if isinstance(entry, InsightEntry)
+    ):
+        # Every draft fell back to the template: the models were unreachable or refused every
+        # call. That is no measurement of the models, and must not pass for one.
+        sys.stderr.write(
+            "Proving Ground: no model wrote any insight; the models were unreachable or "
+            "refused every call. See the log above.\n"
+        )
+        raise SystemExit(CANNOT_JUDGE)
     configuration = runnable.configuration
     if args.name is not None:
         configuration = configuration.model_copy(update={"name": args.name})

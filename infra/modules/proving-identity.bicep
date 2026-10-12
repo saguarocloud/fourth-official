@@ -34,13 +34,38 @@ resource account 'Microsoft.CognitiveServices/accounts@2026-09-01' existing = {
   name: foundryAccountName
 }
 
+// No built-in role fits. Cognitive Services OpenAI User lacks the AIServices data actions the
+// Foundry project endpoint checks (its responses API answers 403), and Azure AI User also lists keys
+// and connection secrets and manages agents. This role can create and read responses, and chat.
+resource inference 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
+  name: guid(resourceGroup().id, 'fourth-official-model-inference')
+  properties: {
+    roleName: 'Fourth Official model inference (${resourceGroup().name})'
+    description: 'Create and read model responses on the Foundry account. Nothing else.'
+    type: 'CustomRole'
+    assignableScopes: [resourceGroup().id]
+    permissions: [
+      {
+        actions: []
+        notActions: []
+        dataActions: [
+          'Microsoft.CognitiveServices/accounts/AIServices/responses/read'
+          'Microsoft.CognitiveServices/accounts/AIServices/responses/write'
+          'Microsoft.CognitiveServices/accounts/OpenAI/responses/read'
+          'Microsoft.CognitiveServices/accounts/OpenAI/responses/write'
+          'Microsoft.CognitiveServices/accounts/OpenAI/deployments/chat/completions/action'
+        ]
+        notDataActions: []
+      }
+    ]
+  }
+}
+
 resource canUseModels 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(account.id, identity.id, '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+  name: guid(account.id, identity.id, inference.id)
   scope: account
   properties: {
-    // Cognitive Services OpenAI User: chat, responses and completions on the deployments; no keys,
-    // connection secrets, agents' management or deployments.
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
+    roleDefinitionId: inference.id
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }

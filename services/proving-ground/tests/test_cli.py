@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from fourth_official_contracts import parse_gate_verdict, parse_scorecard
+from fourth_official_proving import configurations
 from fourth_official_proving.__main__ import main
 
 
@@ -181,3 +182,23 @@ def test_a_summary_says_why_a_run_was_not_gated(
 
     assert "not gated: the base branch has no production configuration yet" in without_baseline
     assert "the gate could not judge" in without_verdict
+
+
+def test_a_model_run_in_which_no_model_wrote_is_an_error_not_a_template_run(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    # The models refuse every call (here: an endpoint that cannot be reached), so every insight
+    # falls back to the template. That must not pass for a measurement of the models.
+    monkeypatch.setattr(configurations, "_with_models", lambda prompt: configurations._templates)
+    monkeypatch.setitem(
+        configurations.CONFIGURATIONS,
+        "production",
+        configurations._model_configuration("production", ("analyst", "v1.2")),
+    )
+
+    with pytest.raises(SystemExit) as stopped:
+        main(["run", "--config", "production", "--matches", "1", "--out", str(tmp_path / "p.json")])
+
+    assert stopped.value.code == 2
+    assert "no model wrote any insight" in capsys.readouterr().err
+    assert not (tmp_path / "p.json").exists()

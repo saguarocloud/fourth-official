@@ -14,7 +14,6 @@ USER_ACCESS_ADMINISTRATOR = "18d7d88d-d35e-4fb5-a5c3-7773c20a72d9"
 RBAC_ADMINISTRATOR = "f58310d9-a9f6-439a-9e8d-f62e7b41a168"
 MANAGED_IDENTITY_OPERATOR = "f1a07417-d97a-45cb-824c-7a7467783830"
 AZURE_AI_USER = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
-OPENAI_USER = "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd"
 STORAGE_BLOB_DATA_CONTRIBUTOR = "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
 KEY_VAULT_CRYPTO_USER = "12338af0-0e69-4776-bea7-57ae8d297424"
 GUID = re.compile(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}")
@@ -200,18 +199,29 @@ def test_the_proving_identity_is_trusted_only_for_pull_requests(
     )
 
 
-def test_the_proving_identity_can_only_run_inference(compiled: CompiledTemplate) -> None:
-    assignments = [
+def test_the_proving_identity_can_only_run_models(compiled: CompiledTemplate) -> None:
+    (assignment,) = [
         a
         for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
         if "proving-identity" in a.module
     ]
+    (role,) = compiled.of_type("Microsoft.Authorization/roleDefinitions")
+    (permissions,) = role.properties["permissions"]
 
-    # Inference only: not Azure AI User, which also lists keys and connection secrets.
-    assert [GUID.findall(str(a.properties["roleDefinitionId"])) for a in assignments] == [
-        [OPENAI_USER]
+    # Its own role: no built-in one gives the project endpoint's responses API and nothing more.
+    assert "Microsoft.Authorization/roleDefinitions'" in str(
+        assignment.properties["roleDefinitionId"]
+    )
+    assert "Microsoft.CognitiveServices/accounts'" in str(assignment.body["scope"])
+    assert permissions["actions"] == []
+    assert sorted(permissions["dataActions"]) == [
+        "Microsoft.CognitiveServices/accounts/AIServices/responses/read",
+        "Microsoft.CognitiveServices/accounts/AIServices/responses/write",
+        "Microsoft.CognitiveServices/accounts/OpenAI/deployments/chat/completions/action",
+        "Microsoft.CognitiveServices/accounts/OpenAI/responses/read",
+        "Microsoft.CognitiveServices/accounts/OpenAI/responses/write",
     ]
-    assert "Microsoft.CognitiveServices/accounts'" in str(assignments[0].body["scope"])
+    assert role.properties["assignableScopes"] == ["[resourceGroup().id]"]
     assert "AZURE_PROVING_CLIENT_ID" in compiled.template["outputs"]
 
 
@@ -259,7 +269,6 @@ EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
     ),
     MANAGED_IDENTITY_OPERATOR: ("Microsoft.ManagedIdentity/userAssignedIdentities'",),
     AZURE_AI_USER: ("Microsoft.CognitiveServices/accounts'",),
-    OPENAI_USER: ("Microsoft.CognitiveServices/accounts'",),
     # On the ledger's and the records' containers, never the account.
     STORAGE_BLOB_DATA_CONTRIBUTOR: ("Microsoft.Storage/storageAccounts/blobServices/containers'",),
     # On the one signing key, never the vault.
@@ -273,6 +282,8 @@ def test_every_role_assignment_has_its_narrowest_scope(compiled: CompiledTemplat
 
     assert assignments
     for assignment in assignments:
+        if "proving-identity" in assignment.module:
+            continue  # its own custom role: see test_the_proving_identity_can_only_run_models
         (role,) = set(GUID.findall(str(assignment.properties["roleDefinitionId"])))
         expected = EXPECTED_ROLE_SCOPES[role]
         scope = assignment.body.get("scope")
