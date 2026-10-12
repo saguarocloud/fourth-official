@@ -8,6 +8,7 @@ from fourth_official_match_data.store import (
     MatchRecord,
     MatchStore,
     demo_store,
+    store_of,
 )
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "MatchStore",
     "create_server",
     "demo_store",
+    "store_of",
     "tools",
 ]

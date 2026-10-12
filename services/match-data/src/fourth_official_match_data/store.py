@@ -1,7 +1,7 @@
 """Where match facts come from. The demo store replays the fixed matchday in memory; a store
 backed by Cosmos DB will expose the same interface."""
 
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from functools import cache
 from types import MappingProxyType
@@ -17,7 +17,7 @@ from fourth_official_contracts import (
 )
 from fourth_official_moments.detector import detect
 from fourth_official_simulator.demo import demo_matchday
-from fourth_official_simulator.engine import play
+from fourth_official_simulator.engine import MatchSetup, play
 from fourth_official_simulator.squads import Player
 from fourth_official_stats.context import MatchContext
 from fourth_official_stats.prepare import PreparedMatch, prepare
@@ -107,11 +107,10 @@ class InMemoryStore:
         return InMemoryStore(MappingProxyType({**self.records, match_id: updated}))
 
 
-@cache
-def demo_store() -> InMemoryStore:
-    """The fixed demo matchday, fully played. Built once per process: the store is immutable."""
+def store_of(setups: Iterable[MatchSetup]) -> InMemoryStore:
+    """These matches, fully played, detected and served from memory."""
     records: dict[str, MatchRecord] = {}
-    for setup in demo_matchday():
+    for setup in setups:
         home, away = setup.home.squad, setup.away.squad
         played = play(setup)
         match = prepare(MatchContext(setup.match_id, home.club, away.club), played.events)
@@ -124,3 +123,9 @@ def demo_store() -> InMemoryStore:
             live_seq=match.events[-1].seq,
         )
     return InMemoryStore(MappingProxyType(records))
+
+
+@cache
+def demo_store() -> InMemoryStore:
+    """The fixed demo matchday, fully played. Built once per process: the store is immutable."""
+    return store_of(demo_matchday())
