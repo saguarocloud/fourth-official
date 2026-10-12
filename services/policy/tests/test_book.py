@@ -8,6 +8,7 @@ import pytest
 from fourth_official_contracts import PolicyHistory, TenantId
 from fourth_official_policy import bundled_store
 from fourth_official_policy.book import (
+    KEPT_VERSIONS,
     InMemoryBookStore,
     PolicyBook,
     StaleVersionError,
@@ -171,3 +172,43 @@ def test_the_book_is_kept_and_read_back() -> None:
     assert again.current(RHEINBLICK).max_items_per_minute == 2
     assert isinstance(again.history(RHEINBLICK), PolicyHistory)
     assert [c.version for c in again.history(RHEINBLICK).changes] == [1, 2]
+
+
+def test_only_the_newest_versions_are_kept_so_edits_and_reset_never_run_out() -> None:
+    opened = book()
+
+    async def toggle(n: int) -> None:
+        budget = 2000 + (n % 2) * 1000
+        version = opened.current(RHEINBLICK).version
+        await opened.edit(
+            RHEINBLICK, edited(latencyBudgetMs=budget), base_version=version, reason="Toggle"
+        )
+
+    for n in range(KEPT_VERSIONS + 5):
+        anyio.run(toggle, n)
+
+    history = opened.history(RHEINBLICK)
+    assert len(history.versions) == KEPT_VERSIONS
+    assert history.current.version == KEPT_VERSIONS + 6
+    (reset,) = anyio.run(lambda: opened.reset(reason="Back to the release"))
+    assert reset.version == KEPT_VERSIONS + 7
+
+
+def test_a_failed_save_leaves_the_book_as_it_was() -> None:
+    class Failing(InMemoryBookStore):
+        fail = False
+
+        async def save(self, history: PolicyHistory) -> None:
+            if self.fail:
+                raise OSError("storage is down")
+            await super().save(history)
+
+    store = Failing()
+    opened = book(store)
+    store.fail = True
+
+    with pytest.raises(OSError, match="storage is down"):
+        anyio.run(
+            lambda: opened.edit(RHEINBLICK, edited(maxItemsPerMinute=2), base_version=1, reason="a")
+        )
+    assert opened.current(RHEINBLICK).version == 1

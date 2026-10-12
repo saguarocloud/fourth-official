@@ -7,11 +7,13 @@ from typing import Any
 
 import httpx2
 import pytest
+from azure.core.exceptions import ServiceRequestError
 from fastapi.testclient import TestClient
 
 from fourth_official_api.main import create_app
 from fourth_official_api.settings import Settings
-from fourth_official_contracts import parse_policy_history
+from fourth_official_contracts import PolicyHistory, parse_policy_history
+from fourth_official_policy.book import InMemoryBookStore
 
 STUDIO = {"X-Requested-By": "fourth-official"}
 RHEINBLICK = "rheinblick-sport"
@@ -167,3 +169,34 @@ def test_edits_are_limited_per_minute(client: TestClient) -> None:
 
     assert statuses[:10] == [200] * 10
     assert statuses[10] == 429
+
+
+class FailingStore(InMemoryBookStore):
+    failing = False
+
+    async def save(self, history: PolicyHistory) -> None:
+        if self.failing:
+            raise ServiceRequestError("storage is unreachable")
+        await super().save(history)
+
+
+def test_a_store_that_fails_is_unavailable_and_costs_no_edit() -> None:
+    store = FailingStore()
+    with TestClient(create_app(Settings(version="test"), policy_store=store)) as api:
+        store.failing = True
+        for _ in range(12):
+            answer = edit(api, current(api) | {"latencyBudgetMs": 6000})
+            assert answer.status_code == 503
+        assert "storage is unreachable" not in answer.text
+        store.failing = False
+
+        assert edit(api, current(api) | {"latencyBudgetMs": 6000}).status_code == 200
+
+
+def test_raw_yaml_is_limited_in_bytes_not_characters(client: TestClient) -> None:
+    payload = {"yaml": "é" * 40_000, "baseVersion": 1, "reason": "big"}
+
+    answer = client.post(f"/api/policies/{RHEINBLICK}", json=payload, headers=STUDIO)
+
+    assert answer.status_code == 422
+    assert "bytes" in str(answer.json()["detail"])

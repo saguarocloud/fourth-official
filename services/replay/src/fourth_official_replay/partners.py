@@ -143,6 +143,9 @@ class Partners:
         async with self._lock:
             schedule = self._schedules[tenant_id]
             policy = self._policy(tenant_id)
+            if policy is not None and template not in policy.templates:
+                # The partner's allow-list governs what airs, as Policy Studio last set it.
+                return None
             if policy is not None and policy.max_items_per_minute != schedule.max_per_minute:
                 # The director keeps what is on air and paces what comes next by the new limit.
                 schedule = replace(schedule, max_per_minute=policy.max_items_per_minute)

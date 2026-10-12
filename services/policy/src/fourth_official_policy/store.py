@@ -18,6 +18,7 @@ from pydantic import ValidationError
 from fourth_official_contracts import TenantId, TenantPolicy, parse_tenant_policy
 
 MAX_POLICY_BYTES = 64 * 1024
+MAX_FIELD_NAME = 40
 
 
 class PolicyError(ValueError):
@@ -57,8 +58,9 @@ class _StrictLoader(yaml.SafeLoader):
 
 
 def _explain(name: str, error: ValidationError) -> PolicyError:
+    # A field name may be the caller's own (an unknown key): shown, but never at length.
     problems = [
-        f"{'.'.join(str(p) for p in problem['loc']) or 'policy'}: {problem['msg']}"
+        f"{'.'.join(str(p)[:MAX_FIELD_NAME] for p in problem['loc']) or 'policy'}: {problem['msg']}"
         for problem in error.errors(include_input=False)
     ]
     return PolicyError(f"{name} is not a valid policy: " + "; ".join(problems[:5]))

@@ -7,10 +7,12 @@ no sign-in, so an edit is recorded against the partner's duty editor, a named de
 the whole studio may make only a few edits a minute. Every edit is kept with who, when and why.
 """
 
+import logging
 import time
 from collections import deque
 from typing import Annotated, Any
 
+from azure.core.exceptions import AzureError
 from fastapi import APIRouter, Header, HTTPException, Request, Response
 from pydantic import (
     AfterValidator,
@@ -28,6 +30,8 @@ from fourth_official_policy.store import MAX_POLICY_BYTES, PolicyError
 
 # Edits the whole studio may make in a minute: a demo has many visitors and one set of policies.
 EDITS_PER_MINUTE = 10
+UNAVAILABLE = "The policy book cannot be saved just now. Nothing was changed; try again shortly."
+logger = logging.getLogger(__name__)
 NO_STORE = {"Cache-Control": "no-store"}
 
 
@@ -53,6 +57,8 @@ class EditRequest(BaseModel):
     def _one_source(self) -> "EditRequest":
         if (self.policy is None) == (self.yaml is None):
             raise ValueError("send the policy either as fields or as YAML, not both")
+        if self.yaml is not None and len(self.yaml.encode("utf-8")) > MAX_POLICY_BYTES:
+            raise ValueError(f"the YAML is larger than {MAX_POLICY_BYTES} bytes")
         return self
 
 
@@ -68,6 +74,11 @@ class _Window:
     def __init__(self, limit: int) -> None:
         self._limit = limit
         self._times: deque[float] = deque()
+
+    def refund(self) -> None:
+        """Give back the latest event: it did not happen (the store failed)."""
+        if self._times:
+            self._times.pop()
 
     def take(self) -> int:
         """0 if allowed, else the seconds until it would be."""
@@ -127,7 +138,12 @@ def policy_router(*, allowed_origins: frozenset[str] = frozenset()) -> APIRouter
     ) -> dict[str, list[dict[str, Any]]]:
         """Every partner's policy back to the release's, as its next version."""
         guard(requested_by, origin)
-        changes = await _book(request).reset(reason=body.reason)
+        try:
+            changes = await _book(request).reset(reason=body.reason)
+        except AzureError:
+            edits.refund()
+            logger.exception("the policy book could not be saved")
+            raise HTTPException(status_code=503, detail=UNAVAILABLE) from None
         response.headers.update(NO_STORE)
         return {"changes": [c.to_wire() for c in changes]}
 
@@ -156,6 +172,11 @@ def policy_router(*, allowed_origins: frozenset[str] = frozenset()) -> APIRouter
             raise HTTPException(status_code=409, detail=str(error)) from None
         except PolicyError as error:
             raise HTTPException(status_code=422, detail=str(error)) from None
+        except AzureError:
+            # Nothing was written (the book saves before it changes), so the edit is not spent.
+            edits.refund()
+            logger.exception("the policy book could not be saved")
+            raise HTTPException(status_code=503, detail=UNAVAILABLE) from None
         response.headers.update(NO_STORE)
         return change.to_wire()
 

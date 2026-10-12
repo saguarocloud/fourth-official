@@ -78,3 +78,40 @@ def test_a_policy_changed_mid_match_governs_the_next_item() -> None:
     assert {e.state for e in before} == {"on_air"}
     assert {e.state for e in after} == {"pending_approval"}
     assert all(e.approval_required for e in after)
+
+
+def test_a_template_the_policy_no_longer_allows_is_not_aired() -> None:
+    policies = {loaded.policy.tenant_id: loaded.policy for loaded in bundled_store().all()}
+    plain = policies[NORTHLIGHT]
+    policies[NORTHLIGHT] = plain.model_copy(
+        update={"templates": tuple(t for t in plain.templates if t != "score_bug")}
+    )
+
+    def source(tenant_id: str) -> Partner:
+        policy = policies[tenant_id]
+        return Partner(policy=policy, blocked=partial(blocked_topics_in, policy=policy))
+
+    async def explainer(moment: Moment, facts: MatchFacts) -> Explanation:
+        return await explain(moment, facts, [])
+
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(
+            demo_store().record("m42"),
+            log,
+            explainer,
+            config=ReplayConfig(),
+            sleep=no_wait,
+            partners=Partners(
+                [source(tenant) for tenant in policies], localizer=None, source=source
+            ),
+        )
+    )
+
+    scores = [
+        e.tenant_id
+        for e in log.entries
+        if isinstance(e, TenantItemEntry) and e.overlay.content.template == "score_bug"
+    ]
+    assert NORTHLIGHT not in scores
+    assert "rheinblick-sport" in scores

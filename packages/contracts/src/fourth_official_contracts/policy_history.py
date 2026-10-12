@@ -53,7 +53,8 @@ class PolicyChange(WireModel):
 
 
 class PolicyHistory(WireModel):
-    """Every version of one partner's policy, oldest first, each with the change that made it."""
+    """One partner's policy versions, oldest first, each with the change that made it. Only the
+    newest are kept, so a history may start after version 1, but never skips one."""
 
     tenant_id: TenantId
     versions: Annotated[
@@ -67,11 +68,12 @@ class PolicyHistory(WireModel):
     def _consistent(self) -> "PolicyHistory":
         if len(self.versions) != len(self.changes):
             raise ValueError("every version needs the change that made it")
+        first = self.versions[0].version
         for number, (policy, change) in enumerate(
-            zip(self.versions, self.changes, strict=True), start=1
+            zip(self.versions, self.changes, strict=True), start=first
         ):
             if policy.version != number or change.version != number:
-                raise ValueError(f"versions run from 1 without gaps; expected {number}")
+                raise ValueError(f"versions run without gaps; expected {number}")
             if self.tenant_id != policy.tenant_id or self.tenant_id != change.tenant_id:
                 raise ValueError("a history holds one partner's policy only")
         return self

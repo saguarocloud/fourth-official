@@ -83,3 +83,12 @@ def test_the_current_policy_is_a_policy() -> None:
 def test_an_inconsistent_history_is_refused(why: str, fields: dict[str, Any]) -> None:
     with pytest.raises(ValidationError):
         parse_policy_history(history(**fields))
+
+
+def test_a_compacted_history_may_start_after_version_one() -> None:
+    third = BASE | {"version": 3}
+    fourth = BASE | {"version": 4, "approvalRequired": ["recap", "insight"]}
+
+    read = parse_policy_history(history(versions=[third, fourth], changes=[change(3), change(4)]))
+
+    assert [p.version for p in read.versions] == [3, 4]

@@ -250,7 +250,7 @@
   "$id": "https://github.com/saguarocloud/fourth-official/schemas/policy-history.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
-  "description": "Every version of one partner's policy, oldest first, each with the change that made it.",
+  "description": "One partner's policy versions, oldest first, each with the change that made it. Only the\nnewest are kept, so a history may start after version 1, but never skips one.",
   "properties": {
     "changes": {
       "items": {

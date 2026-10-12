@@ -40,6 +40,9 @@ EDITABLE = (
     "correctionBehaviour",
 )
 BUNDLED_REASON = "Shipped with the release"
+# Versions kept per partner, newest first to go: edits never run out, a reset always fits, and a
+# partner's kept history stays far below what the store will read back.
+KEPT_VERSIONS = 100
 
 
 class StaleVersionError(PolicyError):
@@ -133,10 +136,10 @@ class PolicyBook:
         return self._histories[tenant_id]
 
     def version(self, tenant_id: TenantId, number: int) -> TenantPolicy:
-        versions = self._histories[tenant_id].versions
-        if not 1 <= number <= len(versions):
-            raise KeyError(number)
-        return versions[number - 1]
+        for policy in self._histories[tenant_id].versions:
+            if policy.version == number:
+                return policy
+        raise KeyError(number)
 
     def _proposed(self, current: TenantPolicy, proposed: Mapping[str, Any] | str) -> TenantPolicy:
         raw = _parse("The policy", proposed.encode()) if isinstance(proposed, str) else proposed
@@ -156,10 +159,11 @@ class PolicyBook:
     async def _append(
         self, history: PolicyHistory, policy: TenantPolicy, change: PolicyChange
     ) -> None:
+        # Written to the store before it is held here, so a failed save changes nothing.
         updated = PolicyHistory(
             tenant_id=history.tenant_id,
-            versions=(*history.versions, policy),
-            changes=(*history.changes, change),
+            versions=(*history.versions, policy)[-KEPT_VERSIONS:],
+            changes=(*history.changes, change)[-KEPT_VERSIONS:],
         )
         await self._store.save(updated)
         self._histories[history.tenant_id] = updated
