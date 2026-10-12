@@ -37,6 +37,15 @@ describe("clientOf", () => {
     expect(clientOf(request({ "x-forwarded-for": "203.0.113.9" }))).toBe("203.0.113.9");
   });
 
+  it("counts an IPv6 client by its /64, as one subscriber is handed a whole /64", () => {
+    const at = (address: string) => clientOf(request({ "x-forwarded-for": address }));
+
+    expect(at("2001:db8:1:2:aaaa::1")).toBe("2001:db8:1:2::/64");
+    expect(at("2001:db8:1:2:ffff:ffff:ffff:ffff")).toBe("2001:db8:1:2::/64");
+    expect(at("2001:db8::7")).toBe("2001:db8:0:0::/64");
+    expect(at("[2001:DB8:1:2::9]")).toBe("2001:db8:1:2::/64");
+  });
+
   it("groups requests without a forwarded address together", () => {
     expect(clientOf(request({}))).toBe("direct");
   });

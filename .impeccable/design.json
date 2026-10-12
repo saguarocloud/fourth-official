@@ -363,6 +363,22 @@
       {
         "name": "corrections-phone",
         "value": "720px"
+      },
+      {
+        "name": "provenance-beside",
+        "value": "1024px"
+      },
+      {
+        "name": "provenance-margin-notes",
+        "value": "768px"
+      },
+      {
+        "name": "provenance-life-beside",
+        "value": "1280px"
+      },
+      {
+        "name": "provenance-phone",
+        "value": "720px"
       }
     ],
     "partnerThemes": [
@@ -462,8 +478,68 @@
         "deskTime": "Summed over the correction's reports; milliseconds under a second ('4 ms'), seconds to one decimal above ('6.4 s').",
         "focus": "Replay moves focus to the first item board's heading (#first-change, tabindex=-1), also under reduced motion.",
         "phone": "At 720px and below the fan switches to its stacked layout (400-unit viewBox, top to bottom: correction, insights, partner items) and the wide one hides, so every node is legible and the fan is announced once; each board's OUT and IN panels stack; the facts drop to one column; the summary bar drops to 20px."
+      },
+      {
+        "name": "Provenance",
+        "path": "/provenance",
+        "rail": "none; main takes the rail's column from 1024px (data-rail=\"none\")",
+        "firstViewport": "Title and verdict; match keys; then the picker ('Items on record · N') and the annotated record, 20rem | minmax(0, 1fr) from 1024px with the picker sticky (top --space-4, at most the viewport tall); stacked below 1024px with the picker at most 22rem tall (15rem on phones). Under the record, a 13px ink-2 link with a trailing ArrowRight: 'Open the public verification page'. Synthetic-data footnote. A record is the item annotated, not a table of hashes.",
+        "verdict": {
+          "verified": "N partner items on record for this match. This one is signed and unchanged. (green)",
+          "development": "N partner items on record for this match. This one is unchanged but signed with a development key. (amber)",
+          "failed": "This record does not verify: reason. (red)",
+          "missing": "This item has no signed record yet. N partner items on record. (amber)",
+          "unreadable": "This record could not be read just now. N partner items on record. (amber)",
+          "empty": "No partner item is on record for this match yet. Each one is signed as it is published. (neutral)",
+          "loading": "Loading the matchday. (neutral)",
+          "unavailable": "The match service is unavailable. Retrying every few seconds. (red)"
+        },
+        "focus": "Choosing an item links to ?match=…&item=…#record, so the record scrolls into view (scroll-margin-top --space-4) and the address stays shareable.",
+        "phone": "At 720px and below the picker caps at 15rem and the record pads 16px; claim margin notes stack under their claims below 768px."
+      },
+      {
+        "name": "Verify",
+        "path": "/verify/[itemId]",
+        "rail": "standalone: no shell, no nav; Paper theme",
+        "firstViewport": "A panel-1 masthead (brand mark, 'Meridian League Studios · Fourth Official') aligned to the record's 64rem column; a small title 'The studio's record of this graphic' (16px 500 ink-2; the seal is set larger); the annotated record in an aria-live=polite region, or a note ('Checking the record.', 'The studio has no record of this graphic.', busy or unavailable with 'Try again'); 'How this check works' (65ch, ink-2); a 13px ink-3 synthetic-data footer.",
+        "robots": "noindex",
+        "phone": "At 720px and below main's top padding drops to 24px and the record pads 16px."
       }
-    ]
+    ],
+    "paperTheme": {
+      "selector": "[data-theme=\"paper\"]",
+      "scope": "The public Verify page only; never the control room.",
+      "colorScheme": "light",
+      "role": "The board's light twin for readers outside the gallery: same tokens, hairlines, keys and lamps, printed in ink on stone. Signals darkened to keep 4.5:1 on the sheet (panel-1).",
+      "tokens": {
+        "panel-0": "#efebe2",
+        "panel-1": "#fbf9f4",
+        "panel-2": "#f1ede4",
+        "panel-3": "#e5e0d4",
+        "hairline": "#ddd6c8",
+        "hairline-strong": "#c2b9a7",
+        "ink-1": "#14181b",
+        "ink-2": "#454d54",
+        "ink-3": "#626b73",
+        "led-green": "#0d7339",
+        "led-red": "#b8251a",
+        "led-amber": "#8a5600",
+        "led-blue": "#1b58b3",
+        "led-violet": "#643cb8",
+        "led-white": "#14181b",
+        "led-off": "rgb(0 0 0 / 0.06)",
+        "focus-ring": "0 0 0 2px var(--panel-1), 0 0 0 4px var(--ink-1)"
+      },
+      "contrastOnPanel1": {
+        "ink-3": 5.16,
+        "led-amber": 5.85,
+        "led-green": 5.66,
+        "led-red": 6.02,
+        "led-blue": 6.45,
+        "led-violet": 6.93
+      },
+      "brandMark": "Stays a black lit board on paper (#0d1013 frame, red #ff4a3d and green #3ee07f rows, unlit dots at 12% white)."
+    }
   },
   "components": [
     {
@@ -633,6 +709,44 @@
       "description": "Corrections: a small default key beside 'What it reached', shown only when items were reached. Re-runs the One Moment light-up across the item boards (260/380/500/620ms) and the fan's item nodes and edges, then moves focus to the first board's heading. Under reduced motion nothing animates; focus still moves.",
       "html": "<div class=\"ds-rp\"><h2 class=\"ds-rp__head\">What it reached</h2><button class=\"ds-rp__key\" type=\"button\">Replay</button></div>",
       "css": ".ds-rp { font-family:var(--font-ui, Geist, system-ui, sans-serif); display:flex; align-items:baseline; justify-content:space-between; gap:12px; width:520px; } .ds-rp__head { margin:0; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-rp__key { display:inline-flex; align-items:center; height:28px; padding:0 12px; border:1px solid #2d363e; border-radius:2px; background:#151a1e; box-shadow:inset 0 1px 0 rgb(255 255 255 / 0.05); color:#e9edf0; font:inherit; font-size:13px; font-weight:500; cursor:pointer; } .ds-rp__key:hover { background:#1c2227; } .ds-rp__key:active { transform:translateY(1px); box-shadow:none; } .ds-rp__key:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; }"
+    },
+    {
+      "name": "Seal",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Provenance and Verify: the record's answer, from sealOf. A 36px Lucide shield beside a 20px 600 title and a 13px ink-2 signer line. Verified: green ShieldCheck 'Signed and unchanged', only for the studio's production key (ES256). Development: amber ShieldAlert 'Unchanged, signed with a development key', detail in amber. Failed: red ShieldX 'Does not verify' with the reason beneath in red. On paper: 24px title, 44px icon.",
+      "html": "<div class=\"ds-seal\"><svg class=\"ds-seal__icon\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/><path d=\"m9 12 2 2 4-4\"/></svg><div><p class=\"ds-seal__title\">Signed and unchanged</p><p class=\"ds-seal__by\">studio-es256-1 · Issued by Meridian League Studios, signed at 19:42:07 UTC</p></div></div>",
+      "css": ".ds-seal { font-family:var(--font-ui, Geist, system-ui, sans-serif); display:flex; align-items:flex-start; gap:16px; width:560px; padding:24px; background:#0d1013; border:1px solid #20272d; border-radius:2px; } .ds-seal__icon { width:36px; height:36px; flex:none; color:#3ee07f; } .ds-seal__title { margin:0; font-size:20px; font-weight:600; letter-spacing:-0.01em; color:#e9edf0; } .ds-seal__by { margin:4px 0 0; font-size:13px; color:#a1abb4; }"
+    },
+    {
+      "name": "Annotated Record",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Provenance and Verify: the item itself, annotated. A panel-1 panel padded 32px (16px on phones). Head: partner (600 ink-1), locale in the data font (12px ink-3, BCP 47 casing), 'Version N, as signed', the shared status lamp, the disclosure label in the AI tag style. Headline clamp(1.75rem, 1.25rem + 1.5vw, 2.5rem) 600, 30ch. Claims at 18px/1.5 with a 16rem margin note from 768px: 'Rests on events …' (ids in the data font). Life and Facts below, side by side from 1280px.",
+      "html": "<article class=\"ds-rec\"><p class=\"ds-rec__head\"><b>Tribuna Austral</b> <span class=\"ds-rec__mono\">es-MX</span> <span>Version 1, as signed</span> <span class=\"ds-rec__tag\">Generado con IA</span></p><h2 class=\"ds-rec__h\" lang=\"es\">Ardmore da la vuelta al marcador</h2><div class=\"ds-rec__claim\"><p lang=\"es\">Remontada en once minutos tras ir perdiendo.</p><p class=\"ds-rec__note\">Rests on events <span class=\"ds-rec__mono\">ev-061, ev-067</span></p></div></article>",
+      "css": ".ds-rec { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:720px; display:grid; gap:24px; padding:32px; background:#0d1013; border:1px solid #20272d; border-radius:2px; color:#e9edf0; } .ds-rec__head { margin:0; display:flex; gap:16px; align-items:center; font-size:13px; color:#a1abb4; } .ds-rec__head b { color:#e9edf0; } .ds-rec__mono { font-family:'Geist Mono', ui-monospace, monospace; font-size:12px; color:#7c8791; } .ds-rec__tag { display:inline-flex; align-items:center; height:18px; padding:0 6px; border:1px solid color-mix(in oklab, #63b4ff 60%, transparent); border-radius:2px; color:#63b4ff; font-size:11px; font-weight:600; } .ds-rec__h { margin:0; max-width:30ch; font-size:2.25rem; font-weight:600; line-height:1.15; letter-spacing:-0.02em; } .ds-rec__claim { display:grid; grid-template-columns:minmax(0,1fr) 16rem; gap:8px 32px; padding-top:16px; border-top:1px solid #20272d; } .ds-rec__claim p { margin:0; font-size:18px; line-height:1.5; } .ds-rec__claim .ds-rec__note { padding-left:12px; border-left:1px solid #2d363e; font-size:13px; color:#a1abb4; }"
+    },
+    {
+      "name": "Life",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "'Its life': the item's steps from lifeOf as 12px lamps on one strong hairline, each a 14px 600 label over a 13px ink-2 detail. Process steps (Written, Remade, Checked, Localised, Approved) are hollow with an ink-3 edge. The ending is lit in the State Vocabulary colour: On air red, Held amber, Pulled red, Replaced violet; Kept off air (and a Rejected step) lit ink-3.",
+      "html": "<ol class=\"ds-life\"><li><span class=\"ds-life__m\"></span><b>Written</b><span>By the explainer, attempt 1</span></li><li><span class=\"ds-life__m\"></span><b>Localised</b><span>Into Spanish (es-MX)</span></li><li data-tone=\"aired\"><span class=\"ds-life__m\"></span><b>On air</b><span>Aired under the partner's policy</span></li></ol>",
+      "css": ".ds-life { font-family:var(--font-ui, Geist, system-ui, sans-serif); list-style:none; margin:0; padding:16px; width:360px; background:#0d1013; } .ds-life li { position:relative; display:grid; grid-template-columns:12px 1fr; column-gap:12px; padding-bottom:16px; } .ds-life li:not(:last-child)::before { content:''; position:absolute; left:5.5px; top:16px; bottom:2px; width:1px; background:#2d363e; } .ds-life__m { grid-row:span 2; width:12px; height:12px; margin-top:4px; border:1px solid #7c8791; border-radius:999px; background:#0d1013; box-sizing:border-box; } .ds-life b { font-size:14px; color:#e9edf0; } .ds-life li > span:last-child { font-size:13px; color:#a1abb4; } .ds-life [data-tone='aired'] .ds-life__m { border-color:#ff4a3d; background:#ff4a3d; }"
+    },
+    {
+      "name": "Record Facts",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "'The record': a dl of 11px uppercase ink-3 terms over 13px ink-1 values: Item, Match and feed entry, Key, Content hash (SHA-256), Signature (algorithm). Ids, hash and signature in the data font at 12px, breaking anywhere."
+    },
+    {
+      "name": "Record Picker",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "Provenance: 'Items on record · N', a call sheet on panel-1 with a sticky heading. Rows are links (code | headline | minute + compact status lamp; 2.75rem | 1fr | auto): code as an 11px ink-3 label, headline truncated in 13px ink-2, minute and lamp in ink-3. Hover panel-2; current (aria-current=page) panel-3 with ink-1. The list scrolls, so the focus ring is inset (inset 0 0 0 2px led-white, inset 0 0 0 4px panel-0) where the scroller cannot clip it. Sticky beside the record from 1024px; max 22rem tall stacked, 15rem on phones.",
+      "html": "<nav class=\"ds-pk\"><h2>Items on record · 3</h2><a href=\"#\" aria-current=\"page\"><b>TRA</b><span>Ardmore da la vuelta al marcador</span><i>67'</i></a><a href=\"#\"><b>NLS</b><span>Ardmore turn it round in eleven minutes</span><i>67'</i></a></nav>",
+      "css": ".ds-pk { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:320px; background:#0d1013; border:1px solid #20272d; border-radius:2px; } .ds-pk h2 { margin:0; padding:12px 16px; border-bottom:1px solid #20272d; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-pk a { display:grid; grid-template-columns:2.75rem minmax(0,1fr) auto; gap:12px; align-items:center; padding:12px 16px; color:#a1abb4; text-decoration:none; font-size:13px; } .ds-pk a + a { border-top:1px solid #20272d; } .ds-pk a:hover { background:#151a1e; } .ds-pk a[aria-current='page'] { background:#1c2227; color:#e9edf0; } .ds-pk b { font-size:11px; letter-spacing:0.08em; color:#7c8791; } .ds-pk a[aria-current='page'] b { color:#e9edf0; } .ds-pk span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ds-pk i { font-style:normal; color:#7c8791; } .ds-pk a:focus-visible { outline:none; box-shadow:inset 0 0 0 2px #f2f5f7, inset 0 0 0 4px #07090b; }"
     }
   ],
   "narrative": {
@@ -685,6 +799,11 @@
         "name": "The Stage Rule",
         "body": "Partner colours live inside the monitor's stage only, never in the chrome. Around the frame the board's palette and signal lights apply unchanged; inside it, no partner colour means state.",
         "section": "colors"
+      },
+      {
+        "name": "The Paper Rule",
+        "body": "Paper is for the public Verify page only. The control room is never light, and no control-room screen sets data-theme=\"paper\".",
+        "section": "colors"
       }
     ],
     "dos": [
@@ -715,7 +834,8 @@
       "**Don't** add motion beyond the OUT/IN light-up (including its staggered repeat on the Corrections item boards and fan) and state transitions of 160 to 220ms (the functional exceptions are loading spinners, the disclosure chevron, and broadcast graphics animating in within 360ms inside the monitor, as they do on air).",
       "**Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.",
       "**Don't** mark moment kinds with colour; a kind is an icon and a label.",
-      "**Don't** repeat a correction's state with a lamp when its strap already names it."
+      "**Don't** repeat a correction's state with a lamp when its strap already names it.",
+      "**Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is \"Signed and unchanged\"."
     ]
   }
 }

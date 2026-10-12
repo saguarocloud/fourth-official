@@ -16,8 +16,8 @@ describe("NavRail", () => {
   it("lists screens that are not built yet without linking to them", () => {
     render(<NavRail current="/" />);
 
-    expect(screen.queryByRole("link", { name: /Provenance/ })).toBeNull();
-    expect(screen.getByText("Provenance")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Policy Studio/ })).toBeNull();
+    expect(screen.getByText("Policy Studio")).toBeInTheDocument();
   });
 
   it("is a labelled primary navigation landmark", () => {
