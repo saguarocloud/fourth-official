@@ -81,7 +81,9 @@ def test_a_policy_changed_mid_match_governs_the_next_item() -> None:
 
 
 def test_a_template_the_policy_no_longer_allows_is_not_aired() -> None:
-    policies = {loaded.policy.tenant_id: loaded.policy for loaded in bundled_store().all()}
+    policies: dict[str, TenantPolicy] = {
+        loaded.policy.tenant_id: loaded.policy for loaded in bundled_store().all()
+    }
     plain = policies[NORTHLIGHT]
     policies[NORTHLIGHT] = plain.model_copy(
         update={"templates": tuple(t for t in plain.templates if t != "score_bug")}
