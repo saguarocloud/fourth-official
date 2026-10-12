@@ -108,6 +108,9 @@ def _reason(response: httpx.Response) -> str:
         reason = f"{error.get('code', '')}: {error.get('message', '')}"
     except (ValueError, AttributeError):
         reason = response.text
+    code = response.headers.get("x-ms-error-code") or response.headers.get("www-authenticate")
+    if code:
+        reason = f"{reason} [{code}]"
     # Foundry names the principal it refused: an identifier, kept out of public CI logs.
     return _IDENTIFIER.sub("<id>", reason)[:_MAX_REASON]
 

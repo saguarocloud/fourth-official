@@ -215,6 +215,9 @@ def test_the_proving_identity_can_only_run_models(compiled: CompiledTemplate) ->
     assert "Microsoft.CognitiveServices/accounts'" in str(assignment.body["scope"])
     assert permissions["actions"] == []
     assert sorted(permissions["dataActions"]) == [
+        "Microsoft.CognitiveServices/accounts/AIServices/deployments/read",
+        "Microsoft.CognitiveServices/accounts/AIServices/endpoints/interact/action",
+        "Microsoft.CognitiveServices/accounts/AIServices/endpoints/invoke/action",
         "Microsoft.CognitiveServices/accounts/AIServices/responses/read",
         "Microsoft.CognitiveServices/accounts/AIServices/responses/write",
         "Microsoft.CognitiveServices/accounts/OpenAI/deployments/chat/completions/action",

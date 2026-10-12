@@ -49,6 +49,10 @@ resource inference 'Microsoft.Authorization/roleDefinitions@2022-04-01' = {
         actions: []
         notActions: []
         dataActions: [
+          // Resolving and invoking a model deployment through the project endpoint.
+          'Microsoft.CognitiveServices/accounts/AIServices/deployments/read'
+          'Microsoft.CognitiveServices/accounts/AIServices/endpoints/invoke/action'
+          'Microsoft.CognitiveServices/accounts/AIServices/endpoints/interact/action'
           'Microsoft.CognitiveServices/accounts/AIServices/responses/read'
           'Microsoft.CognitiveServices/accounts/AIServices/responses/write'
           'Microsoft.CognitiveServices/accounts/OpenAI/responses/read'
