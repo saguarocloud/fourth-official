@@ -86,7 +86,7 @@ async def run_match(
 async def run_benchmark(
     setups: Sequence[MatchSetup], explainer: Explainer, *, concurrency: int = CONCURRENCY
 ) -> tuple[MatchRun, ...]:
-    """Every match, `concurrency` at a time, in benchmark order."""
+    """Every match, `concurrency` at a time, in benchmark order. One failure stops the run."""
     store = store_of(setups)
     gate = asyncio.Semaphore(concurrency)
 
@@ -94,4 +94,6 @@ async def run_benchmark(
         async with gate:
             return await run_match(setup, store.record(setup.match_id), explainer)
 
-    return tuple(await asyncio.gather(*(one(s) for s in setups)))
+    async with asyncio.TaskGroup() as group:
+        tasks = [group.create_task(one(s)) for s in setups]
+    return tuple(task.result() for task in tasks)

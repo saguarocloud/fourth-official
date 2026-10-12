@@ -111,3 +111,26 @@ def test_a_verdict_that_allows_a_failing_rule_is_refused() -> None:
                 "checks": [{"rule": "policy_violations", "passed": False, "detail": "1"}],
             }
         )
+
+
+@pytest.mark.parametrize("text", ["two\nlines", "hidden \u202ereversed", "zero\u200bwidth"])
+def test_free_text_in_a_scorecard_is_one_printable_line(text: str) -> None:
+    card = scorecard()
+    card["failures"] = [card["failures"][0] | {"reasons": [text]}]
+    with pytest.raises(ValidationError):
+        parse_scorecard(card)
+    card["failures"] = [card["failures"][0] | {"reasons": ["ok"], "text": text}]
+    with pytest.raises(ValidationError):
+        parse_scorecard(card)
+
+
+def test_a_gate_detail_is_one_printable_line() -> None:
+    with pytest.raises(ValidationError):
+        parse_gate_verdict(
+            {
+                "candidate": "candidate",
+                "baseline": "production",
+                "allowed": True,
+                "checks": [{"rule": "policy_violations", "passed": True, "detail": "a\u2028b"}],
+            }
+        )

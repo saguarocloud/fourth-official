@@ -106,3 +106,36 @@ def test_a_template_run_has_no_model_writing_and_no_latency_to_report() -> None:
     assert written.of > 0
     assert first_attempt_pass(demo()).of == 0
     assert latency(demo()) is None
+
+
+def tampered(run: MatchRun, template: str, **overlay: object) -> MatchRun:
+    """The run with the last on-air item of this template aired differently."""
+    entries = list(run.entries)
+    index = max(
+        i
+        for i, e in enumerate(entries)
+        if isinstance(e, TenantItemEntry)
+        and e.state == "on_air"
+        and e.overlay.content.template == template
+    )
+    item = entries[index]
+    assert isinstance(item, TenantItemEntry)
+    entries[index] = item.model_copy(update={"overlay": item.overlay.model_copy(update=overlay)})
+    return replace(run, entries=tuple(entries))
+
+
+def test_a_narrative_item_aired_without_its_disclosure_breaks_policy() -> None:
+    (m42, *rest) = demo()
+
+    assert policy_violations([tampered(m42, "lower_third", disclosure=None), *rest]) == 1
+
+
+def test_a_score_bug_is_held_to_its_partners_policy_too() -> None:
+    (m42, *rest) = demo()
+    labelled = next(
+        e.overlay.disclosure
+        for e in m42.entries
+        if isinstance(e, TenantItemEntry) and e.overlay.disclosure is not None
+    )
+
+    assert policy_violations([tampered(m42, "score_bug", disclosure=labelled), *rest]) == 1

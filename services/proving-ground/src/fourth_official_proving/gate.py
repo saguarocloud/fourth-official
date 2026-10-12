@@ -1,6 +1,9 @@
 """The Release Gate (plan §9.3): a candidate configuration is allowed only if, over the same
-benchmark as the production baseline, nothing on air is untrue, no partner's policy is broken, and
-it is not materially worse at finding stories, writing them, or answering in time.
+benchmark as the production baseline, nothing on air is untrue, no partner's policy is broken,
+the Verifier refuses every planted lie, every correction reaches what rests on it, and it is not
+materially worse at finding stories, writing them, or answering in time.
+
+Rates are compared exactly, as integer cross-products of their counts; rounding is for display.
 """
 
 from fourth_official_contracts import GateCheck, GateRule, GateVerdict, Ratio, Scorecard
@@ -22,13 +25,21 @@ def _percent(ratio: Ratio) -> str:
     return f"{_rate(ratio) * PERCENT:.1f}%"
 
 
-def _unsupported(candidate: Scorecard) -> GateCheck:
+def _unsupported(candidate: Scorecard, baseline: Scorecard) -> GateCheck:
     claims = candidate.metrics.supported_claims
     unsupported = claims.of - claims.hit
+    # A candidate that put nothing on air proves nothing, where the baseline did.
+    silent = claims.of == 0 < baseline.metrics.supported_claims.of
     return GateCheck(
         rule="unsupported_claims",
-        passed=unsupported == 0,
+        passed=unsupported == 0 and not silent,
         detail=f"{unsupported} of {claims.of} claims on air at full time are unsupported",
+    )
+
+
+def _all(rule: GateRule, ratio: Ratio, measure: str) -> GateCheck:
+    return GateCheck(
+        rule=rule, passed=ratio.hit == ratio.of, detail=f"{ratio.hit} of {ratio.of} {measure}"
     )
 
 
@@ -50,11 +61,19 @@ def _no_worse(
     points: int,
     name: str,
 ) -> GateCheck:
-    allowed = _rate(baseline) - points / PERCENT
+    # candidate.hit / candidate.of >= baseline.hit / baseline.of - points / 100, in integers.
+    if candidate.of == 0:
+        passed = baseline.of == 0
+    elif baseline.of == 0:
+        passed = True
+    else:
+        passed = (
+            candidate.hit * baseline.of * PERCENT
+            >= (baseline.hit * PERCENT - points * baseline.of) * candidate.of
+        )
     return GateCheck(
         rule=rule,
-        # Rounded to the percentage shown, so the verdict and its detail always agree.
-        passed=round(_rate(candidate) * PERCENT, 1) >= round(allowed * PERCENT, 1),
+        passed=passed,
         detail=f"{_percent(candidate)} {measure} ({name}: {_percent(baseline)})",
     )
 
@@ -84,8 +103,14 @@ def gate(candidate: Scorecard, baseline: Scorecard) -> GateVerdict:
         raise ValueError("a candidate is compared only over the same benchmark as its baseline")
     name = baseline.configuration.name
     checks = (
-        _unsupported(candidate),
+        _unsupported(candidate, baseline),
         _policy(candidate),
+        _all("verifier_catch", candidate.metrics.verifier_catch, "planted lies refused"),
+        _all(
+            "corrections_carried",
+            candidate.metrics.corrections_carried,
+            "items resting on a correction pulled or replaced",
+        ),
         _no_worse(
             "storyline_recall",
             measure="of planted storylines surfaced",

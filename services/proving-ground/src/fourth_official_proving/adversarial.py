@@ -23,6 +23,7 @@ from fourth_official_contracts import (
 )
 from fourth_official_proving.factcheck import EXPLAINS_VOIDS
 from fourth_official_proving.runner import MatchRun
+from fourth_official_proving.truth import PARTICIPANTS
 from fourth_official_replay import facts_for
 from fourth_official_verifier import MatchFacts, verify
 
@@ -41,7 +42,6 @@ LAST_MINUTE = 130
 INVENTED_NAME = "Zorvath"
 # An event number past the end of any match.
 MISSING_EVENT = 99_999
-_PARTICIPANTS = ("player_id", "scorer_id", "assist_id", "receiver_id", "victim_id", "target_id")
 
 
 @dataclass(frozen=True, slots=True)
@@ -74,7 +74,7 @@ def _absent_player(insight: Insight, facts: MatchFacts) -> str | None:
         value
         for event in facts.match.events
         if event.event_id in cited
-        for name in _PARTICIPANTS
+        for name in PARTICIPANTS
         if isinstance(value := getattr(event, name, None), str)
     }
     absent = sorted(p for p in facts.player_names if p not in involved)

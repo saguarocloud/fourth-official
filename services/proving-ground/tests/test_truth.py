@@ -1,8 +1,9 @@
 """What really happened: the simulator's own events with every later correction applied."""
 
+from dataclasses import replace
 from functools import cache
 
-from fourth_official_contracts import GoalEvent, ShotEvent
+from fourth_official_contracts import EventAmended, GoalEvent, ShotEvent
 from fourth_official_proving.truth import Truth, truth_of
 from fourth_official_simulator.demo import demo_matchday
 from fourth_official_simulator.engine import play
@@ -73,3 +74,43 @@ def test_the_final_score_is_the_ground_truths() -> None:
     final = play(demo_matchday()[0]).ground_truth.final_score
 
     assert m42().score_at(10**9) == (final.home, final.away)
+
+
+def amended(**changes: object) -> Truth:
+    """m42 with one more correction: the 89' goal amended as given."""
+    played = play(demo_matchday()[0])
+    extra = EventAmended.model_validate(
+        {
+            "correctionId": "c-m42-09",
+            "matchId": "m42",
+            "reason": "ACCREDITATION_PANEL",
+            "issuedAt": "2026-10-24T16:30:00Z",
+            "targetEventId": REASSIGNED_GOAL,
+            "newVersion": 3,
+            "kind": "EVENT_AMENDED",
+            "changes": changes,
+        }
+    )
+    return truth_of(replace(played, corrections=(*played.corrections, extra)))
+
+
+def test_an_assist_the_panel_removes_is_no_longer_credited() -> None:
+    assist = goal(REASSIGNED_GOAL).assist_id
+    assert assist is not None
+
+    assert assist not in amended(assistId=None).participants([REASSIGNED_GOAL])
+
+
+def test_a_goal_moved_to_another_minute_is_read_at_that_minute() -> None:
+    clock = {"period": 2, "minute": 87, "second": 5}
+
+    assert amended(clock=clock).minutes([REASSIGNED_GOAL]) == {87}
+
+
+def test_a_goal_made_an_own_goal_counts_for_the_other_side() -> None:
+    final = m42().score_at(10**9)
+    defender = "NGT-04"
+
+    turned = amended(scorerId=defender, ownGoal=True, assistId=None)
+    assert turned.score_at(10**9) == (final[0], final[1])
+    assert turned.participants([REASSIGNED_GOAL]) == {defender}

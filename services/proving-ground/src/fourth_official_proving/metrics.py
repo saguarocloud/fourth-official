@@ -19,7 +19,7 @@ from fourth_official_contracts import (
 )
 from fourth_official_contracts.moments import EVENT_MOMENTS
 from fourth_official_policy import blocked_topics_in, bundled_store, disclose
-from fourth_official_proving.factcheck import HEADLINE, check_insight
+from fourth_official_proving.factcheck import EXPLAINS_VOIDS, HEADLINE, check_insight
 from fourth_official_proving.runner import MatchRun
 
 # An event storyline is surfaced by a moment within two minutes of it (plan §9.2). A change of
@@ -36,13 +36,18 @@ KEY_KINDS = EVENT_MOMENTS
 P50, P95 = 50, 95
 
 
-def _latest_items(run: MatchRun) -> list[TenantItemEntry]:
-    """Each partner item once, as its latest version: narrative items only."""
+def _every_item(run: MatchRun) -> list[TenantItemEntry]:
+    """Each partner item once, as its latest version: score bugs and straps included."""
     latest: dict[str, TenantItemEntry] = {}
     for entry in run.entries:
-        if isinstance(entry, TenantItemEntry) and entry.localized is not None:
+        if isinstance(entry, TenantItemEntry):
             latest[entry.overlay.item_id] = entry
     return list(latest.values())
+
+
+def _latest_items(run: MatchRun) -> list[TenantItemEntry]:
+    """Each narrative partner item once, as its latest version."""
+    return [i for i in _every_item(run) if i.localized is not None]
 
 
 def _insights(run: MatchRun) -> dict[str, InsightEntry]:
@@ -130,7 +135,7 @@ def policy_violations(runs: Iterable[MatchRun]) -> int:
     return sum(
         _breaks_policy(item, policies[item.tenant_id])
         for run in runs
-        for item in _latest_items(run)
+        for item in _every_item(run)
         if item.state == "on_air"
     )
 
@@ -153,26 +158,24 @@ def first_attempt_pass(runs: Iterable[MatchRun]) -> Ratio:
     return Ratio(hit=first, of=len(written))
 
 
-def _dependent(run: MatchRun, item: TenantItemEntry, targets: set[str]) -> bool:
-    insight = _insights(run).get(item.localized.insight_id) if item.localized else None
-    if insight is None:
-        return False
-    cited = {e for c in insight.insight.claims for e in c.evidence.event_ids}
-    moment = next(
-        (m.moment for m in _moments(run) if m.moment.moment_id == insight.insight.moment_id), None
-    )
-    explains_void = moment is not None and moment.kind == "var_overturn"
-    return bool(cited & targets) and not explains_void
-
-
 def corrections_carried(runs: Iterable[MatchRun]) -> Ratio:
-    """Partner items that rested on a corrected event and were published before it, which the
-    corrections desk then pulled or replaced (as finally standing at full time)."""
+    """Partner items resting on a corrected event, which the corrections desk pulled or replaced
+    (as finally standing at full time). Whenever they were published: the desk also reaches items
+    published after their correction (ADR-012). A version the desk remade is the replacement, not
+    a miss, and the VAR decision's own insight cites the goal it rules out."""
     hit = of = 0
     for run in runs:
+        insights = _insights(run)
+        kinds = {m.moment.moment_id: m.moment.kind for m in _moments(run)}
         corrected = {c.target_event_id for c in run.record.corrections}
         for item in _latest_items(run):
-            if item.overlay.supersedes is not None or not _dependent(run, item, corrected):
+            canonical = insights.get(item.localized.insight_id) if item.localized else None
+            if item.overlay.supersedes is not None or canonical is None:
+                continue
+            if kinds.get(canonical.insight.moment_id) == EXPLAINS_VOIDS:
+                continue
+            cited = {e for c in canonical.insight.claims for e in c.evidence.event_ids}
+            if not cited & corrected:
                 continue
             of += 1
             hit += item.state in ("retracted", "amended")
@@ -187,8 +190,8 @@ def _percentile(values: Sequence[float], percent: int) -> float:
 
 def latency(runs: Iterable[MatchRun]) -> Latency | None:
     """Time to explain a moment (nearest-rank percentiles), when a model wrote anything."""
-    runs = list(runs)
-    if model_written(runs).hit == 0:
+    measured = list(runs)
+    if model_written(measured).hit == 0:
         return None
-    timings = [t for run in runs for t in run.explain_ms]
+    timings = [t for run in measured for t in run.explain_ms]
     return Latency(p50=_percentile(timings, P50), p95=_percentile(timings, P95))

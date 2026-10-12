@@ -48,6 +48,8 @@ def test_a_candidate_no_worse_anywhere_is_allowed() -> None:
     assert [c.rule for c in verdict.checks] == [
         "unsupported_claims",
         "policy_violations",
+        "verifier_catch",
+        "corrections_carried",
         "storyline_recall",
         "model_written",
         "latency_p95",
@@ -75,6 +77,40 @@ def test_recall_may_dip_three_points_and_no_more() -> None:
     assert not dropped.allowed
     (check,) = [c for c in dropped.checks if not c.passed]
     assert check.detail == "86.0% of planted storylines surfaced (production: 90.0%)"
+
+
+def test_recall_is_compared_exactly_not_after_rounding() -> None:
+    # 90% then 86.96%: 3.04 points lost, which rounds to 3.0 but is more than 3.
+    lost = gate(card("candidate", storylineRecall={"hit": 4348, "of": 5000}), BASELINE)
+    kept = gate(card("candidate", storylineRecall={"hit": 4350, "of": 5000}), BASELINE)
+
+    assert not lost.allowed
+    assert kept.allowed
+
+
+def test_a_candidate_that_published_nothing_is_blocked() -> None:
+    silent = card(
+        "candidate",
+        supportedClaims={"hit": 0, "of": 0},
+        modelWritten={"hit": 0, "of": 0},
+        firstAttemptPass={"hit": 0, "of": 0},
+    )
+    failed = [c.rule for c in gate(silent, BASELINE).checks if not c.passed]
+
+    assert failed == ["unsupported_claims", "model_written"]
+
+
+def test_a_lie_the_verifier_lets_through_blocks() -> None:
+    verdict = gate(card("candidate", verifierCatch={"hit": 79, "of": 80}), BASELINE)
+
+    (check,) = [c for c in verdict.checks if not c.passed]
+    assert check.detail == "79 of 80 planted lies refused"
+
+
+def test_a_correction_left_unpulled_blocks() -> None:
+    verdict = gate(card("candidate", correctionsCarried={"hit": 11, "of": 12}), BASELINE)
+
+    assert [c.rule for c in verdict.checks if not c.passed] == ["corrections_carried"]
 
 
 def test_falling_back_to_the_template_much_more_often_blocks() -> None:

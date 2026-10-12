@@ -44,10 +44,10 @@ def test_every_match_is_two_different_league_clubs() -> None:
 
 def test_every_match_plays_and_records_what_was_planted() -> None:
     for setup, truth in played():
+        storyline = setup.storyline
+        assert storyline is not None
         assert truth.match_id == setup.match_id
-        assert len(truth.storylines) >= len(setup.storyline.directives) - len(
-            setup.storyline.shifts
-        )
+        assert len(truth.storylines) >= len(storyline.directives) - len(storyline.shifts)
 
 
 def test_the_benchmark_plants_every_kind_of_storyline_the_pipeline_must_handle() -> None:

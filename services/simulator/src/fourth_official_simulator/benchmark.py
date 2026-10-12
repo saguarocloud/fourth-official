@@ -58,6 +58,8 @@ def _minutes(rng: random.Random, count: int) -> list[int]:
             break
         if all(abs(minute - other) >= MIN_MINUTES_APART for other in chosen):
             chosen.append(minute)
+    if len(chosen) < count:
+        raise ValueError(f"{count} scripted moments do not fit in one match")
     return sorted(chosen)
 
 

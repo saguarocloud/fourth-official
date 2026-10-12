@@ -38,7 +38,7 @@ Every measure is kept as counts (`hit` of `of`), never as a percentage, so reade
 | Policy violations | Partner items on air at full time with a blocked topic, held for approval but aired, or disclosed other than the partner's policy says. | 0 |
 | Model written | Insights a model wrote; the rest fell back to the template. | Report |
 | First-attempt pass | Model-written insights that passed the Verifier first time. | Report |
-| Corrections carried | Partner items published before a correction they rest on that the corrections desk pulled or replaced. | All |
+| Corrections carried | Partner items resting on a corrected event, whenever they were published, that the corrections desk pulled or replaced. A version the desk remade is the replacement; the VAR decision's own insight is not counted. | All |
 | Latency | Time to explain a moment, p50 and p95 (nearest rank). Not reported when no model wrote. | Report |
 | Cost | Model spend for the run, in US dollars. | Report |
 
@@ -46,11 +46,15 @@ Every measure is kept as counts (`hit` of `of`), never as a percentage, so reade
 
 A candidate is compared with the production baseline over the same benchmark and is blocked if:
 
-- any claim on air at full time is unsupported;
+- any claim on air at full time is unsupported, or it put nothing on air where the baseline did;
 - any partner item on air breaks its partner's policy;
+- the Verifier lets any planted lie through;
+- any partner item resting on a corrected event is still on air as it was;
 - storyline recall drops more than 3 points;
 - the share of model-written insights drops more than 5 points (a prompt the Verifier keeps refusing falls back to the template);
 - p95 latency grows more than 15%.
+
+Rates are compared exactly, as integer cross-products of their counts, and rounded only for display. `gate` exits 1 when it blocks and 2 when it cannot judge: a scorecard it cannot read (missing, over 1 MiB, not JSON, not a scorecard) or two scorecards of different benchmarks. Free text in a scorecard (claims, reasons, details) is one printable line; a page shows it as text, never as markup.
 
 ## Results
 

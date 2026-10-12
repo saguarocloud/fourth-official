@@ -51,3 +51,50 @@ def test_the_gate_exits_non_zero_when_it_blocks(tmp_path: Path) -> None:
         main(["gate", "--candidate", str(candidate), "--baseline", str(baseline)])
 
     assert stopped.value.code == 1
+
+
+@pytest.mark.parametrize(
+    ("content", "why"),
+    [
+        (None, "missing"),
+        ("{not json", "not JSON"),
+        ('{"matches": 3}', "not a scorecard"),
+        ("[" * 5000 + "]" * 5000, "nested too deep"),
+    ],
+)
+def test_a_scorecard_that_cannot_be_read_is_an_error_not_a_block(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], content: str | None, why: str
+) -> None:
+    good = run(tmp_path)
+    bad = tmp_path / "bad.json"
+    if content is not None:
+        bad.write_text(content)
+
+    with pytest.raises(SystemExit) as stopped:
+        main(["gate", "--candidate", str(bad), "--baseline", str(good)])
+
+    assert stopped.value.code == 2, why
+    err = capsys.readouterr().err
+    assert "Traceback" not in err
+    assert err.startswith("Release Gate: cannot read")
+
+
+def test_an_oversized_scorecard_is_refused_unread(tmp_path: Path) -> None:
+    good = run(tmp_path)
+    huge = tmp_path / "huge.json"
+    huge.write_text(" " * (2 * 1024 * 1024) + "{}")
+
+    with pytest.raises(SystemExit) as stopped:
+        main(["gate", "--candidate", str(huge), "--baseline", str(good)])
+
+    assert stopped.value.code == 2
+
+
+def test_scorecards_of_different_benchmarks_are_an_error_not_a_block(tmp_path: Path) -> None:
+    one = run(tmp_path, "one.json", matches=1)
+    two = run(tmp_path, "two.json", matches=2)
+
+    with pytest.raises(SystemExit) as stopped:
+        main(["gate", "--candidate", str(one), "--baseline", str(two)])
+
+    assert stopped.value.code == 2

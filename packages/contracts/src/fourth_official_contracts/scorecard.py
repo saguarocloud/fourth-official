@@ -7,9 +7,9 @@ reader computes the rate the same way the gate does and nothing stored can drift
 
 from typing import Annotated, Literal
 
-from pydantic import Field, StringConstraints, TypeAdapter, model_validator
+from pydantic import AfterValidator, Field, StringConstraints, TypeAdapter, model_validator
 
-from fourth_official_contracts.insights import ClaimText
+from fourth_official_contracts.insights import ClaimText, single_line
 from fourth_official_contracts.localized import ItemId
 from fourth_official_contracts.primitives import EventId, MatchId, UtcTimestamp, WireModel
 
@@ -23,7 +23,17 @@ PromptRef = Annotated[
     str, StringConstraints(pattern=r"^(template|[a-z][a-z-]{1,31}/v[0-9]{1,3}\.[0-9]{1,3})$")
 ]
 ModelAlias = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9.-]{0,63}$")]
-Reason = Annotated[str, StringConstraints(min_length=1, max_length=200)]
+
+
+def _one_line(text: str) -> str:
+    single_line(text)
+    return text
+
+
+# Free text a page will show: one line of printable characters, no bidirectional overrides or
+# zero-width characters that could disguise it. Readers still render it as text, never as markup.
+Reason = Annotated[str, StringConstraints(min_length=1, max_length=200), AfterValidator(_one_line)]
+AiredText = Annotated[ClaimText, AfterValidator(_one_line)]
 Count = Annotated[int, Field(ge=0, le=MAX_COUNT)]
 
 
@@ -84,7 +94,7 @@ class FailedClaim(WireModel):
     item_id: ItemId
     # `cl-1`, or `headline`.
     claim_id: Annotated[str, StringConstraints(pattern=r"^(cl-[0-9]{1,3}|headline)$")]
-    text: ClaimText
+    text: AiredText
     event_ids: Annotated[tuple[EventId, ...], Field(max_length=64, strict=False)]
     reasons: Annotated[tuple[Reason, ...], Field(min_length=1, max_length=8, strict=False)]
 
@@ -101,6 +111,8 @@ class Scorecard(WireModel):
 GateRule = Literal[
     "unsupported_claims",
     "policy_violations",
+    "verifier_catch",
+    "corrections_carried",
     "storyline_recall",
     "model_written",
     "latency_p95",

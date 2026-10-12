@@ -17,6 +17,8 @@
           "enum": [
             "unsupported_claims",
             "policy_violations",
+            "verifier_catch",
+            "corrections_carried",
             "storyline_recall",
             "model_written",
             "latency_p95"

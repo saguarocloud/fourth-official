@@ -20,7 +20,7 @@ from fourth_official_contracts import (
 from fourth_official_simulator.engine import SimulatedMatch
 
 # The fields of an event that name a player taking part in it.
-_PARTICIPANTS = (
+PARTICIPANTS = (
     "player_id",
     "scorer_id",
     "assist_id",
@@ -53,7 +53,7 @@ class Truth:
             value
             for event in cited
             if event.event_id not in behind_goals
-            for name in _PARTICIPANTS
+            for name in PARTICIPANTS
             if isinstance(value := getattr(event, name, None), str)
         }
 
@@ -89,7 +89,11 @@ def truth_of(played: SimulatedMatch) -> Truth:
             voided.add(correction.target_event_id)
         elif isinstance(correction, EventAmended):
             target = events[correction.target_event_id]
-            changes = correction.changes.model_dump(exclude_none=True, by_alias=False)
+            # Exactly the fields the panel set, as models: `assist_id=None` removes the assist,
+            # and a moved goal keeps its clock a clock. An own goal still counts for the side
+            # it was scored for, so the goal's team is unchanged.
+            amendment = correction.changes
+            changes = {name: getattr(amendment, name) for name in amendment.model_fields_set}
             events[target.event_id] = target.model_copy(update=changes)
     voided_at = {
         e.target_event_id: e.seq

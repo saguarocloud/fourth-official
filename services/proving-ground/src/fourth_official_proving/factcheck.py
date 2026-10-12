@@ -1,6 +1,7 @@
 """The Proving Ground's fact check: every claim still on air at full time, held against what
 finally happened. Code reads the claim's references; no model judges anything here."""
 
+import re
 from collections.abc import Iterator, Sequence
 
 from fourth_official_contracts import FailedClaim, Insight, LocalizedInsight, claim_references
@@ -35,9 +36,13 @@ def _reasons(
                 )
 
 
+_MOMENT_KIND = re.compile(r"^mo-m[0-9]+-([a-z_]+)-")
+
+
 def _kind(moment_id: str) -> str:
-    # `mo-m42-var_overturn-HCY-s1704`: kinds use underscores, never hyphens.
-    return moment_id.split("-")[2]
+    """`var_overturn` from `mo-m42-var_overturn-HCY-s1704` (the contract fixes the id's shape)."""
+    found = _MOMENT_KIND.match(moment_id)
+    return found.group(1) if found else ""
 
 
 def check_insight(
