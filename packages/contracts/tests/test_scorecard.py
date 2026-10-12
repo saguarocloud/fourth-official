@@ -38,7 +38,7 @@ def scorecard(**changes: object) -> dict[str, Any]:
         "failures": [
             {
                 "matchId": "m1003",
-                "insightId": "in-m1003-goal-HCY-s0287-a1",
+                "itemId": "it-northlight-sport-in-m1003-goal-HCY-s0287-a1-v1",
                 "claimId": "cl-1",
                 "text": "{{player:HCY-19}} scores",
                 "eventIds": ["m1003-e0287"],

@@ -10,7 +10,13 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from types import MappingProxyType
 
-from fourth_official_contracts import EventAmended, EventVoided, GoalEvent, MatchEvent
+from fourth_official_contracts import (
+    EventAmended,
+    EventVoided,
+    GoalEvent,
+    MatchEvent,
+    VarDecisionEvent,
+)
 from fourth_official_simulator.engine import SimulatedMatch
 
 # The fields of an event that name a player taking part in it.
@@ -34,6 +40,9 @@ class Truth:
     events: Mapping[str, MatchEvent]
     original: Mapping[str, MatchEvent]
     voided: frozenset[str]
+    # Goals VAR overturned during the match, and the event that announced it: from then on the
+    # pipeline published the score without them.
+    voided_at: Mapping[str, int]
 
     def participants(self, event_ids: Iterable[str]) -> set[str]:
         """Players taking part in these events, as finally credited. The shot behind a cited goal
@@ -51,14 +60,18 @@ class Truth:
     def minutes(self, event_ids: Iterable[str]) -> set[int]:
         return {self.events[e].clock.minute for e in event_ids if e in self.events}
 
-    def score_at(self, seq: int, *, corrected: bool = True) -> tuple[int, int]:
-        """(home, away) after every event up to `seq`: as finally true, or as first published."""
-        events = self.events if corrected else self.original
+    def score_at(self, seq: int, *, as_published: bool = False) -> tuple[int, int]:
+        """(home, away) after every event up to `seq`: as finally true, or as it could be
+        published then (without goals VAR had overturned by then)."""
+        events = self.original if as_published else self.events
         home = away = 0
         for event in events.values():
             if not isinstance(event, GoalEvent) or event.seq > seq:
                 continue
-            if corrected and event.event_id in self.voided:
+            decided = self.voided_at.get(event.event_id)
+            if as_published and decided is not None and decided <= seq:
+                continue
+            if not as_published and event.event_id in self.voided:
                 continue
             if event.team_id == self.home:
                 home += 1
@@ -78,9 +91,15 @@ def truth_of(played: SimulatedMatch) -> Truth:
             target = events[correction.target_event_id]
             changes = correction.changes.model_dump(exclude_none=True, by_alias=False)
             events[target.event_id] = target.model_copy(update=changes)
+    voided_at = {
+        e.target_event_id: e.seq
+        for e in played.events
+        if isinstance(e, VarDecisionEvent) and e.decision == "overturned"
+    }
     return Truth(
         home=played.ground_truth.home,
         events=MappingProxyType(events),
         original=MappingProxyType(original),
         voided=frozenset(voided),
+        voided_at=MappingProxyType(voided_at),
     )

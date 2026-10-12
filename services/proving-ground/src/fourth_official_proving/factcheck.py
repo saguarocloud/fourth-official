@@ -3,10 +3,12 @@ finally happened. Code reads the claim's references; no model judges anything he
 
 from collections.abc import Iterator, Sequence
 
-from fourth_official_contracts import FailedClaim, Insight, claim_references
+from fourth_official_contracts import FailedClaim, Insight, LocalizedInsight, claim_references
 from fourth_official_proving.truth import Truth
 
 HEADLINE = "headline"
+# The moment that announces a goal ruled out cites that goal: it is what it explains.
+EXPLAINS_VOIDS = "var_overturn"
 
 
 def _reasons(
@@ -24,7 +26,7 @@ def _reasons(
         elif kind == "minute" and int(argument) not in minutes:
             yield f"names minute {argument}, when none of its events happened"
         elif kind == "score":
-            published = truth.score_at(as_of_seq, corrected=False)
+            published = truth.score_at(as_of_seq, as_published=True)
             final = truth.score_at(as_of_seq)
             if published != final:
                 yield (
@@ -33,7 +35,14 @@ def _reasons(
                 )
 
 
-def check_insight(insight: Insight, truth: Truth) -> tuple[FailedClaim, ...]:
+def _kind(moment_id: str) -> str:
+    # `mo-m42-var_overturn-HCY-s1704`: kinds use underscores, never hyphens.
+    return moment_id.split("-")[2]
+
+
+def check_insight(
+    insight: Insight | LocalizedInsight, item_id: str, truth: Truth
+) -> tuple[FailedClaim, ...]:
     """Every claim of the insight that the truth does not support, and the headline if its own
     references are wrong (it rests on the claims' evidence, which the claims already answer for)."""
     checked = [(c.claim_id, c.text, c.evidence.event_ids) for c in insight.claims]
@@ -41,14 +50,14 @@ def check_insight(insight: Insight, truth: Truth) -> tuple[FailedClaim, ...]:
     checked.append((HEADLINE, insight.headline, everything))
     failures = []
     for claim_id, text, event_ids in checked:
-        own = claim_id != HEADLINE
+        own = claim_id != HEADLINE and _kind(insight.moment_id) != EXPLAINS_VOIDS
         found = _reasons(text, event_ids, insight.as_of_seq, truth, own_evidence=own)
         reasons = tuple(dict.fromkeys(found))
         if reasons:
             failures.append(
                 FailedClaim(
                     match_id=insight.match_id,
-                    insight_id=insight.insight_id,
+                    item_id=item_id,
                     claim_id=claim_id,
                     text=text,
                     event_ids=tuple(event_ids),

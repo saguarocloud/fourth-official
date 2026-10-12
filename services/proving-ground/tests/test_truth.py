@@ -58,8 +58,15 @@ def test_minutes_are_those_of_the_cited_events() -> None:
 def test_the_score_leaves_out_goals_ruled_out() -> None:
     after_void = goal(VOIDED_GOAL).seq + 1
 
-    assert m42().score_at(after_void, corrected=False) == (2, 0)
+    assert m42().score_at(after_void, as_published=True) == (2, 0)
     assert m42().score_at(after_void) == (1, 0)
+
+
+def test_the_score_as_published_drops_a_goal_once_var_has_ruled_it_out() -> None:
+    decided = m42().voided_at[VOIDED_GOAL]
+
+    assert decided > goal(VOIDED_GOAL).seq
+    assert m42().score_at(decided, as_published=True) == (1, 0)
 
 
 def test_the_final_score_is_the_ground_truths() -> None:

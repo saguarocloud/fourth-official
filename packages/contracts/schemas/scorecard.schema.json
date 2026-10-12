@@ -56,9 +56,10 @@
           "title": "Eventids",
           "type": "array"
         },
-        "insightId": {
-          "maxLength": 72,
-          "title": "Insightid",
+        "itemId": {
+          "maxLength": 128,
+          "pattern": "^it-[a-z]+(-[a-z]+)*-[A-Za-z0-9_-]{1,100}$",
+          "title": "Itemid",
           "type": "string"
         },
         "matchId": {
@@ -86,7 +87,7 @@
       },
       "required": [
         "matchId",
-        "insightId",
+        "itemId",
         "claimId",
         "text",
         "eventIds",

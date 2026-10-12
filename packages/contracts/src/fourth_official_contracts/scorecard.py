@@ -10,6 +10,7 @@ from typing import Annotated, Literal
 from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
 from fourth_official_contracts.insights import ClaimText
+from fourth_official_contracts.localized import ItemId
 from fourth_official_contracts.primitives import EventId, MatchId, UtcTimestamp, WireModel
 
 MAX_MATCHES = 100
@@ -79,7 +80,8 @@ class FailedClaim(WireModel):
     """A claim on air at full time that the ground truth does not support, and why."""
 
     match_id: MatchId
-    insight_id: Annotated[str, StringConstraints(max_length=72)]
+    # The partner item that aired it.
+    item_id: ItemId
     # `cl-1`, or `headline`.
     claim_id: Annotated[str, StringConstraints(pattern=r"^(cl-[0-9]{1,3}|headline)$")]
     text: ClaimText
