@@ -98,3 +98,23 @@ def test_scorecards_of_different_benchmarks_are_an_error_not_a_block(tmp_path: P
         main(["gate", "--candidate", str(one), "--baseline", str(two)])
 
     assert stopped.value.code == 2
+
+
+def test_a_run_can_be_named_for_the_gate(tmp_path: Path) -> None:
+    out = tmp_path / "named.json"
+    main(
+        ["run", "--config", "template", "--matches", "1", "--name", "candidate", "--out", str(out)]
+    )
+
+    assert parse_scorecard(json.loads(out.read_text())).configuration.name == "candidate"
+
+
+def test_a_model_run_without_foundry_is_an_error_not_a_crash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.delenv("FOUNDRY_PROJECT_ENDPOINT", raising=False)
+
+    with pytest.raises(SystemExit) as stopped:
+        main(["run", "--config", "production", "--matches", "1", "--out", str(tmp_path / "p.json")])
+
+    assert stopped.value.code == 2

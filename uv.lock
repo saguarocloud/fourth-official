@@ -703,6 +703,7 @@ name = "fourth-official-proving"
 version = "0.1.0"
 source = { editable = "services/proving-ground" }
 dependencies = [
+    { name = "azure-identity" },
     { name = "fourth-official-contracts" },
     { name = "fourth-official-explain" },
     { name = "fourth-official-match-data" },
@@ -710,10 +711,12 @@ dependencies = [
     { name = "fourth-official-replay" },
     { name = "fourth-official-simulator" },
     { name = "fourth-official-verifier" },
+    { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "azure-identity", specifier = ">=1.25,<2" },
     { name = "fourth-official-contracts", editable = "packages/contracts" },
     { name = "fourth-official-explain", editable = "services/explain" },
     { name = "fourth-official-match-data", editable = "services/match-data" },
@@ -721,6 +724,7 @@ requires-dist = [
     { name = "fourth-official-replay", editable = "services/replay" },
     { name = "fourth-official-simulator", editable = "services/simulator" },
     { name = "fourth-official-verifier", editable = "services/verifier" },
+    { name = "uvicorn", specifier = ">=0.54" },
 ]
 
 [[package]]

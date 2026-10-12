@@ -10,6 +10,7 @@ and 2 when it cannot judge (a scorecard it cannot read, or two of different benc
 import argparse
 import asyncio
 import json
+import re
 import sys
 from collections.abc import Sequence
 from datetime import UTC, datetime
@@ -18,9 +19,11 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from fourth_official_contracts import Scorecard, parse_scorecard
-from fourth_official_proving.configurations import CONFIGURATIONS
+from fourth_official_match_data import store_of
+from fourth_official_proving.configurations import CONFIGURATIONS, Runnable
 from fourth_official_proving.gate import gate
-from fourth_official_proving.runner import run_benchmark
+from fourth_official_proving.models import CostMeter, FoundryUnavailableError
+from fourth_official_proving.runner import MatchRun, run_benchmark
 from fourth_official_proving.scorecard import score
 from fourth_official_simulator.benchmark import BENCHMARK_SIZE, benchmark_matches
 
@@ -29,6 +32,7 @@ SMOKE_MATCHES = 20
 # A full scorecard with every failure listed is well under this; anything larger is refused unread.
 MAX_SCORECARD_BYTES = 1024 * 1024
 BLOCKED, CANNOT_JUDGE = 1, 2
+NAME = re.compile(r"[a-z0-9][a-z0-9-]{0,39}")
 
 
 class UnreadableScorecardError(Exception):
@@ -63,10 +67,30 @@ def _write(path: Path | None, wire: object) -> None:
         path.write_text(text, encoding="utf-8")
 
 
+async def _runs(runnable: Runnable, matches: int, meter: CostMeter) -> tuple[MatchRun, ...]:
+    setups = benchmark_matches(matches)
+    store = store_of(setups)
+    async with runnable.open(store, meter) as explainer:
+        return await run_benchmark(setups, explainer, store=store)
+
+
 def _run(args: argparse.Namespace) -> None:
     runnable = CONFIGURATIONS[args.config]
-    runs = asyncio.run(run_benchmark(benchmark_matches(args.matches), runnable.explainer()))
-    card = score(runnable.configuration, runs, generated_at=datetime.now(UTC))
+    meter = CostMeter()
+    try:
+        runs = asyncio.run(_runs(runnable, args.matches, meter))
+    except FoundryUnavailableError as error:
+        sys.stderr.write(f"Proving Ground: {error}\n")
+        raise SystemExit(CANNOT_JUDGE) from error
+    configuration = runnable.configuration
+    if args.name is not None:
+        configuration = configuration.model_copy(update={"name": args.name})
+    card = score(
+        configuration,
+        runs,
+        generated_at=datetime.now(UTC),
+        cost_usd=meter.cost_usd() if runnable.uses_models else None,
+    )
     _write(args.out, card.to_wire())
 
 
@@ -87,6 +111,12 @@ def _gate(args: argparse.Namespace) -> None:
     sys.stderr.write(f"Release Gate: {verdict.candidate} is allowed.\n")
 
 
+def _name(value: str) -> str:
+    if not NAME.fullmatch(value):
+        raise argparse.ArgumentTypeError("lower-case letters, digits and hyphens")
+    return value
+
+
 def _matches(value: str) -> int:
     count = int(value)
     if not 1 <= count <= BENCHMARK_SIZE:
@@ -101,6 +131,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     run.add_argument("--config", required=True, choices=sorted(CONFIGURATIONS))
     run.add_argument("--matches", type=_matches, default=SMOKE_MATCHES)
     run.add_argument("--out", type=Path, default=None)
+    run.add_argument(
+        "--name", type=_name, default=None, help="name the run in its scorecard (e.g. candidate)"
+    )
     run.set_defaults(handler=_run)
     check = commands.add_parser("gate", help="gate a candidate scorecard against a baseline")
     check.add_argument("--candidate", type=Path, required=True)
