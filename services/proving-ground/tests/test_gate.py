@@ -119,12 +119,28 @@ def test_falling_back_to_the_template_much_more_often_blocks() -> None:
     assert [c.rule for c in verdict.checks if not c.passed] == ["model_written"]
 
 
-def test_p95_latency_may_grow_fifteen_percent_and_no_more() -> None:
-    within = card("candidate", latencyMs={"p50": 1900.0, "p95": 4600.0})
-    beyond = card("candidate", latencyMs={"p50": 1900.0, "p95": 4601.0})
+def p95(ms: float) -> Scorecard:
+    return card("candidate", latencyMs={"p50": 1900.0, "p95": ms})
 
-    assert gate(within, BASELINE).allowed
-    assert not gate(beyond, BASELINE).allowed
+
+def test_p95_latency_may_grow_fifteen_percent_and_no_more() -> None:
+    slow = card("production", latencyMs={"p50": 9000.0, "p95": 40000.0})
+
+    assert gate(p95(46000.0), slow).allowed
+    assert not gate(p95(46001.0), slow).allowed
+
+
+def test_a_few_seconds_of_tail_noise_never_blocks() -> None:
+    # p95 over ~80 moments is the slowest four model calls: seconds of noise between identical
+    # runs (CI saw 11.3 s then 13.7 s). Growth must exceed 15% and 5 s to block.
+    assert gate(p95(9000.0), BASELINE).allowed
+    assert not gate(p95(9001.0), BASELINE).allowed
+
+
+def test_the_degraded_candidate_is_still_blocked_on_latency() -> None:
+    production = card("production", latencyMs={"p50": 4863.2, "p95": 22094.7})
+
+    assert not gate(p95(32341.3), production).allowed
 
 
 def test_latency_is_not_compared_when_either_run_wrote_without_a_model() -> None:

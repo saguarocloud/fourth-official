@@ -53,15 +53,17 @@ class PlantedLie:
 
 
 def _with_first_claim(insight: Insight, text: str, event_ids: tuple[str, ...]) -> Insight | None:
+    """The insight with its first claim changed, or None if that is no valid insight (a lie the
+    contract itself refuses, such as one pushed past the length limit, is not planted)."""
     first, *rest = insight.claims
-    changed = Claim(
-        claim_id=first.claim_id,
-        type=first.type,
-        text=text,
-        evidence=first.evidence.model_copy(update={"event_ids": event_ids}),
-    ).to_wire()
-    wire = insight.to_wire() | {"claims": [changed, *(c.to_wire() for c in rest)]}
     try:
+        changed = Claim(
+            claim_id=first.claim_id,
+            type=first.type,
+            text=text,
+            evidence=first.evidence.model_copy(update={"event_ids": event_ids}),
+        ).to_wire()
+        wire = insight.to_wire() | {"claims": [changed, *(c.to_wire() for c in rest)]}
         return parse_insight(wire)
     except ValidationError:
         return None

@@ -78,7 +78,7 @@ async def _runs(runnable: Runnable, matches: int, meter: CostMeter) -> tuple[Mat
     setups = benchmark_matches(matches)
     store = store_of(setups)
     async with runnable.open(store, meter) as explainer:
-        return await run_benchmark(setups, explainer, store=store)
+        return await run_benchmark(setups, explainer, store=store, concurrency=runnable.concurrency)
 
 
 def _run(args: argparse.Namespace) -> None:

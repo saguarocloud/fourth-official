@@ -59,6 +59,10 @@ jobs:
       id-token: write
     strategy:
       fail-fast: false
+      # One side at a time: both share the model deployments' rate limits, and running together
+      # they were refused (429) often enough to push drafts to the template unevenly, so identical
+      # configurations differed by 12 points on the share a model wrote.
+      max-parallel: 1
       matrix:
         include:
           # The base branch's own code and configuration: never the pull request's copy, so a pull

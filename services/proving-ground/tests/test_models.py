@@ -141,3 +141,10 @@ def test_a_refusal_stops_the_run_with_foundrys_reason_and_no_identifiers() -> No
     assert "403 PermissionDenied" in message
     assert "AIServices/responses/write" in message
     assert "0f1e2d3c" not in message
+
+
+def test_model_runs_replay_fewer_matches_at_once_than_template_runs() -> None:
+    # The deployments' token-per-minute limits refuse four matches' drafts at once (429).
+    assert CONFIGURATIONS["production"].concurrency == 2
+    assert CONFIGURATIONS["candidate"].concurrency == 2
+    assert CONFIGURATIONS["template"].concurrency == 4

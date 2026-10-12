@@ -4,8 +4,9 @@ import asyncio
 from collections import Counter
 from functools import cache
 
+from fourth_official_contracts import InsightEntry, MomentEntry
 from fourth_official_explain import Explanation, explain
-from fourth_official_proving.adversarial import MUTATIONS, planted_lies, verifier_catch
+from fourth_official_proving.adversarial import MUTATIONS, _lies, planted_lies, verifier_catch
 from fourth_official_proving.runner import MatchRun, run_benchmark
 from fourth_official_replay import facts_for
 from fourth_official_simulator.demo import demo_matchday
@@ -46,3 +47,21 @@ def test_the_verifier_refuses_every_lie() -> None:
 
     assert catch.of >= 30
     assert catch.hit == catch.of
+
+
+def test_a_lie_that_would_break_the_contract_is_skipped_not_a_crash() -> None:
+    (m42, *_) = demo()
+    entry = next(e for e in m42.entries if isinstance(e, InsightEntry) and e.verdict.passed)
+    first = entry.insight.claims[0]
+    # A model may write a claim right up to the limit: appending to it makes no valid insight.
+    long = first.model_copy(update={"text": first.text + " and" * ((280 - len(first.text)) // 4)})
+    insight = entry.insight.model_copy(update={"claims": (long, *entry.insight.claims[1:])})
+    moment = next(
+        m.moment
+        for m in m42.entries
+        if isinstance(m, MomentEntry) and m.moment.moment_id == insight.moment_id
+    )
+
+    lies = list(_lies(insight, moment, facts_for(m42.record)))
+
+    assert "invented_name" not in {mutation for mutation, _ in lies}
