@@ -3,27 +3,20 @@
 from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import AsyncExitStack, asynccontextmanager
 from functools import partial
-from typing import Literal
 
 from azure.identity.aio import DefaultAzureCredential
 
 from fourth_official_api.settings import FoundrySettings
 from fourth_official_contracts import Moment, TenantPolicy
 from fourth_official_explain import Explanation, explain
-from fourth_official_explain.analyst import AgentDrafter, foundry_analyst
+from fourth_official_explain.analyst import AgentDrafter
 from fourth_official_explain.localize import Localizer
 from fourth_official_explain.localizer import AgentLocalizer, foundry_localizer
+from fourth_official_explain.production import LOCALIZER, analyst_drafters
 from fourth_official_explain.prompts import load_prompt
 from fourth_official_policy import blocked_topics_in
 from fourth_official_replay import Explainer, Partner, Partners
 from fourth_official_verifier import MatchFacts
-
-PROMPT = ("analyst", "v1.2")
-# Model aliases in the order they are tried, with each one's reasoning effort.
-MODELS: tuple[tuple[str, Literal["minimal", "low", "medium"] | None], ...] = (
-    ("fast", "minimal"),
-    ("fallback", None),
-)
 
 
 async def template_explainer(moment: Moment, facts: MatchFacts) -> Explanation:
@@ -34,20 +27,12 @@ async def template_explainer(moment: Moment, facts: MatchFacts) -> Explanation:
 def foundry_drafters(
     settings: FoundrySettings, credential: DefaultAzureCredential
 ) -> list[AgentDrafter]:
-    """The Analyst on the `fast` model (minimal reasoning), then on the `fallback` model."""
-    prompt = load_prompt(*PROMPT)
-    return [
-        foundry_analyst(
-            project_endpoint=settings.project_endpoint,
-            deployment=alias,
-            alias=alias,
-            match_data_url=settings.match_data_url,
-            prompt=prompt,
-            credential=credential,
-            reasoning_effort=effort,
-        )
-        for alias, effort in MODELS
-    ]
+    """The production Analyst: the `fast` model (minimal reasoning), then the `fallback` one."""
+    return analyst_drafters(
+        project_endpoint=settings.project_endpoint,
+        match_data_url=settings.match_data_url,
+        credential=credential,
+    )
 
 
 @asynccontextmanager
@@ -67,9 +52,6 @@ async def foundry_explainer(settings: FoundrySettings) -> AsyncIterator[Explaine
         yield explainer
 
 
-LOCALIZER_PROMPT = ("localizer", "v1.0")
-
-
 @asynccontextmanager
 async def foundry_localizer_for(settings: FoundrySettings) -> AsyncIterator[AgentLocalizer]:
     """The Localizer on the `fast` model. Its credential opens and closes here."""
@@ -80,7 +62,7 @@ async def foundry_localizer_for(settings: FoundrySettings) -> AsyncIterator[Agen
             project_endpoint=settings.project_endpoint,
             deployment="fast",
             alias="fast",
-            prompt=load_prompt(*LOCALIZER_PROMPT),
+            prompt=load_prompt(*LOCALIZER),
             credential=credential,
             reasoning_effort="minimal",
         )

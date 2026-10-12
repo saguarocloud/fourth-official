@@ -31,6 +31,29 @@ class DraftError(RuntimeError):
     """The model answered without a usable structured draft."""
 
 
+@dataclass(frozen=True, slots=True)
+class TokenCount:
+    """Tokens one model call spent, under the model's configured alias."""
+
+    model: str
+    input: int
+    output: int
+
+
+# Told of every call's tokens, so a caller can put a price on a run.
+Meter = Callable[[TokenCount], None]
+
+
+def _spent(response: object, model: str) -> TokenCount | None:
+    usage = getattr(response, "usage_details", None)
+    if not isinstance(usage, Mapping):
+        return None
+    tokens_in, tokens_out = usage.get("input_token_count"), usage.get("output_token_count")
+    if not isinstance(tokens_in, int) or not isinstance(tokens_out, int):
+        return None
+    return TokenCount(model=model, input=tokens_in, output=tokens_out)
+
+
 # Runs the agent on one message, with options, bounded to a moment; returns the agent's response.
 RunAgent = Callable[[str, ChatOptions[Any], int], Awaitable[object]]
 
@@ -73,6 +96,9 @@ class AgentDrafter:
     # Model-specific options, such as reasoning effort for reasoning models.
     options: Mapping[str, object] = field(default_factory=dict)
     connections: tuple[AbstractAsyncContextManager[object], ...] = ()
+    # Told what each call spent, whether or not its answer was usable. A call that fails outright
+    # reports nothing, so a meter can only undercount.
+    meter: Meter | None = None
     _stack: AsyncExitStack | None = field(default=None, init=False, repr=False)
 
     async def __aenter__(self) -> "AgentDrafter":
@@ -94,13 +120,16 @@ class AgentDrafter:
     async def draft(self, request: DraftRequest) -> InsightDraft:
         options = cast("ChatOptions[Any]", {**self.options, "response_format": InsightDraft})
         response = await self.run(request_message(request), options, request.moment.as_of_seq)
+        spent = _spent(response, self.provenance.model)
+        if self.meter is not None and spent is not None:
+            self.meter(spent)
         value = getattr(response, "value", None)
         if not isinstance(value, InsightDraft):
             raise DraftError("the model returned no structured draft")
         return value
 
 
-def foundry_analyst(
+def foundry_analyst(  # noqa: PLR0913 - the model, its tools, its prompt and its meter
     *,
     project_endpoint: str,
     deployment: str,
@@ -109,6 +138,7 @@ def foundry_analyst(
     prompt: Prompt,
     credential: AsyncTokenCredential,
     reasoning_effort: Literal["minimal", "low", "medium"] | None = None,
+    meter: Meter | None = None,
 ) -> AgentDrafter:
     """The caller owns `credential` and closes it after the drafter.
 
@@ -135,4 +165,10 @@ def foundry_analyst(
         agent=prompt.agent, prompt_version=prompt.version, model=alias, produced_by="model"
     )
     options = {"reasoning": {"effort": reasoning_effort}} if reasoning_effort else {}
-    return AgentDrafter(run=run, provenance=provenance, options=options, connections=(match_data,))
+    return AgentDrafter(
+        run=run,
+        provenance=provenance,
+        options=options,
+        connections=(match_data,),
+        meter=meter,
+    )
