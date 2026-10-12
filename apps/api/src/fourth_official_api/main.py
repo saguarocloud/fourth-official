@@ -17,6 +17,7 @@ from fourth_official_api.explainers import (
 )
 from fourth_official_api.matchday_routes import matchday_router
 from fourth_official_api.provenance import Issuer, provenance_router
+from fourth_official_api.proving import proving_router
 from fourth_official_api.security import SecurityHeaders
 from fourth_official_api.settings import Settings
 from fourth_official_api.start_ledger import blob_start_ledger
@@ -147,6 +148,7 @@ def create_app(
     app.include_router(matchday_router(_summaries(store)))
     app.include_router(decision_router())
     app.include_router(provenance_router())
+    app.include_router(proving_router(settings.proving_results))
     docs = [path for path in (app.docs_url, app.redoc_url) if path is not None]
     app.add_middleware(SecurityHeaders, docs_paths=docs)
     return app

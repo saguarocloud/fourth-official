@@ -254,7 +254,7 @@ A neutral black chrome with six signal lights; the lights are the only chroma on
 
 **The One Blue Rule.** Blue is reserved for the AI tag. Nothing else is blue.
 
-**The White Clock Rule.** Clocks and scorelines are lit white. A number becomes a state colour only when it is itself a state (a pending count, an SLO breach).
+**The White Clock Rule.** Clocks and scorelines are lit white. A number becomes a state colour only when it is itself a state (a pending count, an SLO breach, a Proving Ground figure that breaches its gate rule, lit red; a figure that passes stays ink-1, never green).
 
 ### Partner looks (Broadcast Preview monitor only)
 Each partner's graphics are drawn in its own look, inside the 16:9 stage and nowhere else. These colours are graphics, not signals.
@@ -332,6 +332,10 @@ The main wall leads with the page header and verdict, then the match wall: a two
 
 **Verify** (`/verify/[itemId]`) is the public page, standalone: no shell, no nav, in Paper. A panel-1 masthead with a hairline foot holds the brand mark and "Meridian League Studios · Fourth Official" (the product in ink-2), aligned to the record's 64rem column so the mark sits over the record's left edge. Main (64rem, centred, 32px by 16px padding) runs: a small title, "The studio's record of this graphic" (16px, 500, ink-2; the seal is the answer, so it is set larger than the title); the record in an `aria-live="polite"` region (or the note: "Checking the record.", "The studio has no record of this graphic.", busy, unavailable with "Try again"); "How this check works" (65ch, two ink-2 paragraphs: what is signed, and that a copied graphic can sit beside a genuine id, so the words must match too); a 13px ink-3 synthetic-data footer. The page is `noindex`.
 
+**Proving Ground** (`/proving-ground`) has no live rail, so main takes the full width. The Release Gate's last call on a candidate, made as a go/no-go poll rule by rule; never a dashboard of metric cards or a bare pass/fail badge. It reads the recorded runs (production and the candidate on the smoke subset, the template over the full benchmark) and the gate's verdict on them. The page runs: page header (title, verdict line); the poll board, one column, `minmax(20rem, 26rem) | minmax(0, 1fr)` from 1280 with The call left and The poll right (aligned to the top); "Side by side", capped at 64rem, a 13px ink-3 note ("Every measure of both runs. A measure marked (reported) is shown for context: the gate does not rule on it.") over the data table; then Unsupported claims beside The full benchmark (`3fr | 2fr` from 1024), stacked full width when there are no failures (the benchmark then capped at 64rem); the synthetic-data footnote at 75ch, which says every pull request runs its production configuration beside the base branch's on the same N benchmark matches, and that the candidate is a prompt kept deliberately worse.
+- **Verdict:** red "The Release Gate blocks Analyst prompt v1.4 against production's v1.2 on N of 7 rules: rule title, candidate figure against production's (allowance); …." naming every no-go rule; green "The Release Gate allows …: all 7 rules call go."; neutral "Reading the recorded runs."; red "The recorded runs could not be read: the match service did not answer." and red "Too many reads from here. Wait a moment and try again.", both with a small "Try again" key beneath the header.
+- **Phones (720 and below):** each poll station puts lamp and call, title and figure on one line (`auto | 1fr | auto`), production and the rule wrapping beneath at full width; padding 16px.
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -344,6 +348,7 @@ Breakpoints:
 - **Approvals only:** 1280 and up puts the call sheet beside the desk and the stage beside the reading; 720 and below turns the decisions log into cards.
 - **Corrections only:** 1280 and up puts the incident's facts beside its board and lays item boards out at `minmax(28rem, 1fr)`; 720 and below stacks each board's panels and the facts, and the fan switches to its stacked layout.
 - **Provenance only:** 1024 and up puts the sticky picker beside the record; 768 and up sets each claim's margin note beside it; 1280 and up puts the life beside the facts; 720 and below caps the picker at 15rem and pads the record 16px.
+- **Proving Ground only:** 1280 and up puts The call beside The poll; 1024 and up puts Unsupported claims beside the benchmark (when there are any); 720 and below folds each station to one line.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -538,6 +543,23 @@ The item itself, annotated: a panel-1 panel padded 32px (16px on phones) with a 
 ### Picker (Provenance)
 "Items on record · N": a call sheet on panel-1 with a hairline edge, its heading sticky inside it. Rows are links (`code | headline | minute + compact lamp`, `2.75rem | 1fr | auto`, 12px by 16px padding, hairline-divided): partner code as an 11px label in ink-3, the headline truncated in 13px ink-2, the minute and the compact status lamp in ink-3. Hover panel-2; the current row (`aria-current="page"`) is panel-3 with ink-1 text and code. The list scrolls, so its focus ring is drawn inset (`inset 0 0 0 2px led-white, inset 0 0 0 4px panel-0`) where the scroller cannot clip it.
 
+### The call (Proving Ground)
+The gate's verdict lit on the board: a panel-1 panel padded 24px with a hairline edge. "The call" panel heading; an LED readout reading NO-GO (red) or GO (green) at 6px dots, filling the panel's width on a panel-0 field padded 16px (`role="img"`, "The call: no-go"); the subject in 16px 600 ink-1, balanced ("Analyst prompt v1.4 against production's v1.2"); above a hairline, a facts `dl` of 11px uppercase ink-3 terms over 14px ink-1 values: Benchmark ("20 matches from …", tabular), Models (joined ", then "), Recorded (the date, in `<time>`).
+
+### Poll station (Proving Ground)
+"The poll · 7 rules": an ordered list on panel-1 with a hairline edge, one station per rule in the gate's order, hairline-divided, padded 12px by 24px. Columns `6rem | minmax(0, 24rem) | minmax(7rem, auto)`, packed to the start so the figure sits beside its label rather than across the panel. The call: a 10px round lamp (green go, red no-go) with "Go" or "No-go" in 14px 600 ink-1, never colour alone. The title: 16px 600 ink-1. The candidate's figure: 20px 600 tabular, right-aligned, ink-1, lit red only when that station is no-go (the White Clock Rule's breach exception). Beneath the title, production's figure ("Production …", ink-2) and the allowance ("Rule: may drop 3 points", ink-3), 14px.
+
+**Measure naming.** One label per measure, identical in the poll, the table and the benchmark (from `RULE_TEXT`): Unsupported claims on air (rule: none), Policy breaches (none), Planted lies refused (every one), Corrections carried (every one), Planted stories found (may drop 3 points), Written by the model (may drop 5 points), Time to explain (p95) (may grow 15%). Reported only: About a real moment, Passed first time, Time to explain (p50), Cost of the run.
+
+### Side by side (Proving Ground)
+The data table, Measure | Production | Candidate: the gated measures in the poll's order (rates also as counts, "hit of N (rate%)"), then the reported ones with "(reported)" in ink-3 after the label. No colour in the table; the poll carries the state.
+
+### Unsupported claim (Proving Ground)
+Each failure from either run, candidate first: a panel-1 item padded 16px with a hairline edge. A 14px ink-3 line "Candidate · match id · item id" (ids in the data font, 12px, breaking anywhere); the claim's text in ink-1, rendered as text, never markup; its reasons as a 14px ink-2 bulleted list; "Rests on E1, E2" in ink-3. None: a 65ch ink-2 sentence, "No claim on air at full time was unsupported, in either run."
+
+### Benchmark panel (Proving Ground)
+"The full benchmark": a panel-1 panel padded 24px. A 65ch ink-2 lede ("The harness's own reference run: N matches from …, explained by the template with no model and no cost.") over a facts `dl` in auto-fit `minmax(12rem, 1fr)` columns: 11px uppercase ink-3 terms over 16px 600 ink-1 tabular values, using the measure names above.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -558,6 +580,7 @@ The item itself, annotated: a panel-1 panel padded 32px (16px on phones) with a 
 - **Do** name the duty editor as a demo identity wherever a decision names an editor; this demo has no sign-in.
 - **Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.
 - **Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.
+- **Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much.
 
 ### Don't:
 - **Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).
@@ -570,7 +593,9 @@ The item itself, annotated: a panel-1 panel padded 32px (16px on phones) with a 
 - **Don't** repeat a correction's state with a lamp when its strap already names it.
 - **Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.
 - **Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is "Signed and unchanged".
+- **Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state.
 
 ### Open items
 - Nothing on air links to Verify yet: no QR code or short link on the partner graphics or in the Broadcast Preview monitor, so a viewer can only reach `/verify/[itemId]` from a shared URL.
+- The Proving Ground shows the recorded runs in `eval/results` (production-20, candidate-20, template), not the latest CI run; a pull request's own verdict is not yet linked from the screen.
 - Paper has no print stylesheet; the Verify page prints with its masthead and links as on screen.

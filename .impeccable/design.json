@@ -379,6 +379,18 @@
       {
         "name": "provenance-phone",
         "value": "720px"
+      },
+      {
+        "name": "proving-beside",
+        "value": "1280px"
+      },
+      {
+        "name": "proving-lower-beside",
+        "value": "1024px"
+      },
+      {
+        "name": "proving-phone",
+        "value": "720px"
       }
     ],
     "partnerThemes": [
@@ -496,6 +508,38 @@
         },
         "focus": "Choosing an item links to ?match=…&item=…#record, so the record scrolls into view (scroll-margin-top --space-4) and the address stays shareable.",
         "phone": "At 720px and below the picker caps at 15rem and the record pads 16px; claim margin notes stack under their claims below 768px."
+      },
+      {
+        "name": "Proving Ground",
+        "path": "/proving-ground",
+        "rail": "none; main takes the rail's column from 1024px (data-rail=\"none\")",
+        "firstViewport": "Title and a verdict naming the failing rules and their figures; the poll board, minmax(20rem, 26rem) | minmax(0, 1fr) from 1280px: The call (LED NO-GO/GO) left, The poll (7 stations) right; 'Side by side' (64rem max) with a note explaining '(reported)'; Unsupported claims beside The full benchmark (3fr | 2fr from 1024px), stacked full width when there are no failures; synthetic-data footnote at 75ch. A go/no-go poll, never a dashboard of metric cards or a bare pass/fail badge.",
+        "verdict": {
+          "blocked": "The Release Gate blocks Analyst prompt v1.4 against production's v1.2 on N of 7 rules: rule title, candidate figure against production's (allowance); …. (red)",
+          "allowed": "The Release Gate allows …: all 7 rules call go. (green)",
+          "loading": "Reading the recorded runs. (neutral)",
+          "busy": "Too many reads from here. Wait a moment and try again. (red, with Try again)",
+          "unavailable": "The recorded runs could not be read: the match service did not answer. (red, with Try again)"
+        },
+        "measures": {
+          "gated": [
+            "Unsupported claims on air (none)",
+            "Policy breaches (none)",
+            "Planted lies refused (every one)",
+            "Corrections carried (every one)",
+            "Planted stories found (may drop 3 points)",
+            "Written by the model (may drop 5 points)",
+            "Time to explain (p95) (may grow 15%)"
+          ],
+          "reported": [
+            "About a real moment",
+            "Passed first time",
+            "Time to explain (p50)",
+            "Cost of the run"
+          ],
+          "rule": "One label per measure, identical in the poll, the table and the benchmark."
+        },
+        "phone": "At 720px and below each poll station puts lamp and call, title and figure on one line (auto | 1fr | auto); production and the rule wrap beneath; padding 16px."
       },
       {
         "name": "Verify",
@@ -747,6 +791,36 @@
       "description": "Provenance: 'Items on record · N', a call sheet on panel-1 with a sticky heading. Rows are links (code | headline | minute + compact status lamp; 2.75rem | 1fr | auto): code as an 11px ink-3 label, headline truncated in 13px ink-2, minute and lamp in ink-3. Hover panel-2; current (aria-current=page) panel-3 with ink-1. The list scrolls, so the focus ring is inset (inset 0 0 0 2px led-white, inset 0 0 0 4px panel-0) where the scroller cannot clip it. Sticky beside the record from 1024px; max 22rem tall stacked, 15rem on phones.",
       "html": "<nav class=\"ds-pk\"><h2>Items on record · 3</h2><a href=\"#\" aria-current=\"page\"><b>TRA</b><span>Ardmore da la vuelta al marcador</span><i>67'</i></a><a href=\"#\"><b>NLS</b><span>Ardmore turn it round in eleven minutes</span><i>67'</i></a></nav>",
       "css": ".ds-pk { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:320px; background:#0d1013; border:1px solid #20272d; border-radius:2px; } .ds-pk h2 { margin:0; padding:12px 16px; border-bottom:1px solid #20272d; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-pk a { display:grid; grid-template-columns:2.75rem minmax(0,1fr) auto; gap:12px; align-items:center; padding:12px 16px; color:#a1abb4; text-decoration:none; font-size:13px; } .ds-pk a + a { border-top:1px solid #20272d; } .ds-pk a:hover { background:#151a1e; } .ds-pk a[aria-current='page'] { background:#1c2227; color:#e9edf0; } .ds-pk b { font-size:11px; letter-spacing:0.08em; color:#7c8791; } .ds-pk a[aria-current='page'] b { color:#e9edf0; } .ds-pk span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ds-pk i { font-style:normal; color:#7c8791; } .ds-pk a:focus-visible { outline:none; box-shadow:inset 0 0 0 2px #f2f5f7, inset 0 0 0 4px #07090b; }"
+    },
+    {
+      "name": "The Call",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Proving Ground: a panel-1 panel padded 24px. 'The call' heading; an LED readout NO-GO (red) or GO (green) at 6px dots filling the panel's width on a panel-0 field; the subject in 16px 600 ink-1 ('Analyst prompt v1.4 against production's v1.2'); a facts dl above a hairline (11px uppercase ink-3 terms, 14px ink-1 values): Benchmark, Models, Recorded."
+    },
+    {
+      "name": "Poll Station",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Proving Ground: one per gate rule, in the gate's order, hairline-divided on panel-1. Columns 6rem | minmax(0, 24rem) | minmax(7rem, auto), packed to the start so the figure sits beside its label. A 10px lamp (green go, red no-go) with 'Go'/'No-go' text; the title (16px 600 ink-1, the measure's one name); the candidate figure 20px 600 tabular, ink-1, lit red only when the station is no-go; beneath, 'Production …' in ink-2 and 'Rule: …' in ink-3. Phones: lamp, title and figure on one line."
+    },
+    {
+      "name": "Side-by-side Table",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Proving Ground: the data table, Measure | Production | Candidate; gated measures in the poll's order, then reported ones marked '(reported)' in ink-3. No state colour."
+    },
+    {
+      "name": "Unsupported Claim",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Proving Ground: a panel-1 item per failure, candidate first: 'Run · match · item id' (ids in the data font), the claim rendered as text, reasons as an ink-2 list, 'Rests on' evidence ids in ink-3."
+    },
+    {
+      "name": "Benchmark Panel",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Proving Ground: 'The full benchmark', a panel-1 panel; a 65ch ink-2 lede ('The harness's own reference run: …') over facts in auto-fit minmax(12rem, 1fr) columns, 16px 600 tabular values."
     }
   ],
   "narrative": {
@@ -777,7 +851,7 @@
       },
       {
         "name": "The White Clock Rule",
-        "body": "Clocks and scorelines are lit white. A number becomes a state colour only when it is itself a state (a pending count, an SLO breach).",
+        "body": "Clocks and scorelines are lit white. A number becomes a state colour only when it is itself a state (a pending count, an SLO breach, a Proving Ground figure that breaches its gate rule, lit red; a figure that passes stays ink-1, never green).",
         "section": "colors"
       },
       {
@@ -823,7 +897,8 @@
       "**Do** keep a text equivalent beside every picture of a broadcast: the rundown lists everything the monitor shows.",
       "**Do** name the duty editor as a demo identity wherever a decision names an editor; this demo has no sign-in.",
       "**Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.",
-      "**Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it."
+      "**Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.",
+      "**Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much."
     ],
     "donts": [
       "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
@@ -835,7 +910,8 @@
       "**Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.",
       "**Don't** mark moment kinds with colour; a kind is an icon and a label.",
       "**Don't** repeat a correction's state with a lamp when its strap already names it.",
-      "**Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is \"Signed and unchanged\"."
+      "**Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is \"Signed and unchanged\".",
+      "**Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state."
     ]
   }
 }
