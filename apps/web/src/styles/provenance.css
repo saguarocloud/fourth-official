@@ -284,7 +284,9 @@
   font-family: var(--font-data);
   font-size: 0.75rem;
   color: var(--ink-1);
-  overflow-wrap: anywhere;
+  /* Ids, hashes and signatures break at any character: a hyphen is not a word boundary in them,
+     and a signature that starts with one must not leave it alone on a line. */
+  word-break: break-all;
 }
 
 .record__below {

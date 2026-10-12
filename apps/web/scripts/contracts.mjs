@@ -12,6 +12,8 @@ const schemas = join(here, "../../../packages/contracts/schemas");
 export const CONTRACTS = [
   { schema: "feed-entry.schema.json", output: "feed.ts" },
   { schema: "signed-provenance.schema.json", output: "provenance.ts" },
+  { schema: "scorecard.schema.json", output: "scorecard.ts" },
+  { schema: "gate-verdict.schema.json", output: "gateVerdict.ts" },
 ];
 export const BANNER =
   "/* Generated from packages/contracts/schemas by `npm run contracts`. Do not edit. */";
