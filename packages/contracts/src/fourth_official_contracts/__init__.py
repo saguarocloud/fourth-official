@@ -117,6 +117,12 @@ from fourth_official_contracts.overlays import (
     StatRow,
     parse_overlay_spec,
 )
+from fourth_official_contracts.policy_history import (
+    PolicyChange,
+    PolicyField,
+    PolicyHistory,
+    parse_policy_history,
+)
 from fourth_official_contracts.primitives import (
     FIRST_HALF_MINUTES,
     MAX_BALL_SPEED_KMH,
@@ -268,6 +274,9 @@ __all__ = [
     "PitchPoint",
     "PlayerAction",
     "PlayerId",
+    "PolicyChange",
+    "PolicyField",
+    "PolicyHistory",
     "PossessionChangeEvent",
     "PressureEvent",
     "Provenance",
@@ -322,6 +331,7 @@ __all__ = [
     "parse_moment",
     "parse_moment_json",
     "parse_overlay_spec",
+    "parse_policy_history",
     "parse_scorecard",
     "parse_signed_provenance",
     "parse_tenant_policy",

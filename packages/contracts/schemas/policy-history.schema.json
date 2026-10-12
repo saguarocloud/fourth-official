@@ -1,0 +1,290 @@
+{
+  "$defs": {
+    "PolicyChange": {
+      "additionalProperties": false,
+      "description": "How one version came to be.",
+      "properties": {
+        "action": {
+          "enum": [
+            "bundled",
+            "edited",
+            "reset"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "changedAt": {
+          "format": "date-time",
+          "title": "Changedat",
+          "type": "string"
+        },
+        "editor": {
+          "pattern": "^[A-Z][A-Za-z.' -]{1,59}$",
+          "title": "Editor",
+          "type": "string"
+        },
+        "fields": {
+          "items": {
+            "enum": [
+              "displayName",
+              "tone",
+              "preferTerms",
+              "avoidTerms",
+              "blockedTopics",
+              "approvalRequired",
+              "disclosureMode",
+              "latencyBudgetMs",
+              "maxItemsPerMinute",
+              "templates",
+              "correctionBehaviour"
+            ],
+            "type": "string"
+          },
+          "maxItems": 16,
+          "title": "Fields",
+          "type": "array"
+        },
+        "reason": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Reason",
+          "type": "string"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        },
+        "version": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tenantId",
+        "version",
+        "action",
+        "editor",
+        "changedAt",
+        "reason",
+        "fields"
+      ],
+      "title": "PolicyChange",
+      "type": "object"
+    },
+    "TenantPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "approvalRequired": {
+          "items": {
+            "enum": [
+              "insight",
+              "recap",
+              "stat",
+              "correction",
+              "score"
+            ],
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Approvalrequired",
+          "type": "array"
+        },
+        "avoidTerms": {
+          "items": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[^\\W\\d_]+(?:[ '-][^\\W\\d_]+)*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Avoidterms",
+          "type": "array"
+        },
+        "blockedTopics": {
+          "items": {
+            "enum": [
+              "injury_speculation",
+              "betting",
+              "transfer_rumour",
+              "referee_criticism",
+              "off_field"
+            ],
+            "type": "string"
+          },
+          "maxItems": 5,
+          "title": "Blockedtopics",
+          "type": "array"
+        },
+        "correctionBehaviour": {
+          "enum": [
+            "auto-amend",
+            "retract-and-notify",
+            "escalate"
+          ],
+          "title": "Correctionbehaviour",
+          "type": "string"
+        },
+        "disclosureMode": {
+          "enum": [
+            "label-all",
+            "label-unless-approved",
+            "eu-strict"
+          ],
+          "title": "Disclosuremode",
+          "type": "string"
+        },
+        "displayName": {
+          "maxLength": 60,
+          "minLength": 1,
+          "title": "Displayname",
+          "type": "string"
+        },
+        "dutyEditor": {
+          "pattern": "^[A-Z][A-Za-z.' -]{1,59}$",
+          "title": "Dutyeditor",
+          "type": "string"
+        },
+        "latencyBudgetMs": {
+          "maximum": 30000,
+          "minimum": 1000,
+          "title": "Latencybudgetms",
+          "type": "integer"
+        },
+        "locale": {
+          "enum": [
+            "en-GB",
+            "es-MX",
+            "de-DE"
+          ],
+          "title": "Locale",
+          "type": "string"
+        },
+        "maxItemsPerMinute": {
+          "maximum": 30,
+          "minimum": 1,
+          "title": "Maxitemsperminute",
+          "type": "integer"
+        },
+        "preferTerms": {
+          "items": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[^\\W\\d_]+(?:[ '-][^\\W\\d_]+)*$",
+            "type": "string"
+          },
+          "maxItems": 50,
+          "title": "Preferterms",
+          "type": "array"
+        },
+        "templates": {
+          "items": {
+            "enum": [
+              "lower_third",
+              "stat_card",
+              "correction_strap",
+              "score_bug"
+            ],
+            "type": "string"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Templates",
+          "type": "array"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        },
+        "tone": {
+          "items": {
+            "maxLength": 40,
+            "minLength": 1,
+            "pattern": "^[^\\W\\d_]+(?:[ '-][^\\W\\d_]+)*$",
+            "type": "string"
+          },
+          "maxItems": 6,
+          "minItems": 1,
+          "title": "Tone",
+          "type": "array"
+        },
+        "version": {
+          "maximum": 1000,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "tenantId",
+        "version",
+        "displayName",
+        "locale",
+        "tone",
+        "preferTerms",
+        "avoidTerms",
+        "blockedTopics",
+        "approvalRequired",
+        "disclosureMode",
+        "latencyBudgetMs",
+        "maxItemsPerMinute",
+        "templates",
+        "correctionBehaviour",
+        "dutyEditor"
+      ],
+      "title": "TenantPolicy",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/policy-history.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Every version of one partner's policy, oldest first, each with the change that made it.",
+  "properties": {
+    "changes": {
+      "items": {
+        "$ref": "#/$defs/PolicyChange"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Changes",
+      "type": "array"
+    },
+    "tenantId": {
+      "enum": [
+        "northlight-sport",
+        "tribuna-austral",
+        "rheinblick-sport"
+      ],
+      "title": "Tenantid",
+      "type": "string"
+    },
+    "versions": {
+      "items": {
+        "$ref": "#/$defs/TenantPolicy"
+      },
+      "maxItems": 500,
+      "minItems": 1,
+      "title": "Versions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "tenantId",
+    "versions",
+    "changes"
+  ],
+  "title": "PolicyHistory",
+  "type": "object"
+}
