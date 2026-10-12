@@ -264,6 +264,15 @@ Each partner's graphics are drawn in its own look, inside the 16:9 stage and now
 
 **The Stage Rule.** Partner colours live inside the monitor's stage only, never in the chrome. Around the frame the board's palette and signal lights apply unchanged; inside it, no partner colour means state.
 
+### Paper (Verify page only)
+The board's light twin, for readers outside the gallery (a viewer, a journalist, a regulator holding a graphic). `[data-theme="paper"]` redefines the same tokens, so hairlines, keys, lamps and the seal are unchanged; only the ink and stone change (`color-scheme: light`).
+- **Stone:** panel-0 #efebe2 (page), panel-1 #fbf9f4 (the sheet: masthead and record), panel-2 #f1ede4, panel-3 #e5e0d4; hairline #ddd6c8, strong #c2b9a7.
+- **Ink:** ink-1 #14181b, ink-2 #454d54, ink-3 #626b73 (5.16:1). led-white becomes ink-1, so the primary key and focus ring print black (`0 0 0 2px panel-1, 0 0 0 4px ink-1`); led-off is 6% black.
+- **Signals, darkened to keep 4.5:1 on the sheet** (on panel-1): amber #8a5600 (5.85), green #0d7339 (5.66), red #b8251a (6.02), blue #1b58b3 (6.45), violet #643cb8 (6.93). Same meanings, same one-colour-per-state.
+- **Brand mark:** stays a black board, lit (#0d1013 frame, red and green rows), on paper too: the mark is the board itself.
+
+**The Paper Rule.** Paper is for the public Verify page only. The control room is never light, and no control-room screen sets `data-theme="paper"`.
+
 ## Typography
 
 **Display font:** none; the LED readout takes the display role.
@@ -316,6 +325,13 @@ The main wall leads with the page header and verdict, then the match wall: a two
 - **What it reached:** the panel heading with the small Replay key at the right (shown only when items were reached); the impact fan; then the item boards as a list labelled "Items corrected", one column, `repeat(auto-fill, minmax(28rem, 1fr))` from 1280. With nothing reached, a 13px ink-2 sentence: "No partner item rested on the corrected event." (or, before any report, "The corrections desk has not reported on this correction yet.").
 - **Phones (720 and below):** the fan switches to its stacked layout (a 400-unit viewBox read top to bottom: the correction, its insights, then each partner item), so every node stays legible without scrolling; the wide layout hides, and a hidden layout is out of the accessibility tree, so the fan is announced once; each board's OUT and IN panels stack; the facts drop to one column; the summary bar drops to 20px.
 
+**Provenance** (`/provenance`) has no live rail, so main takes the full width. An item's signed record, read as the item annotated, not as a table of hashes. The first viewport runs: page header (title, "Home v Away · Meridian League", verdict line); the controls row (`.provenance__controls`) with the match keys; then the picker and the record, `20rem | minmax(0, 1fr)` from 1024 with the picker sticky (`top: --space-4`, at most the viewport tall), stacked below 1024 (picker at most 22rem tall, 15rem on phones, scrolling inside). Under the record, a 13px ink-2 link, underlined in strong hairline, with a trailing ArrowRight: "Open the public verification page" (`/verify/[itemId]`). The synthetic-data footnote closes the page.
+- **Verdict:** leads with the match count, then the chosen record's state: green "N partner items on record for this match. This one is signed and unchanged."; amber "… This one is unchanged but signed with a development key."; red "This record does not verify: reason."; amber when the item has no record yet or it could not be read; neutral "No partner item is on record for this match yet. Each one is signed as it is published." and "Loading the matchday."; red "The match service is unavailable. Retrying every few seconds."
+- **Choosing an item** links to `?match=…&item=…#record`, so the record scrolls into view (`scroll-margin-top: --space-4`) and keeps the address shareable.
+- **Not on record:** a panel-1 note (65ch, ink-2) in place of the record ("No record has been issued for this item yet…", or that it could not be read, with a small "Try again" key when busy or unavailable).
+
+**Verify** (`/verify/[itemId]`) is the public page, standalone: no shell, no nav, in Paper. A panel-1 masthead with a hairline foot holds the brand mark and "Meridian League Studios · Fourth Official" (the product in ink-2), aligned to the record's 64rem column so the mark sits over the record's left edge. Main (64rem, centred, 32px by 16px padding) runs: a small title, "The studio's record of this graphic" (16px, 500, ink-2; the seal is the answer, so it is set larger than the title); the record in an `aria-live="polite"` region (or the note: "Checking the record.", "The studio has no record of this graphic.", busy, unavailable with "Try again"); "How this check works" (65ch, two ink-2 paragraphs: what is signed, and that a copied graphic can sit beside a genuine id, so the words must match too); a 13px ink-3 synthetic-data footer. The page is `noindex`.
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -327,6 +343,7 @@ Breakpoints:
 - **Broadcast Preview only:** 1800 and up puts the rundown beside the monitor; 720 and below is the phone layout above.
 - **Approvals only:** 1280 and up puts the call sheet beside the desk and the stage beside the reading; 720 and below turns the decisions log into cards.
 - **Corrections only:** 1280 and up puts the incident's facts beside its board and lays item boards out at `minmax(28rem, 1fr)`; 720 and below stacks each board's panels and the facts, and the fan switches to its stacked layout.
+- **Provenance only:** 1024 and up puts the sticky picker beside the record; 768 and up sets each claim's margin note beside it; 1280 and up puts the life beside the facts; 720 and below caps the picker at 15rem and pads the record 16px.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -498,6 +515,29 @@ One partner item a correction reached, as a list item: a panel-1 panel padded 16
 ### Replay (Corrections)
 A small default key beside "What it reached". It re-runs the One Moment light-up across the item boards (260, 380, 500, 620ms) and the fan's item nodes and their edges, then moves focus to the first board's heading (`#first-change`, `tabindex="-1"`). Under reduced motion nothing animates, but focus still moves, so the replay is felt.
 
+### Seal (Provenance, Verify)
+The record's answer, first in the record above a hairline: a 36px Lucide shield (stroke 1.5) beside a 20px weight-600 title, then the signer line in 13px ink-2 ("key · Issued by …, signed at hh:mm:ss UTC"). Three tones, from `sealOf`:
+- **Verified** (green ShieldCheck): "Signed and unchanged". Only the studio's production key (ES256) earns it.
+- **Development** (amber ShieldAlert, detail in amber): "Unchanged, signed with a development key"; a local key proves nothing outside the studio.
+- **Failed** (red ShieldX): "Does not verify", with the reason beneath in red, weight 500.
+- **On paper:** set larger than the page title (24px title, 44px icon).
+
+### Annotated record (Provenance, Verify)
+The item itself, annotated: a panel-1 panel padded 32px (16px on phones) with a hairline edge, `id="record"`, `tabindex="-1"`.
+- **Head** (13px ink-2): the partner name (600, ink-1), its locale in the data font (12px ink-3, BCP 47 casing kept, not a label), "Version N, as signed" in ink-3, the shared status lamp (a rejected item reads Dropped), and the disclosure exactly as the partner's policy labelled it, in the AI tag's style (18px, blue edge at 60%, in the item's `lang`).
+- **Headline:** `clamp(1.75rem, 1.25rem + 1.5vw, 2.5rem)`, 600, 1.15, -0.02em, 30ch, balanced, in the item's own `lang`.
+- **Claims:** an ordered list, each above a hairline: the claim at 18px/1.5 ink-1 (60ch) and, from 768 in a 16rem column beside it, a margin note (13px ink-2, strong-hairline left rule): "Rests on events E1, E2 and stats S1", ids in the data font (Geist Mono, 12px).
+- **Below:** Life and Facts under a hairline, side by side from 1280.
+
+### Life
+"Its life": the item's steps as a lamp on one strong hairline, from `lifeOf` (Written, Remade, Checked, Localised, Approved or Rejected, then the ending), each a 14px weight-600 label over a 13px ink-2 detail. Process steps are hollow 12px lamps (ink-3 edge). The ending is lit in its State Vocabulary colour: On air red, Held amber, Pulled red, Replaced violet; Kept off air (and a Rejected step) lit ink-3. Never colour alone: every lamp has its label.
+
+### Facts
+"The record": a `dl` of 11px uppercase ink-3 terms over 13px ink-1 values: Item, Match and feed entry, Key, Content hash (SHA-256), Signature (algorithm). Ids, hash and signature are set in the data font at 12px and break anywhere.
+
+### Picker (Provenance)
+"Items on record · N": a call sheet on panel-1 with a hairline edge, its heading sticky inside it. Rows are links (`code | headline | minute + compact lamp`, `2.75rem | 1fr | auto`, 12px by 16px padding, hairline-divided): partner code as an 11px label in ink-3, the headline truncated in 13px ink-2, the minute and the compact status lamp in ink-3. Hover panel-2; the current row (`aria-current="page"`) is panel-3 with ink-1 text and code. The list scrolls, so its focus ring is drawn inset (`inset 0 0 0 2px led-white, inset 0 0 0 4px panel-0`) where the scroller cannot clip it.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -529,6 +569,8 @@ A small default key beside "What it reached". It re-runs the One Moment light-up
 - **Don't** mark moment kinds with colour; a kind is an icon and a label.
 - **Don't** repeat a correction's state with a lamp when its strap already names it.
 - **Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.
+- **Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is "Signed and unchanged".
 
 ### Open items
-- A light theme for Provenance and the public Verify page has not been built; the system is dark only (`color-scheme: dark`).
+- Nothing on air links to Verify yet: no QR code or short link on the partner graphics or in the Broadcast Preview monitor, so a viewer can only reach `/verify/[itemId]` from a shared URL.
+- Paper has no print stylesheet; the Verify page prints with its masthead and links as on screen.
