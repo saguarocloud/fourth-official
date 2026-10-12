@@ -309,3 +309,22 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - Key Vault Standard costs well under a cent a match at these volumes, and Key Vault is in the plan's service list (§10.4). EC verification runs in the API process once the public key is fetched, so reads do not reach the vault.
 - Records name the key version that signed them. After a rotation, records signed by the old version report "signed with another key" until that version is added to the trusted versions. This fails closed.
 - Purge protection cannot be turned off. A torn-down vault's name stays taken for the 7-day retention period.
+
+## ADR-014: The Proving Ground holds what is on air at full time against ground truth
+
+**Date:** 2026-10-12 · **Status:** Accepted
+
+**Context.** A prompt or model change can make the pipeline worse in ways a demo never shows. The plan (§9) asks for a benchmark of seeded matches with planted storylines, measured accuracy, recall, latency and cost, and a gate in CI that blocks regressions.
+
+**Choice.**
+- **A seeded benchmark from the simulator.** A hundred matches (`m1001` to `m1100`), each from its own seed, with goals, red cards, press collapses, VAR voids and scorer reassignments drawn from that seed. A smaller run is the start of the full one, so CI's 20-match smoke subset never changes. Ground truth comes from the simulator, as for the demo matchday.
+- **The real pipeline, headless.** Each match is replayed through the same replay, Explainer, Verifier, partner policies and corrections desk the API runs, with no waiting and fixed clocks. Only the explain step is timed.
+- **Truth that is not the Verifier's.** What partners still air at full time, in their own words, is checked against the simulator's events with every correction applied: voids, and amendments such as a reassigned scorer. The Verifier asks whether a claim was supported when it was written; this asks whether what is on air is true now. A correction that was not carried through, or a check the Verifier lacks, shows up as an unsupported claim.
+- **Planted lies for the Verifier.** Code makes six kinds of lie from each published insight, and the catch rate is how many the Verifier refuses.
+- **Counts, not percentages.** A scorecard (`packages/contracts`, `scorecard.schema.json`) stores every measure as `hit` of `of`. The gate and every reader compute rates the same way, and nothing stored can drift from its counts. No model computes any of it.
+- **The gate's rules** are those of plan §9.3, plus one: a candidate is blocked if its share of model-written insights falls more than 5 points. The deterministic Verifier refuses unsupported drafts before they air, so a worse prompt shows up as more fallbacks to the template, not as untrue claims on air.
+
+**Consequences.**
+- The template configuration runs the full benchmark in about a minute with no model cost, so the harness itself is tested in the ordinary suite.
+- Running a model configuration costs tokens and needs Foundry credentials. Which runs happen where, and how CI reaches Foundry, is decided with the model configurations.
+- The fact check reads references (`{{player:…}}`, `{{minute:…}}`, `{{score}}`), not prose. A claim that misstates a player's role while naming a player who did take part passes it. An LLM judge layer would cover that, at a cost.

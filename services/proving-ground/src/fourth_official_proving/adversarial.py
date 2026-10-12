@@ -6,7 +6,7 @@ about its own insights: a player who took no part, a minute still to come, a bar
 invented name, evidence that does not exist, and evidence VAR has already ruled out.
 """
 
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 
 from pydantic import ValidationError
@@ -142,7 +142,7 @@ def planted_lies(run: MatchRun) -> tuple[PlantedLie, ...]:
     return tuple(lies)
 
 
-def verifier_catch(runs: list[MatchRun] | tuple[MatchRun, ...]) -> Ratio:
+def verifier_catch(runs: Iterable[MatchRun]) -> Ratio:
     """Planted lies the Verifier refused, of all planted."""
     hit = of = 0
     for run in runs:
