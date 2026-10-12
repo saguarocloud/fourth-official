@@ -1,0 +1,51 @@
+{
+  "configuration": {
+    "analystPrompt": "analyst/v1.4",
+    "localizerPrompt": "template",
+    "models": [
+      "fast",
+      "fallback"
+    ],
+    "name": "candidate"
+  },
+  "failures": [],
+  "firstMatch": "m1001",
+  "generatedAt": "2026-10-12T00:52:42.992Z",
+  "matches": 20,
+  "metrics": {
+    "correctionsCarried": {
+      "hit": 36,
+      "of": 36
+    },
+    "costUsd": 0.0819,
+    "firstAttemptPass": {
+      "hit": 16,
+      "of": 23
+    },
+    "keyMomentPrecision": {
+      "hit": 68,
+      "of": 79
+    },
+    "latencyMs": {
+      "p50": 3116.6,
+      "p95": 32341.3
+    },
+    "modelWritten": {
+      "hit": 23,
+      "of": 79
+    },
+    "policyViolations": 0,
+    "storylineRecall": {
+      "hit": 54,
+      "of": 54
+    },
+    "supportedClaims": {
+      "hit": 206,
+      "of": 206
+    },
+    "verifierCatch": {
+      "hit": 409,
+      "of": 409
+    }
+  }
+}

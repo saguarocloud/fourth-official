@@ -1,0 +1,51 @@
+{
+  "configuration": {
+    "analystPrompt": "analyst/v1.2",
+    "localizerPrompt": "template",
+    "models": [
+      "fast",
+      "fallback"
+    ],
+    "name": "production"
+  },
+  "failures": [],
+  "firstMatch": "m1001",
+  "generatedAt": "2026-10-12T00:51:15.681Z",
+  "matches": 20,
+  "metrics": {
+    "correctionsCarried": {
+      "hit": 36,
+      "of": 36
+    },
+    "costUsd": 0.1412,
+    "firstAttemptPass": {
+      "hit": 59,
+      "of": 78
+    },
+    "keyMomentPrecision": {
+      "hit": 68,
+      "of": 79
+    },
+    "latencyMs": {
+      "p50": 4863.2,
+      "p95": 22094.7
+    },
+    "modelWritten": {
+      "hit": 78,
+      "of": 79
+    },
+    "policyViolations": 0,
+    "storylineRecall": {
+      "hit": 54,
+      "of": 54
+    },
+    "supportedClaims": {
+      "hit": 236,
+      "of": 236
+    },
+    "verifierCatch": {
+      "hit": 409,
+      "of": 409
+    }
+  }
+}

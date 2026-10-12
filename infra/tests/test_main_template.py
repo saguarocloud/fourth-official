@@ -161,9 +161,13 @@ def test_the_only_role_a_person_can_hold_is_using_models_on_the_foundry_account(
 def test_github_federated_credential_is_scoped_to_one_environment(
     compiled: CompiledTemplate,
 ) -> None:
-    (credential,) = compiled.of_type(
-        "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
-    )
+    (credential,) = [
+        c
+        for c in compiled.of_type(
+            "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
+        )
+        if "deploy-identity" in c.module
+    ]
 
     assert credential.properties["issuer"] == "https://token.actions.githubusercontent.com"
     assert credential.properties["audiences"] == ["api://AzureADTokenExchange"]
@@ -173,6 +177,40 @@ def test_github_federated_credential_is_scoped_to_one_environment(
         "[format('{0}:environment:{1}', parameters('githubSubjectPrefix'), "
         "parameters('githubEnvironment'))]"
     )
+
+
+def test_the_proving_identity_is_trusted_only_for_pull_requests(
+    compiled: CompiledTemplate,
+) -> None:
+    (credential,) = [
+        c
+        for c in compiled.of_type(
+            "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
+        )
+        if "proving-identity" in c.module
+    ]
+
+    assert credential.properties["issuer"] == "https://token.actions.githubusercontent.com"
+    assert credential.properties["audiences"] == ["api://AzureADTokenExchange"]
+    # Pull requests of this repository only: GitHub issues no token to a fork's pull request, and
+    # no branch, environment or wildcard form can match.
+    assert credential.properties["subject"] == (
+        "[format('{0}:pull_request', parameters('githubSubjectPrefix'))]"
+    )
+
+
+def test_the_proving_identity_can_only_use_models(compiled: CompiledTemplate) -> None:
+    assignments = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if "proving-identity" in a.module
+    ]
+
+    assert [GUID.findall(str(a.properties["roleDefinitionId"])) for a in assignments] == [
+        [AZURE_AI_USER]
+    ]
+    assert "Microsoft.CognitiveServices/accounts'" in str(assignments[0].body["scope"])
+    assert "AZURE_PROVING_CLIENT_ID" in compiled.template["outputs"]
 
 
 def test_outputs_never_expose_secrets(compiled: CompiledTemplate) -> None:
