@@ -529,7 +529,7 @@
             "Corrections carried (every one)",
             "Planted stories found (may drop 3 points)",
             "Written by the model (may drop 5 points)",
-            "Time to explain (p95) (may grow 15% and 5 s)"
+            "Time to explain (p50) (may grow 15% and 2 s)"
           ],
           "reported": [
             "About a real moment",

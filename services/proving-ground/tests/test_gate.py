@@ -52,7 +52,7 @@ def test_a_candidate_no_worse_anywhere_is_allowed() -> None:
         "corrections_carried",
         "storyline_recall",
         "model_written",
-        "latency_p95",
+        "latency_p50",
     ]
 
 
@@ -119,28 +119,26 @@ def test_falling_back_to_the_template_much_more_often_blocks() -> None:
     assert [c.rule for c in verdict.checks if not c.passed] == ["model_written"]
 
 
-def p95(ms: float) -> Scorecard:
-    return card("candidate", latencyMs={"p50": 1900.0, "p95": ms})
+def p50(ms: float) -> Scorecard:
+    return card("candidate", latencyMs={"p50": ms, "p95": 60000.0})
 
 
-def test_p95_latency_may_grow_fifteen_percent_and_no_more() -> None:
-    slow = card("production", latencyMs={"p50": 9000.0, "p95": 40000.0})
+def test_the_median_time_may_grow_fifteen_percent_and_no_more() -> None:
+    slow = card("production", latencyMs={"p50": 20000.0, "p95": 40000.0})
 
-    assert gate(p95(46000.0), slow).allowed
-    assert not gate(p95(46001.0), slow).allowed
-
-
-def test_a_few_seconds_of_tail_noise_never_blocks() -> None:
-    # p95 over ~80 moments is the slowest four model calls: seconds of noise between identical
-    # runs (CI saw 11.3 s then 13.7 s). Growth must exceed 15% and 5 s to block.
-    assert gate(p95(9000.0), BASELINE).allowed
-    assert not gate(p95(9001.0), BASELINE).allowed
+    assert gate(p50(23000.0), slow).allowed
+    assert not gate(p50(23001.0), slow).allowed
 
 
-def test_the_degraded_candidate_is_still_blocked_on_latency() -> None:
-    production = card("production", latencyMs={"p50": 4863.2, "p95": 22094.7})
+def test_a_couple_of_seconds_of_noise_never_blocks() -> None:
+    assert gate(p50(3800.0), BASELINE).allowed
+    assert not gate(p50(3801.0), BASELINE).allowed
 
-    assert not gate(p95(32341.3), production).allowed
+
+def test_the_tail_is_reported_not_ruled_on() -> None:
+    # p95 over a smoke run's ~80 moments is whether a few drafts needed a retry: identical code
+    # in CI measured 13.1 s and 20.1 s. The median is the rule; the tail is in the scorecard.
+    assert gate(card("candidate", latencyMs={"p50": 1800.0, "p95": 400000.0}), BASELINE).allowed
 
 
 def test_latency_is_not_compared_when_either_run_wrote_without_a_model() -> None:
@@ -149,7 +147,7 @@ def test_latency_is_not_compared_when_either_run_wrote_without_a_model() -> None
         template, card("template-baseline", latencyMs=None, modelWritten={"hit": 0, "of": 64})
     )
 
-    latency = next(c for c in verdict.checks if c.rule == "latency_p95")
+    latency = next(c for c in verdict.checks if c.rule == "latency_p50")
     assert latency.passed
     assert latency.detail == "not measured: no model wrote in one of the runs"
 

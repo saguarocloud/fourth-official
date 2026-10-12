@@ -17,7 +17,7 @@ export type Rule =
   | "corrections_carried"
   | "storyline_recall"
   | "model_written"
-  | "latency_p95";
+  | "latency_p50";
 
 /**
  * The Release Gate's answer for a candidate against the baseline: allowed only if every

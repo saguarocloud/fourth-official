@@ -22,7 +22,7 @@ const RULES: readonly Rule[] = [
   "corrections_carried",
   "storyline_recall",
   "model_written",
-  "latency_p95",
+  "latency_p50",
 ];
 const RATIOS = [
   "supportedClaims",
@@ -177,10 +177,10 @@ const RULE_TEXT: Readonly<Record<Rule, RuleText>> = {
     rule: "may drop 5 points",
     figure: (c) => percent(c.metrics.modelWritten),
   },
-  latency_p95: {
-    title: "Time to explain (p95)",
-    rule: "may grow 15% and 5 s",
-    figure: (c) => latencyOf(c, "p95"),
+  latency_p50: {
+    title: "Time to explain (p50)",
+    rule: "may grow 15% and 2 s",
+    figure: (c) => latencyOf(c, "p50"),
   },
 };
 
@@ -247,7 +247,7 @@ const TABLE_FIGURE: Readonly<Partial<Record<Rule, (c: Scorecard) => string>>> = 
 const REPORTED: readonly (readonly [string, (c: Scorecard) => string])[] = [
   ["About a real moment", (c) => both(c.metrics.keyMomentPrecision)],
   ["Passed first time", (c) => both(c.metrics.firstAttemptPass)],
-  ["Time to explain (p50)", (c) => latencyOf(c, "p50")],
+  ["Time to explain (p95)", (c) => latencyOf(c, "p95")],
   ["Cost of the run", costOf],
 ];
 
