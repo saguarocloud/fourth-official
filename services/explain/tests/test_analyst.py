@@ -13,6 +13,7 @@ from fourth_official_contracts import Finding, Provenance
 from fourth_official_explain.analyst import (
     AgentDrafter,
     DraftError,
+    TokenCount,
     foundry_analyst,
     request_message,
 )
@@ -244,3 +245,42 @@ def test_leaving_a_drafter_that_was_never_entered_is_harmless() -> None:
     drafter = AgentDrafter(run=Stub(DRAFT, []), provenance=PROVENANCE)
 
     anyio.run(drafter.__aexit__, None, None, None)
+
+
+@dataclass
+class Metered:
+    value: object
+    usage: dict[str, int] | None
+
+    async def __call__(self, message: str, options: ChatOptions[Any], as_of_seq: int) -> object:
+        return type("Response", (), {"value": self.value, "usage_details": self.usage})()
+
+
+def test_the_tokens_each_draft_spends_are_metered_under_its_model_alias() -> None:
+    spent: list[TokenCount] = []
+    usage = {"input_token_count": 1200, "output_token_count": 300, "total_token_count": 1500}
+    drafter = AgentDrafter(run=Metered(DRAFT, usage), provenance=PROVENANCE, meter=spent.append)
+
+    anyio.run(drafter.draft, DraftRequest(moment=moment("goal"), attempt=1))
+
+    assert spent == [TokenCount(model=PROVENANCE.model, input=1200, output=300)]
+
+
+def test_an_unusable_answer_still_counts_the_tokens_it_spent() -> None:
+    spent: list[TokenCount] = []
+    usage = {"input_token_count": 900, "output_token_count": 10}
+    drafter = AgentDrafter(run=Metered(None, usage), provenance=PROVENANCE, meter=spent.append)
+
+    with pytest.raises(DraftError):
+        anyio.run(drafter.draft, DraftRequest(moment=moment("goal"), attempt=1))
+
+    assert spent == [TokenCount(model=PROVENANCE.model, input=900, output=10)]
+
+
+def test_an_answer_without_usage_is_metered_as_nothing() -> None:
+    spent: list[TokenCount] = []
+    drafter = AgentDrafter(run=Metered(DRAFT, None), provenance=PROVENANCE, meter=spent.append)
+
+    anyio.run(drafter.draft, DraftRequest(moment=moment("goal"), attempt=1))
+
+    assert spent == []

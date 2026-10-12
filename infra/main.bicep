@@ -236,6 +236,21 @@ module deployIdentity 'modules/deploy-identity.bicep' = if (!empty(githubReposit
   }
 }
 
+// The Release Gate's identity: pull requests of this repository may run the Proving Ground on the
+// models, and nothing else (ADR-014).
+module provingIdentity 'modules/proving-identity.bicep' = if (!empty(githubRepository) && !empty(githubSubjectPrefix)) {
+  name: 'proving-identity'
+  scope: resourceGroup
+  params: {
+    name: 'id-proving-${token}'
+    location: location
+    tags: tags
+    githubSubjectPrefix: githubSubjectPrefix
+    foundryAccountName: foundry.outputs.accountName
+    foundryProjectName: foundry.outputs.projectName
+  }
+}
+
 // One budget for the whole subscription (the credit is subscription-wide), shared by all environments.
 module budget 'modules/budget.bicep' = if (!empty(budgetContactEmail)) {
   name: 'budget'
@@ -253,6 +268,7 @@ output AZURE_TENANT_ID string = tenant().tenantId
 output AZURE_RESOURCE_GROUP string = resourceGroup.name
 output AZURE_CONTAINER_REGISTRY_ENDPOINT string = registry.outputs.loginServer
 output AZURE_DEPLOY_CLIENT_ID string = deployIdentity.?outputs.clientId ?? ''
+output AZURE_PROVING_CLIENT_ID string = provingIdentity.?outputs.clientId ?? ''
 output SERVICE_API_NAME string = api.outputs.name
 output SERVICE_API_URI string = api.outputs.uri
 output SERVICE_WEB_NAME string = web.outputs.name

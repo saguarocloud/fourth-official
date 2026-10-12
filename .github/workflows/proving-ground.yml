@@ -1,0 +1,159 @@
+name: proving-ground
+
+# The Release Gate (ADR-014): a pull request that changes what the Analyst is told, which models it
+# drafts on, how drafts are checked, what the benchmark is, or the Proving Ground itself is run over
+# the benchmark's 20-match smoke subset on the models, beside the base branch's production run in
+# the same place at the same time, and blocked if it is worse.
+#
+# Trust: `pull_request` runs the pull request's own code with the proving identity, so anyone who
+# can push a branch here can use that identity: inference on the models, nothing else. That is the
+# same circle that can already merge code into what the API runs. A fork's pull request (and
+# Dependabot's) gets neither the secrets nor a token and never runs. The gate is a quality check,
+# not a security boundary: review still decides what merges.
+on:
+  pull_request:
+    paths:
+      - packages/contracts/src/**
+      - services/explain/src/**
+      - services/verifier/src/**
+      - services/moments/src/**
+      - services/replay/src/**
+      - services/policy/src/**
+      - services/match-data/src/**
+      - services/simulator/src/**
+      - services/stats-engine/src/**
+      - services/proving-ground/**
+      - pyproject.toml
+      - uv.lock
+      - infra/main.bicep
+      - infra/modules/foundry.bicep
+      - .github/workflows/proving-ground.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: proving-ground-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  SMOKE_MATCHES: "20"
+
+defaults:
+  run:
+    # -e and -o pipefail: a failure anywhere in a pipeline fails the step.
+    shell: bash
+
+jobs:
+  run:
+    name: ${{ matrix.side }} on the models
+    # A fork's pull request, and Dependabot's, gets neither the secrets nor a token: never run.
+    if: >-
+      github.event.pull_request.head.repo.full_name == github.repository
+      && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      # To exchange the job's GitHub token for the proving identity's, which can only run models.
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # The base branch's own code and configuration: never the pull request's copy, so a pull
+          # request cannot move the bar it is judged by.
+          - side: baseline
+            ref: ${{ github.base_ref }}
+          - side: candidate
+            ref: ""
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ matrix.ref }}
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.13.0"
+          enable-cache: true
+      - name: Install
+        run: uv sync --all-packages --locked
+      - name: Is there a production configuration here?
+        id: here
+        run: |
+          if uv run python -c "from fourth_official_proving.configurations import CONFIGURATIONS as c; raise SystemExit(0 if 'production' in c else 3)"; then
+            echo "runnable=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No production configuration on this side yet; nothing to run."
+            echo "runnable=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Sign in as the proving identity
+        if: steps.here.outputs.runnable == 'true'
+        env:
+          AUDIENCE: api://AzureADTokenExchange
+        run: |
+          umask 077
+          token="$(curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${AUDIENCE}" | jq -r '.value // empty')"
+          if [ -z "$token" ]; then echo "::error::GitHub issued no OIDC token"; exit 1; fi
+          printf '%s' "$token" > "${RUNNER_TEMP}/oidc-token"
+          echo "AZURE_FEDERATED_TOKEN_FILE=${RUNNER_TEMP}/oidc-token" >> "$GITHUB_ENV"
+      - name: Run production over the smoke subset
+        if: steps.here.outputs.runnable == 'true'
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.PROVING_AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.PROVING_AZURE_TENANT_ID }}
+          FOUNDRY_PROJECT_ENDPOINT: ${{ secrets.PROVING_FOUNDRY_PROJECT_ENDPOINT }}
+          SIDE: ${{ matrix.side }}
+        run: |
+          mkdir -p "${RUNNER_TEMP}/out"
+          name="$([ "$SIDE" = baseline ] && echo production || echo candidate)"
+          uv run python -m fourth_official_proving run --config production --name "$name" \
+            --matches "${SMOKE_MATCHES}" --out "${RUNNER_TEMP}/out/${SIDE}.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: steps.here.outputs.runnable == 'true'
+        with:
+          name: scorecard-${{ matrix.side }}
+          path: ${{ runner.temp }}/out/${{ matrix.side }}.json
+          if-no-files-found: error
+          retention-days: 14
+
+  gate:
+    name: release gate
+    needs: run
+    if: always() && needs.run.result != 'skipped'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.13.0"
+          enable-cache: true
+      - name: Install
+        run: uv sync --all-packages --locked
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: scorecard-*
+          path: ${{ runner.temp }}/out
+          merge-multiple: true
+      - name: Release Gate
+        run: |
+          out="${RUNNER_TEMP}/out"
+          if [ "${{ needs.run.result }}" != "success" ]; then
+            echo "::error::A run on the models failed; there is nothing to judge."
+            exit 2
+          fi
+          if [ ! -f "${out}/baseline.json" ]; then
+            echo "::notice::The base branch has no production configuration yet; not gated."
+            exit 0
+          fi
+          uv run python -m fourth_official_proving gate \
+            --candidate "${out}/candidate.json" --baseline "${out}/baseline.json" \
+            --out "${out}/verdict.json"
+      - name: Summary
+        if: always()
+        run: uv run python -m fourth_official_proving summary --dir "${RUNNER_TEMP}/out" >> "$GITHUB_STEP_SUMMARY"

@@ -25,13 +25,14 @@ from typing import Any
 
 from azure.identity.aio import DefaultAzureCredential
 
-from fourth_official_api.explainers import PROMPT, foundry_drafters
+from fourth_official_api.explainers import foundry_drafters
 from fourth_official_api.settings import FoundrySettings
 from fourth_official_contracts import Moment, Provenance
 from fourth_official_explain import Explanation, explain
 from fourth_official_explain.analyst import AgentDrafter
 from fourth_official_explain.drafts import InsightDraft
 from fourth_official_explain.pipeline import DraftRequest
+from fourth_official_explain.production import ANALYST
 from fourth_official_match_data import demo_store
 from fourth_official_replay import FeedLog, replay
 from fourth_official_verifier import MatchFacts
@@ -70,7 +71,7 @@ async def no_wait(seconds: float) -> None:
 def summarise(results: list[dict[str, Any]]) -> dict[str, Any]:
     by_model = [[a for a in r["attempts"] if a["model"] != "none"] for r in results]
     return {
-        "prompt": "/".join(PROMPT),
+        "prompt": "/".join(ANALYST),
         "moments": len(results),
         "first_attempt_pass": sum(1 for r in results if r["attempts"][0]["outcome"] == "passed"),
         "model_written": sum(1 for r in results if r["attempts"][-1]["model"] != "none"),

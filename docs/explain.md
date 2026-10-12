@@ -72,6 +72,8 @@ The gain came from the following:
 
 None of this loosened the rules on numbers, names or the future. The remaining refusals are mostly an unknown word or a club code written as text, and they are fixed on the next attempt. The `fast` model occasionally times out (20 s); the `fallback` model then writes the insight.
 
+Production runs Analyst prompt v1.2, defined once in `fourth_official_explain.production` for both the API and the Proving Ground. Prompt v1.4 is not an improvement: it is deliberately worse (it asks for colour, season form and players around the moment) and exists only as the candidate the Release Gate is shown blocking (docs/evaluation.md). Never put it into production.
+
 ## The Localizer
 
 The Localizer rewrites a verified canonical insight for one partner, in the partner's language and voice (`localize.py`, `localizer.py`, prompt `localizer/v1.0`). It runs on the `fast` model with minimal reasoning. It has no tools, because everything it may say is in the insight it is given.

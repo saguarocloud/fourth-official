@@ -11,6 +11,8 @@ dependencies = [
   "fourth-official-replay",
   "fourth-official-simulator",
   "fourth-official-verifier",
+  "azure-identity>=1.25,<2",
+  "uvicorn>=0.54",
 ]
 
 [tool.uv.sources]

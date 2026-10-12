@@ -73,4 +73,14 @@ for name in $GITHUB_VARIABLES; do
   gh variable set "$name" --repo "$REPO" --env "$ENV_NAME" --body "$value"
 done
 
+# The Release Gate runs on pull requests, outside any environment (a job in an environment gets an
+# environment subject, which the proving identity does not trust), so its identifiers are
+# repository secrets. GitHub gives none of them to a fork's pull request.
+if [ -n "${AZURE_PROVING_CLIENT_ID:-}" ]; then
+  gh secret set PROVING_AZURE_CLIENT_ID --repo "$REPO" --body "$AZURE_PROVING_CLIENT_ID"
+  gh secret set PROVING_AZURE_TENANT_ID --repo "$REPO" --body "$AZURE_TENANT_ID"
+  gh secret set PROVING_AZURE_SUBSCRIPTION_ID --repo "$REPO" --body "$AZURE_SUBSCRIPTION_ID"
+  gh secret set PROVING_FOUNDRY_PROJECT_ENDPOINT --repo "$REPO" --body "$FOUNDRY_PROJECT_ENDPOINT"
+fi
+
 echo "postprovision: GitHub environment '$ENV_NAME' deploys from '$DEPLOY_BRANCH' only."

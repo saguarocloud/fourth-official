@@ -161,9 +161,13 @@ def test_the_only_role_a_person_can_hold_is_using_models_on_the_foundry_account(
 def test_github_federated_credential_is_scoped_to_one_environment(
     compiled: CompiledTemplate,
 ) -> None:
-    (credential,) = compiled.of_type(
-        "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
-    )
+    (credential,) = [
+        c
+        for c in compiled.of_type(
+            "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
+        )
+        if "deploy-identity" in c.module
+    ]
 
     assert credential.properties["issuer"] == "https://token.actions.githubusercontent.com"
     assert credential.properties["audiences"] == ["api://AzureADTokenExchange"]
@@ -173,6 +177,43 @@ def test_github_federated_credential_is_scoped_to_one_environment(
         "[format('{0}:environment:{1}', parameters('githubSubjectPrefix'), "
         "parameters('githubEnvironment'))]"
     )
+
+
+def test_the_proving_identity_is_trusted_only_for_pull_requests(
+    compiled: CompiledTemplate,
+) -> None:
+    (credential,) = [
+        c
+        for c in compiled.of_type(
+            "Microsoft.ManagedIdentity/userAssignedIdentities/federatedIdentityCredentials"
+        )
+        if "proving-identity" in c.module
+    ]
+
+    assert credential.properties["issuer"] == "https://token.actions.githubusercontent.com"
+    assert credential.properties["audiences"] == ["api://AzureADTokenExchange"]
+    # Pull requests of this repository only: GitHub issues no token to a fork's pull request, and
+    # no branch, environment or wildcard form can match.
+    assert credential.properties["subject"] == (
+        "[format('{0}:pull_request', parameters('githubSubjectPrefix'))]"
+    )
+
+
+def test_the_proving_identity_uses_models_in_the_project_only(
+    compiled: CompiledTemplate,
+) -> None:
+    (assignment,) = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if "proving-identity" in a.module
+    ]
+
+    # Azure AI User, as the project endpoint requires, on the one project: not the account, so
+    # it cannot list the account's keys or reach any other project.
+    assert GUID.findall(str(assignment.properties["roleDefinitionId"])) == [AZURE_AI_USER]
+    assert "Microsoft.CognitiveServices/accounts/projects'" in str(assignment.body["scope"])
+    assert compiled.of_type("Microsoft.Authorization/roleDefinitions") == []
+    assert "AZURE_PROVING_CLIENT_ID" in compiled.template["outputs"]
 
 
 def test_outputs_never_expose_secrets(compiled: CompiledTemplate) -> None:
@@ -218,7 +259,11 @@ EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
         "Microsoft.App/managedEnvironments'",
     ),
     MANAGED_IDENTITY_OPERATOR: ("Microsoft.ManagedIdentity/userAssignedIdentities'",),
-    AZURE_AI_USER: ("Microsoft.CognitiveServices/accounts'",),
+    # On the account (the agents, a developer) or on one project (the proving identity).
+    AZURE_AI_USER: (
+        "Microsoft.CognitiveServices/accounts'",
+        "Microsoft.CognitiveServices/accounts/projects'",
+    ),
     # On the ledger's and the records' containers, never the account.
     STORAGE_BLOB_DATA_CONTRIBUTOR: ("Microsoft.Storage/storageAccounts/blobServices/containers'",),
     # On the one signing key, never the vault.

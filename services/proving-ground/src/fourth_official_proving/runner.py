@@ -13,7 +13,7 @@ from functools import partial
 
 from fourth_official_contracts import FeedEntry, GroundTruth, Moment
 from fourth_official_explain import Explanation
-from fourth_official_match_data import MatchRecord, store_of
+from fourth_official_match_data import MatchRecord, MatchStore, store_of
 from fourth_official_policy import blocked_topics_in, bundled_store
 from fourth_official_proving.truth import Truth, truth_of
 from fourth_official_replay import FeedLog, Partner, Partners, fixed_clocks, replay
@@ -84,10 +84,15 @@ async def run_match(
 
 
 async def run_benchmark(
-    setups: Sequence[MatchSetup], explainer: Explainer, *, concurrency: int = CONCURRENCY
+    setups: Sequence[MatchSetup],
+    explainer: Explainer,
+    *,
+    concurrency: int = CONCURRENCY,
+    store: MatchStore | None = None,
 ) -> tuple[MatchRun, ...]:
-    """Every match, `concurrency` at a time, in benchmark order. One failure stops the run."""
-    store = store_of(setups)
+    """Every match, `concurrency` at a time, in benchmark order. One failure stops the run.
+    `store` serves the matches if the explainer already reads them from one."""
+    store = store if store is not None else store_of(setups)
     gate = asyncio.Semaphore(concurrency)
 
     async def one(setup: MatchSetup) -> MatchRun:

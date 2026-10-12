@@ -9,6 +9,24 @@ uv run python -m fourth_official_proving gate --candidate candidate.json --basel
 
 `gate` prints every rule and exits 1 when it blocks, so a CI job fails the pull request.
 
+## Configurations
+
+| Name | Analyst | Cost |
+|---|---|---|
+| `template` | The deterministic templates alone. Tests the harness itself. | None |
+| `production` | Exactly what the API runs (`fourth_official_explain.production`): Analyst `v1.2` on `fast` (gpt-5-mini, minimal reasoning), then `fallback` (gpt-4.1-mini). | About $0.15 for 20 matches |
+| `candidate` | Production with the Analyst's `v1.4` prompt, deliberately worse: it asks for colour, season form and players around the moment, which the Verifier refuses. It exists so the gate can be shown blocking a change. | About $0.08 for 20 matches |
+
+Partners localise by template in every configuration: the Proving Ground judges the Analyst. A model run serves the benchmark to the Analyst's tools from a Match Data server on loopback that lives as long as the run, needs `FOUNDRY_PROJECT_ENDPOINT` (a Foundry project URL, nothing else is accepted) and an Azure sign-in that holds Azure AI User on the account, and prices every call's tokens by the model behind its alias (`PRICES_PER_MILLION`).
+
+## In CI
+
+`.github/workflows/proving-ground.yml` runs on any pull request that changes the pipeline, the benchmark, the Proving Ground, the dependencies or the model deployments. Two jobs run at the same time over the 20-match smoke subset: the base branch's own `production` configuration (its code, never the pull request's copy, so a pull request cannot move the bar it is judged by) and the pull request's. Both run in the same place at the same time, so latency is compared like for like. A third job gates the candidate against that baseline and writes both scorecards' counts and the verdict to the job summary; the scorecards are kept as artifacts. A gated pull request costs about $0.30. Until the base branch has a production configuration (the bootstrap), the candidate is recorded but not gated.
+
+The runs sign in as the proving identity (`id-proving-*`) through workload identity federation. It is trusted only for this repository's pull requests and holds Azure AI User on the one Foundry project, not the account: it cannot list the account's keys or reach another project, though within the project it can do what a project user can (manage agents and their data, read the project's connections). Narrower roles were tried and refused by the project endpoint with a bare 403: Cognitive Services OpenAI User, and a custom role with every inference data action. A model run in which no model wrote anything (every draft fell back to the template, as it does when the models refuse every call) fails as "cannot judge" rather than passing as a template run. Anyone who can push a branch here can use it, the same people who can already merge code into what the API runs. GitHub gives a fork's pull request, and Dependabot's, neither the secrets nor a token, so the jobs are skipped there. The gate is a quality check, not a security boundary: review still decides what merges.
+
+`eval/results/production-20.json` and `candidate-20.json` are the runs recorded below, kept as evidence; the gate in CI does not read them.
+
 ## The benchmark
 
 A hundred matches, `m1001` to `m1100`, each from its own seed (`fourth_official_simulator.benchmark`). A smaller run is the start of the full one, so the 20-match smoke subset is always the same 20 matches. Each match has a storyline planted in it, drawn from its seed:
@@ -57,6 +75,20 @@ A candidate is compared with the production baseline over the same benchmark and
 Rates are compared exactly, as integer cross-products of their counts, and rounded only for display. `gate` exits 1 when it blocks and 2 when it cannot judge: a scorecard it cannot read (missing, over 1 MiB, not JSON, not a scorecard) or two scorecards of different benchmarks. Free text in a scorecard (claims, reasons, details) is one printable line; a page shows it as text, never as markup.
 
 ## Results
+
+The release gate on the smoke subset, production against the `v1.4` candidate (`eval/results/production-20.json`, `eval/results/candidate-20.json`):
+
+| Measure | Production | Candidate |
+|---|---|---|
+| Supported claims | 236 of 236 | 206 of 206 |
+| Storyline recall | 54 of 54 | 54 of 54 |
+| Model written | 78 of 79 (98.7%) | 23 of 79 (29.1%) |
+| First-attempt pass | 59 of 78 | 16 of 23 |
+| Latency p95 | 22.1 s | 32.3 s |
+| Cost | $0.14 | $0.08 |
+| **Gate** | (baseline) | **Blocked**: model written, latency |
+
+The Verifier kept every embellishment off air (no unsupported claim either way), so the candidate's damage shows as fallbacks to the template and as time spent on refused drafts. A second production run, as a candidate against the first, was allowed: p95 within 4% and model written within 1.2 points, inside the gate's margins.
 
 The template configuration over the full benchmark (`eval/results/template.json`):
 

@@ -104,6 +104,8 @@ resource developerCanUseModels 'Microsoft.Authorization/roleAssignments@2022-04-
   }
 }
 
+output accountName string = account.name
+output projectName string = project.name
 output projectEndpoint string = 'https://${account.properties.customSubDomainName}.services.ai.azure.com/api/projects/${project.name}'
 output agentsIdentityId string = agentsIdentity.id
 output agentsIdentityClientId string = agentsIdentity.properties.clientId
