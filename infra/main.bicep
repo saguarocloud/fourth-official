@@ -247,6 +247,7 @@ module provingIdentity 'modules/proving-identity.bicep' = if (!empty(githubRepos
     tags: tags
     githubSubjectPrefix: githubSubjectPrefix
     foundryAccountName: foundry.outputs.accountName
+    foundryProjectName: foundry.outputs.projectName
   }
 }
 
