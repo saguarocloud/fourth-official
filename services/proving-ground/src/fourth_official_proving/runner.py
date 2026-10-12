@@ -92,7 +92,7 @@ async def run_benchmark(
 ) -> tuple[MatchRun, ...]:
     """Every match, `concurrency` at a time, in benchmark order. One failure stops the run.
     `store` serves the matches if the explainer already reads them from one."""
-    store = store or store_of(setups)
+    store = store if store is not None else store_of(setups)
     gate = asyncio.Semaphore(concurrency)
 
     async def one(setup: MatchSetup) -> MatchRun:

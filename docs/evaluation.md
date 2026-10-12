@@ -21,9 +21,11 @@ Partners localise by template in every configuration: the Proving Ground judges 
 
 ## In CI
 
-`.github/workflows/proving-ground.yml` runs on any pull request that changes the Explainer, the Verifier, moment detection, the replay, the Proving Ground or the model deployments. It runs the pull request's own `production` configuration over the 20-match smoke subset as the candidate and gates it against `eval/results/production-20.json` as committed on the base branch, never the pull request's copy, so a pull request cannot move the bar it is judged by. The job writes the scorecard and the verdict to its summary and keeps them as an artifact.
+`.github/workflows/proving-ground.yml` runs on any pull request that changes the pipeline, the benchmark, the Proving Ground, the dependencies or the model deployments. Two jobs run at the same time over the 20-match smoke subset: the base branch's own `production` configuration (its code, never the pull request's copy, so a pull request cannot move the bar it is judged by) and the pull request's. Both run in the same place at the same time, so latency is compared like for like. A third job gates the candidate against that baseline and writes both scorecards' counts and the verdict to the job summary; the scorecards are kept as artifacts. A gated pull request costs about $0.30. Until the base branch has a production configuration (the bootstrap), the candidate is recorded but not gated.
 
-It signs in as the proving identity (`id-proving-*`) through workload identity federation: trusted only for this repository's pull requests, with Azure AI User on the Foundry account and nothing else. GitHub gives a fork's pull request neither the secrets nor a token, so the job is skipped there.
+The runs sign in as the proving identity (`id-proving-*`) through workload identity federation. It is trusted only for this repository's pull requests and holds Cognitive Services OpenAI User on the Foundry account: inference, nothing else (not the agents' broader Azure AI User, which also lists keys and connection secrets). Anyone who can push a branch here can use it, the same people who can already merge code into what the API runs. GitHub gives a fork's pull request, and Dependabot's, neither the secrets nor a token, so the jobs are skipped there. The gate is a quality check, not a security boundary: review still decides what merges.
+
+`eval/results/production-20.json` and `candidate-20.json` are the runs recorded below, kept as evidence; the gate in CI does not read them.
 
 ## The benchmark
 

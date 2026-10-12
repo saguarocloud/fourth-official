@@ -166,3 +166,18 @@ def test_a_summary_without_a_scorecard_says_so(
     main(["summary", "--dir", str(tmp_path)])
 
     assert "No scorecard was produced" in capsys.readouterr().out
+
+
+def test_a_summary_says_why_a_run_was_not_gated(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    run(tmp_path, "candidate.json")
+
+    main(["summary", "--dir", str(tmp_path)])
+    without_baseline = capsys.readouterr().out
+    (tmp_path / "baseline.json").write_text("{}")
+    main(["summary", "--dir", str(tmp_path)])
+    without_verdict = capsys.readouterr().out
+
+    assert "not gated: the base branch has no production configuration yet" in without_baseline
+    assert "the gate could not judge" in without_verdict

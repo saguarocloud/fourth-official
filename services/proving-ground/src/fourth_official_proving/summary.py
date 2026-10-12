@@ -36,12 +36,17 @@ def _measures(card: Scorecard) -> list[str]:
     return ["| Measure | Result |", "|---|---|", *(f"| {k} | {v} |" for k, v in rows)]
 
 
-def render(card: Scorecard | None, verdict: GateVerdict | None) -> str:
+def render(card: Scorecard | None, verdict: GateVerdict | None, *, has_baseline: bool) -> str:
     if card is None:
         return "## Proving Ground\n\nNo scorecard was produced; see the job log.\n"
     name = card.configuration.name
-    if verdict is None:
-        title = f"## Proving Ground: {name} (not gated)"
+    if verdict is None and has_baseline:
+        title = f"## Release Gate: the gate could not judge {name}; see the job log"
+    elif verdict is None:
+        title = (
+            f"## Proving Ground: {name} "
+            "(not gated: the base branch has no production configuration yet)"
+        )
     else:
         title = f"## Release Gate: {name} is {'allowed' if verdict.allowed else 'blocked'}"
     lines = [

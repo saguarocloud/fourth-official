@@ -67,7 +67,10 @@ def _with_models(prompt: tuple[str, str]) -> Opener:
 class Runnable:
     configuration: Configuration
     open: Opener
-    uses_models: bool
+
+    @property
+    def uses_models(self) -> bool:
+        return bool(self.configuration.models)
 
 
 def _model_configuration(name: str, prompt: tuple[str, str]) -> Runnable:
@@ -79,7 +82,6 @@ def _model_configuration(name: str, prompt: tuple[str, str]) -> Runnable:
             models=tuple(alias for alias, _ in MODELS),
         ),
         open=_with_models(prompt),
-        uses_models=True,
     )
 
 
@@ -88,7 +90,6 @@ TEMPLATE = Runnable(
         name="template", analyst_prompt="template", localizer_prompt=LOCALIZED_BY, models=()
     ),
     open=_templates,
-    uses_models=False,
 )
 
 CONFIGURATIONS: dict[str, Runnable] = {

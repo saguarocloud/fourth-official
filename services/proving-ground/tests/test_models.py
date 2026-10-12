@@ -82,3 +82,18 @@ def test_production_and_the_candidate_differ_only_in_the_analysts_prompt() -> No
     assert candidate.analyst_prompt == "analyst/v1.4"
     assert production.models == candidate.models == ("fast", "fallback")
     assert production.localizer_prompt == candidate.localizer_prompt == "template"
+
+
+def test_the_server_stops_even_when_the_run_fails() -> None:
+    async def failing() -> str:
+        async with match_data_server(store_of(benchmark_matches(1))) as url:
+            raise RuntimeError(url)
+
+    with pytest.raises(RuntimeError) as failed:
+        asyncio.run(failing())
+    with pytest.raises(httpx.ConnectError):
+        httpx.get(str(failed.value).removesuffix("/mcp") + "/healthz", timeout=2)
+
+
+def test_a_meter_that_heard_of_no_call_knows_no_cost() -> None:
+    assert CostMeter().cost_usd() is None

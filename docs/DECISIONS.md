@@ -326,5 +326,5 @@ One entry per decision: context, options, choice, consequences. Newest last.
 
 **Consequences.**
 - The template configuration runs the full benchmark in about a minute with no model cost, so the harness itself is tested in the ordinary suite.
-- Model runs cost tokens: about $0.15 for the 20-match smoke subset. CI runs it on pull requests that touch the pipeline, as a proving identity trusted only for this repository's pull requests and able only to call the models. The baseline is read from the base branch, never the pull request.
+- Model runs cost tokens: about $0.15 for the 20-match smoke subset. On a pull request that touches the pipeline, CI runs the base branch's production configuration and the pull request's side by side (about $0.30), so latency is compared like for like and the bar comes from the base branch's code, never the pull request's. Both run as a proving identity trusted only for this repository's pull requests, with inference rights (Cognitive Services OpenAI User) and nothing else.
 - The fact check reads references (`{{player:…}}`, `{{minute:…}}`, `{{score}}`), not prose. A claim that misstates a player's role while naming a player who did take part passes it. An LLM judge layer would cover that, at a cost.

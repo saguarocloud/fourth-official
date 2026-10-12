@@ -9,9 +9,10 @@ as long as the run.
 import asyncio
 import os
 import socket
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from urllib.parse import urlsplit
 
 import uvicorn
@@ -21,6 +22,7 @@ from fourth_official_match_data import MatchStore, create_server
 
 LOOPBACK = "127.0.0.1"
 STARTUP_SECONDS = 10.0
+SHUTDOWN_SECONDS = 5
 _POLL_SECONDS = 0.02
 _PER_MILLION = 1_000_000
 FOUNDRY_HOST_SUFFIX = ".services.ai.azure.com"
@@ -36,10 +38,12 @@ class Price:
 
 # List prices of the models behind each alias (infra/main.bicep: fast is gpt-5-mini, fallback is
 # gpt-4.1-mini; Global Standard, pay as you go). Change these with the deployments.
-PRICES_PER_MILLION: dict[str, Price] = {
-    "fast": Price(input=0.25, output=2.00),
-    "fallback": Price(input=0.40, output=1.60),
-}
+PRICES_PER_MILLION: Mapping[str, Price] = MappingProxyType(
+    {
+        "fast": Price(input=0.25, output=2.00),
+        "fallback": Price(input=0.40, output=1.60),
+    }
+)
 
 
 @dataclass(slots=True)
@@ -48,15 +52,16 @@ class CostMeter:
     guess: a scorecard's cost is either known or the run fails."""
 
     calls: int = 0
-    _usd: float = field(default=0.0, repr=False)
+    _usd: float = field(default=0.0, init=False, repr=False)
 
     def __call__(self, spent: TokenCount) -> None:
         price = PRICES_PER_MILLION[spent.model]
         self._usd += (spent.input * price.input + spent.output * price.output) / _PER_MILLION
         self.calls += 1
 
-    def cost_usd(self) -> float:
-        return round(self._usd, 4)
+    def cost_usd(self) -> float | None:
+        """The run's cost, or None if no call reported what it spent (unknown, not free)."""
+        return round(self._usd, 4) if self.calls else None
 
 
 class FoundryUnavailableError(RuntimeError):
@@ -76,28 +81,39 @@ def project_endpoint() -> str:
     return endpoint
 
 
-def _free_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
-        probe.bind((LOOPBACK, 0))
-        return int(probe.getsockname()[1])
+class _QuietServer(uvicorn.Server):
+    # The run owns Ctrl-C and SIGTERM, not the server inside it.
+    def install_signal_handlers(self) -> None:
+        return None
 
 
 @asynccontextmanager
 async def match_data_server(store: MatchStore) -> AsyncIterator[str]:
-    """Serve `store` over streamable HTTP on loopback for the run; yields its MCP URL."""
-    port = _free_port()
-    app = create_server(store, host=LOOPBACK, port=port, version="proving-ground")
-    server = uvicorn.Server(
-        uvicorn.Config(app.streamable_http_app(), host=LOOPBACK, port=port, log_level="warning")
-    )
-    serving = asyncio.create_task(server.serve())
-    try:
-        async with asyncio.timeout(STARTUP_SECONDS):
-            while not server.started:
-                if serving.done():
-                    serving.result()
-                await asyncio.sleep(_POLL_SECONDS)
-        yield f"http://{LOOPBACK}:{port}/mcp"
-    finally:
-        server.should_exit = True
-        await serving
+    """Serve `store` over streamable HTTP on loopback for the run; yields its MCP URL. The socket
+    is bound here and handed to the server, so no other process can take the port in between."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((LOOPBACK, 0))
+        port = int(sock.getsockname()[1])
+        app = create_server(store, host=LOOPBACK, port=port, version="proving-ground")
+        server = _QuietServer(
+            uvicorn.Config(
+                app.streamable_http_app(),
+                log_level="warning",
+                timeout_graceful_shutdown=SHUTDOWN_SECONDS,
+            )
+        )
+        serving = asyncio.create_task(server.serve(sockets=[sock]))
+        try:
+            async with asyncio.timeout(STARTUP_SECONDS):
+                while not server.started:
+                    if serving.done():
+                        serving.result()
+                    await asyncio.sleep(_POLL_SECONDS)
+            yield f"http://{LOOPBACK}:{port}/mcp"
+        finally:
+            server.should_exit = True
+            try:
+                async with asyncio.timeout(SHUTDOWN_SECONDS * 2):
+                    await serving
+            except TimeoutError:
+                serving.cancel()

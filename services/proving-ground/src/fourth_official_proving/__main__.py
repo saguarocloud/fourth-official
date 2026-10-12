@@ -92,6 +92,8 @@ def _run(args: argparse.Namespace) -> None:
         generated_at=datetime.now(UTC),
         cost_usd=meter.cost_usd() if runnable.uses_models else None,
     )
+    if runnable.uses_models and meter.calls == 0:
+        sys.stderr.write("Proving Ground: no model call reported its tokens; cost is unknown.\n")
     _write(args.out, card.to_wire())
 
 
@@ -126,7 +128,9 @@ def _summary(args: argparse.Namespace) -> None:
         card: Scorecard | None = read_scorecard(args.dir / "candidate.json")
     except UnreadableScorecardError:
         card = None
-    sys.stdout.write(render(card, _read_verdict(args.dir / "verdict.json")))
+    verdict = _read_verdict(args.dir / "verdict.json")
+    has_baseline = (args.dir / "baseline.json").is_file()
+    sys.stdout.write(render(card, verdict, has_baseline=has_baseline))
 
 
 def _name(value: str) -> str:

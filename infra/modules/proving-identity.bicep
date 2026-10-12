@@ -1,7 +1,8 @@
 // Identity for the Proving Ground's Release Gate in GitHub Actions (ADR-014), via workload identity
 // federation (no secrets). It is trusted only for this repository's pull requests (GitHub issues no
-// token to a fork's), and it can do one thing: call the Foundry account's models. It cannot deploy,
-// read storage or sign anything.
+// token to a fork's), and it can do one thing: run inference on the Foundry account's models. Not
+// the broader Azure AI User the agents hold, which also manages agents and deployments and lists
+// keys and connection secrets. It cannot deploy, read storage or sign anything.
 
 param name string
 param location string
@@ -34,11 +35,12 @@ resource account 'Microsoft.CognitiveServices/accounts@2026-09-01' existing = {
 }
 
 resource canUseModels 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(account.id, identity.id, '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+  name: guid(account.id, identity.id, '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
   scope: account
   properties: {
-    // Azure AI User: the same data-plane rights as the agents, nothing more.
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '53ca6127-db72-4b80-b1b0-d745d6d5456d')
+    // Cognitive Services OpenAI User: chat, responses and completions on the deployments; no keys,
+    // connection secrets, agents' management or deployments.
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd')
     principalId: identity.properties.principalId
     principalType: 'ServicePrincipal'
   }
