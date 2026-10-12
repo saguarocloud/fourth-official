@@ -25,8 +25,12 @@ export async function GET(request: Request): Promise<Response> {
       redirect: "error",
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
     });
-    if (upstream.status === 503) {
-      return Response.json(await upstream.json(), { status: 503, headers: NO_STORE });
+    if (upstream.status === 503 || upstream.status === 429) {
+      const retry = upstream.headers.get("retry-after");
+      return Response.json(await upstream.json(), {
+        status: upstream.status,
+        headers: retry ? { ...NO_STORE, "Retry-After": retry } : NO_STORE,
+      });
     }
     if (upstream.status !== 200) throw new Error(`match API answered ${upstream.status}`);
     return Response.json(await upstream.json(), { headers: CACHED });

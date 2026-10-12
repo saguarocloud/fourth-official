@@ -43,6 +43,22 @@ describe("GET the Proving Ground", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
   });
 
+  it("passes a busy API on, with when to try again", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() =>
+        Promise.resolve(
+          Response.json({ detail: "x" }, { status: 429, headers: { "Retry-After": "30" } }),
+        ),
+      ),
+    );
+
+    const response = await call({ "x-forwarded-for": "198.51.100.9" });
+
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("30");
+  });
+
   it.each([
     ["an unexpected status", () => Promise.resolve(Response.json({}, { status: 500 }))],
     ["no answer", () => Promise.reject(new TypeError("fetch failed"))],

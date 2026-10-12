@@ -17,8 +17,7 @@ import {
 import { type Lookup, useProvingGround } from "./useProvingGround";
 
 const counted = (r: Ratio): string => `${r.hit} of ${r.of}`;
-const costOf = (card: Scorecard): string =>
-  card.metrics.costUsd === null ? "none" : `$${card.metrics.costUsd.toFixed(2)}`;
+const unsupported = (r: Ratio): string => `${r.of - r.hit} of ${r.of}`;
 
 function TheCall({ ground }: { readonly ground: ProvingGround }) {
   const go = ground.verdict.allowed;
@@ -49,12 +48,6 @@ function TheCall({ ground }: { readonly ground: ProvingGround }) {
           <dd>{candidate.configuration.models.join(", then ")}</dd>
         </div>
         <div>
-          <dt>Cost</dt>
-          <dd className="tabular">
-            {costOf(candidate)} candidate · {costOf(baseline)} production
-          </dd>
-        </div>
-        <div>
           <dt>Recorded</dt>
           <dd>
             <time dateTime={candidate.generatedAt}>{candidate.generatedAt.slice(0, 10)}</time>
@@ -82,6 +75,22 @@ function StationRow({ station }: { readonly station: Station }) {
   );
 }
 
+function Poll({ ground }: { readonly ground: ProvingGround }) {
+  const stations = poll(ground);
+  return (
+    <section aria-labelledby="poll-heading" className="poll-panel">
+      <h2 id="poll-heading" className="panel-heading">
+        The poll · {stations.length} rules
+      </h2>
+      <ol aria-labelledby="poll-heading" className="poll">
+        {stations.map((station) => (
+          <StationRow key={station.rule} station={station} />
+        ))}
+      </ol>
+    </section>
+  );
+}
+
 const MEASURE_COLUMNS: readonly Column<Measure>[] = [
   {
     key: "measure",
@@ -100,12 +109,12 @@ const MEASURE_COLUMNS: readonly Column<Measure>[] = [
 function Benchmark({ card }: { readonly card: Scorecard }) {
   const m = card.metrics;
   const facts: readonly (readonly [string, string])[] = [
-    ["Claims on air that were true", counted(m.supportedClaims)],
-    ["Planted stories found", counted(m.storylineRecall)],
-    ["About a real moment", counted(m.keyMomentPrecision)],
+    ["Unsupported claims on air", unsupported(m.supportedClaims)],
+    ["Policy breaches", String(m.policyViolations)],
     ["Planted lies refused", counted(m.verifierCatch)],
     ["Corrections carried", counted(m.correctionsCarried)],
-    ["Policy breaches", String(m.policyViolations)],
+    ["Planted stories found", counted(m.storylineRecall)],
+    ["About a real moment", counted(m.keyMomentPrecision)],
   ];
   return (
     <section aria-labelledby="benchmark-heading" className="benchmark">
@@ -113,8 +122,8 @@ function Benchmark({ card }: { readonly card: Scorecard }) {
         The full benchmark
       </h2>
       <p className="benchmark__lede">
-        {card.matches} matches from {card.firstMatch}, written by {promptName(card)}: the harness
-        itself, with no model and no cost.
+        The harness&apos;s own reference run: {card.matches} matches from {card.firstMatch},
+        explained by {promptName(card)} with no model and no cost.
       </p>
       <dl className="benchmark__facts">
         {facts.map(([label, value]) => (
@@ -128,12 +137,12 @@ function Benchmark({ card }: { readonly card: Scorecard }) {
   );
 }
 
-function Failures({ ground }: { readonly ground: ProvingGround }) {
-  const runs: readonly (readonly [string, readonly FailedClaim[]])[] = [
-    ["Candidate", ground.candidate.failures],
-    ["Production", ground.baseline.failures],
-  ];
-  const all = runs.flatMap(([run, failures]) => failures.map((f) => ({ run, failure: f })));
+interface RunFailure {
+  readonly run: string;
+  readonly failure: FailedClaim;
+}
+
+function Failures({ all }: { readonly all: readonly RunFailure[] }) {
   return (
     <section aria-labelledby="failures-heading" className="failures">
       <h2 id="failures-heading" className="panel-heading">
@@ -167,37 +176,25 @@ function Failures({ ground }: { readonly ground: ProvingGround }) {
   );
 }
 
-const NOTES: Readonly<Record<Exclude<Lookup["status"], "ready">, string>> = {
-  loading: "Reading the recorded runs.",
-  busy: "Too many reads from here. Wait a moment and try again.",
-  unavailable: "The recorded runs could not be read: the match service did not answer.",
-};
-
-function Verdict({ ground }: { readonly ground: ProvingGround }) {
-  const verdict = verdictLine(ground);
-  return (
-    <p role="status" aria-label="Release Gate verdict" className="verdict" data-tone={verdict.tone}>
-      <span aria-hidden="true" className="verdict__lamp" />
-      {verdict.text}
-    </p>
-  );
-}
-
 function Recorded({ ground }: { readonly ground: ProvingGround }) {
+  const failures: RunFailure[] = [
+    ...ground.candidate.failures.map((failure) => ({ run: "Candidate", failure })),
+    ...ground.baseline.failures.map((failure) => ({ run: "Production", failure })),
+  ];
   return (
     <>
       <div className="poll-board">
         <TheCall ground={ground} />
-        <ol aria-label="The poll" className="poll">
-          {poll(ground).map((station) => (
-            <StationRow key={station.rule} station={station} />
-          ))}
-        </ol>
+        <Poll ground={ground} />
       </div>
       <section aria-labelledby="measures-heading" className="measures">
         <h2 id="measures-heading" className="panel-heading">
           Side by side
         </h2>
+        <p className="measures__note">
+          Every measure of both runs. A measure marked (reported) is shown for context: the gate
+          does not rule on it.
+        </p>
         <DataTable
           caption="Every measure, both runs"
           hideCaption
@@ -206,11 +203,36 @@ function Recorded({ ground }: { readonly ground: ProvingGround }) {
           rowKey={(m) => m.label}
         />
       </section>
-      <div className="proving__lower">
-        <Failures ground={ground} />
+      <div className="proving__lower" data-failures={failures.length > 0}>
+        <Failures all={failures} />
         <Benchmark card={ground.benchmark} />
       </div>
     </>
+  );
+}
+
+interface Line {
+  readonly tone: "green" | "red" | "neutral";
+  readonly text: string;
+}
+
+const NOT_READY: Readonly<Record<Exclude<Lookup["status"], "ready">, Line>> = {
+  loading: { tone: "neutral", text: "Reading the recorded runs." },
+  busy: { tone: "red", text: "Too many reads from here. Wait a moment and try again." },
+  unavailable: {
+    tone: "red",
+    text: "The recorded runs could not be read: the match service did not answer.",
+  },
+};
+
+function Verdict({ lookup }: { readonly lookup: Lookup }) {
+  const verdict: Line =
+    lookup.status === "ready" ? verdictLine(lookup.ground) : NOT_READY[lookup.status];
+  return (
+    <p role="status" aria-label="Release Gate verdict" className="verdict" data-tone={verdict.tone}>
+      <span aria-hidden="true" className="verdict__lamp" />
+      {verdict.text}
+    </p>
   );
 }
 
@@ -218,37 +240,27 @@ function Recorded({ ground }: { readonly ground: ProvingGround }) {
  * behind it. */
 export function ProvingGroundScreen() {
   const { lookup, retry } = useProvingGround();
+  const matches = lookup.status === "ready" ? lookup.ground.candidate.matches : null;
   return (
     <AppShell current="/proving-ground" studio="Meridian League Studios" replay>
       <header className="page-header">
         <h1>Proving Ground</h1>
-        {lookup.status === "ready" && (
-          <>
-            <p>
-              {promptName(lookup.ground.candidate)} against production ·{" "}
-              {lookup.ground.candidate.matches} benchmark matches
-            </p>
-            <Verdict ground={lookup.ground} />
-          </>
-        )}
+        <Verdict lookup={lookup} />
       </header>
-      {lookup.status === "ready" ? (
-        <Recorded ground={lookup.ground} />
-      ) : (
-        <div className="provenance__note" data-status={lookup.status}>
-          <p>{NOTES[lookup.status]}</p>
-          {lookup.status !== "loading" && (
-            <button type="button" className="key" data-size="sm" onClick={retry}>
-              <span>Try again</span>
-            </button>
-          )}
+      {lookup.status === "ready" && <Recorded ground={lookup.ground} />}
+      {(lookup.status === "busy" || lookup.status === "unavailable") && (
+        <div className="proving__retry">
+          <button type="button" className="key" data-size="sm" onClick={retry}>
+            <span>Try again</span>
+          </button>
         </div>
       )}
-      <p className="page-footnote">
+      <p className="page-footnote proving__footnote">
         All data is synthetic. Every pull request that changes the pipeline runs its own production
-        configuration beside the base branch&apos;s on the same 20 matches, on the models, and the
-        Release Gate blocks it if it is worse. The runs here were recorded with the candidate prompt
-        kept for this purpose.
+        configuration beside the base branch&apos;s, with the models, on the same{" "}
+        {matches === null ? "benchmark matches" : `${matches} benchmark matches`}; the Release Gate
+        blocks it if any rule above calls no-go. The candidate shown is a prompt kept deliberately
+        worse, to show the gate blocking.
       </p>
     </AppShell>
   );

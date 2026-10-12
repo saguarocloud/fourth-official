@@ -60,7 +60,9 @@ def proving_router(directory: Path) -> APIRouter:
             body = load(directory)
         except UnavailableResultsError:
             # Not cached: a later deploy that adds the results is served without a restart.
-            logger.warning("the Proving Ground's results are not available")
+            logger.warning(
+                "the Proving Ground's results are not available under %s", directory.resolve()
+            )
             raise HTTPException(status_code=503, detail=UNAVAILABLE) from None
         response.headers["Cache-Control"] = CACHE
         return body

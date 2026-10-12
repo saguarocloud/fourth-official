@@ -42,9 +42,8 @@ describe("ProvingGroundScreen", () => {
 
     const verdict = await screen.findByRole("status", { name: "Release Gate verdict" });
     expect(verdict).toHaveAttribute("data-tone", "red");
-    expect(verdict).toHaveTextContent(
-      "The Release Gate blocks Analyst prompt v1.4: 2 of 7 rules call no-go",
-    );
+    expect(verdict).toHaveTextContent("blocks Analyst prompt v1.4 against production's v1.2");
+    expect(verdict).toHaveTextContent("written by the model, 29.1% against 98.7%");
     expect(screen.getByRole("img", { name: "The call: no-go" })).toBeInTheDocument();
   });
 
@@ -52,7 +51,7 @@ describe("ProvingGroundScreen", () => {
     serve(fixture);
     render(<ProvingGroundScreen />);
 
-    const stations = within(await screen.findByRole("list", { name: "The poll" })).getAllByRole(
+    const stations = within(await screen.findByRole("list", { name: /^The poll/ })).getAllByRole(
       "listitem",
     );
     expect(stations).toHaveLength(7);
@@ -60,7 +59,7 @@ describe("ProvingGroundScreen", () => {
     expect(written).toHaveTextContent("No-go");
     expect(written).toHaveTextContent("29.1%");
     expect(written).toHaveTextContent("Production 98.7%");
-    expect(written).toHaveTextContent("May drop 5 points");
+    expect(written).toHaveTextContent("Rule: may drop 5 points");
     expect(stations[0]).toHaveTextContent("Go");
   });
 
@@ -71,6 +70,7 @@ describe("ProvingGroundScreen", () => {
     const table = await screen.findByRole("table", { name: "Every measure, both runs" });
     expect(within(table).getAllByRole("row")).toHaveLength(12);
     expect(table).toHaveTextContent("$0.14");
+    expect(screen.getByText(/the gate does not rule on it/)).toBeInTheDocument();
   });
 
   it("reports the full benchmark run by template", async () => {
@@ -79,7 +79,8 @@ describe("ProvingGroundScreen", () => {
 
     const benchmark = await screen.findByRole("region", { name: "The full benchmark" });
     expect(benchmark).toHaveTextContent("100 matches");
-    expect(benchmark).toHaveTextContent("1067 of 1067");
+    expect(benchmark).toHaveTextContent("0 of 1067");
+    expect(benchmark).not.toHaveTextContent(/pass/i);
   });
 
   it("says when no claim on air was unsupported", async () => {
@@ -106,12 +107,16 @@ describe("ProvingGroundScreen", () => {
     render(<ProvingGroundScreen />);
 
     expect(await screen.findByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Release Gate verdict" })).toHaveAttribute(
+      "data-tone",
+      "red",
+    );
   });
 
   it("has no accessibility violations", async () => {
     serve(withFailure);
     const { container } = render(<ProvingGroundScreen />);
-    await screen.findByRole("list", { name: "The poll" });
+    await screen.findByRole("list", { name: /^The poll/ });
 
     const results = await axe.run(container);
     expect(results.violations).toEqual([]);
