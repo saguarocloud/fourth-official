@@ -19,10 +19,11 @@ from fourth_official_explain.analyst import Meter
 from fourth_official_explain.production import ANALYST, MODELS, analyst_drafters
 from fourth_official_match_data import MatchStore
 from fourth_official_proving.models import match_data_server, preflight, project_endpoint
-from fourth_official_proving.runner import Explainer
+from fourth_official_proving.runner import CONCURRENCY, Explainer
 from fourth_official_verifier import MatchFacts
 
 CANDIDATE = ("analyst", "v1.4")
+MODEL_CONCURRENCY = 2
 # Partners localise by template in every configuration: the Proving Ground judges the Analyst.
 LOCALIZED_BY = "template"
 
@@ -72,6 +73,12 @@ class Runnable:
     @property
     def uses_models(self) -> bool:
         return bool(self.configuration.models)
+
+    @property
+    def concurrency(self) -> int:
+        """Matches replayed at once: fewer with models, whose deployments limit tokens per
+        minute and refuse (429) the drafts of four matches at once."""
+        return MODEL_CONCURRENCY if self.uses_models else CONCURRENCY
 
 
 def _model_configuration(name: str, prompt: tuple[str, str]) -> Runnable:
