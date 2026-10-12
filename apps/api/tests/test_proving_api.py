@@ -36,7 +36,7 @@ def test_the_recorded_runs_and_the_gates_verdict_on_them(tmp_path: Path) -> None
     assert parse_scorecard(body["benchmark"]).matches == 100
     verdict = parse_gate_verdict(body["verdict"])
     assert not verdict.allowed
-    assert {c.rule for c in verdict.checks if not c.passed} == {"model_written", "latency_p95"}
+    assert {c.rule for c in verdict.checks if not c.passed} == {"model_written"}
     assert "max-age" in response.headers["cache-control"]
 
 

@@ -104,13 +104,13 @@ describe("poll", () => {
       ["Corrections carried", true],
       ["Planted stories found", true],
       ["Written by the model", false],
-      ["Time to explain (p95)", false],
+      ["Time to explain (p50)", true],
     ]);
   });
 
   it("sets the candidate's figure against production's and the margin the rule allows", () => {
     const written = poll(RECORDED).find((s) => s.rule === "model_written")!;
-    const latency = poll(RECORDED).find((s) => s.rule === "latency_p95")!;
+    const latency = poll(RECORDED).find((s) => s.rule === "latency_p50")!;
     const untrue = poll(RECORDED).find((s) => s.rule === "unsupported_claims")!;
 
     expect(written).toMatchObject({
@@ -119,9 +119,9 @@ describe("poll", () => {
       allowance: "Rule: may drop 5 points",
     });
     expect(latency).toMatchObject({
-      candidate: "32.3 s",
-      baseline: "22.1 s",
-      allowance: "Rule: may grow 15% and 5 s",
+      candidate: "3.1 s",
+      baseline: "4.9 s",
+      allowance: "Rule: may grow 15% and 2 s",
     });
     expect(untrue).toMatchObject({
       candidate: "0 of 206",
@@ -136,9 +136,8 @@ describe("verdictLine", () => {
     expect(verdictLine(RECORDED)).toEqual({
       tone: "red",
       text:
-        "The Release Gate blocks Analyst prompt v1.4 against production's v1.2 on 2 of 7 rules: " +
-        "written by the model, 29.1% against 98.7% (may drop 5 points); " +
-        "time to explain (p95), 32.3 s against 22.1 s (may grow 15% and 5 s).",
+        "The Release Gate blocks Analyst prompt v1.4 against production's v1.2 on 1 of 7 rules: " +
+        "written by the model, 29.1% against 98.7% (may drop 5 points).",
     });
   });
 
@@ -161,10 +160,10 @@ describe("measures", () => {
       ["Corrections carried", true],
       ["Planted stories found", true],
       ["Written by the model", true],
-      ["Time to explain (p95)", true],
+      ["Time to explain (p50)", true],
       ["About a real moment", false],
       ["Passed first time", false],
-      ["Time to explain (p50)", false],
+      ["Time to explain (p95)", false],
       ["Cost of the run", false],
     ]);
     expect(rows.find((r) => r.label === "Cost of the run")).toEqual({

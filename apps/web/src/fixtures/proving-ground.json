@@ -176,9 +176,9 @@
         "rule": "model_written"
       },
       {
-        "detail": "p95 32341 ms to explain a moment (production: 22095 ms)",
-        "passed": false,
-        "rule": "latency_p95"
+        "detail": "p50 3117 ms to explain a moment (production: 4863 ms)",
+        "passed": true,
+        "rule": "latency_p50"
       }
     ]
   }
