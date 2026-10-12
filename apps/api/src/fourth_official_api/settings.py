@@ -3,6 +3,7 @@
 import os
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 from fourth_official_replay.matchday import DEFAULT_RUNS_PER_DAY
 
@@ -70,6 +71,8 @@ class Settings:
     runs_per_day: int = DEFAULT_RUNS_PER_DAY
     # None: records are signed with a key that lives as long as the process, and kept in memory.
     provenance: ProvenanceSettings | None = None
+    # The Proving Ground's recorded runs, served read-only (relative to the working directory).
+    proving_results: Path = Path("eval/results")
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -83,6 +86,9 @@ class Settings:
             start_ledger=_ledger_from_env(),
             runs_per_day=_runs_from_env(),
             provenance=_provenance_from_env(),
+            proving_results=Path(
+                os.environ.get("PROVING_RESULTS_DIR", "").strip() or "eval/results"
+            ),
         )
 
 

@@ -35,6 +35,8 @@ RUN groupadd --system --gid 10001 app && useradd --system --uid 10001 --gid app 
 WORKDIR /app
 # Root-owned and read-only to the runtime user: the app cannot modify its own code.
 COPY --from=build /app/.venv /app/.venv
+# The Proving Ground's recorded runs, served read-only at /api/proving-ground.
+COPY eval/results /app/eval/results
 ARG APP_VERSION=dev
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \

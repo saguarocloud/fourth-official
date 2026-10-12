@@ -1,4 +1,5 @@
 import dataclasses
+from pathlib import Path
 
 import pytest
 
@@ -224,3 +225,17 @@ def test_provenance_settings_must_name_a_vault_key_version_and_a_container(
 
     with pytest.raises(ValueError, match="PROVENANCE"):
         Settings.from_env()
+
+
+def test_the_proving_grounds_results_are_read_from_eval_results_by_default(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("PROVING_RESULTS_DIR", raising=False)
+
+    assert Settings.from_env().proving_results == Path("eval/results")
+
+
+def test_the_proving_grounds_results_directory_can_be_set(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PROVING_RESULTS_DIR", "/srv/results")
+
+    assert Settings.from_env().proving_results == Path("/srv/results")
