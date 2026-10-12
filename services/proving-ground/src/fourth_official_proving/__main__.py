@@ -18,13 +18,14 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from fourth_official_contracts import Scorecard, parse_scorecard
+from fourth_official_contracts import GateVerdict, Scorecard, parse_gate_verdict, parse_scorecard
 from fourth_official_match_data import store_of
 from fourth_official_proving.configurations import CONFIGURATIONS, Runnable
 from fourth_official_proving.gate import gate
 from fourth_official_proving.models import CostMeter, FoundryUnavailableError
 from fourth_official_proving.runner import MatchRun, run_benchmark
 from fourth_official_proving.scorecard import score
+from fourth_official_proving.summary import render
 from fourth_official_simulator.benchmark import BENCHMARK_SIZE, benchmark_matches
 
 # Matches CI runs on a pull request; the full benchmark runs nightly (plan §9.3).
@@ -111,6 +112,23 @@ def _gate(args: argparse.Namespace) -> None:
     sys.stderr.write(f"Release Gate: {verdict.candidate} is allowed.\n")
 
 
+def _read_verdict(path: Path) -> GateVerdict | None:
+    if not path.is_file() or path.stat().st_size > MAX_SCORECARD_BYTES:
+        return None
+    try:
+        return parse_gate_verdict(json.loads(path.read_bytes()))
+    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError, ValidationError):
+        return None
+
+
+def _summary(args: argparse.Namespace) -> None:
+    try:
+        card: Scorecard | None = read_scorecard(args.dir / "candidate.json")
+    except UnreadableScorecardError:
+        card = None
+    sys.stdout.write(render(card, _read_verdict(args.dir / "verdict.json")))
+
+
 def _name(value: str) -> str:
     if not NAME.fullmatch(value):
         raise argparse.ArgumentTypeError("lower-case letters, digits and hyphens")
@@ -140,6 +158,9 @@ def main(argv: Sequence[str] | None = None) -> None:
     check.add_argument("--baseline", type=Path, required=True)
     check.add_argument("--out", type=Path, default=None)
     check.set_defaults(handler=_gate)
+    summary = commands.add_parser("summary", help="a Markdown summary of a run and its verdict")
+    summary.add_argument("--dir", type=Path, required=True)
+    summary.set_defaults(handler=_summary)
     args = parser.parse_args(argv)
     args.handler(args)
 

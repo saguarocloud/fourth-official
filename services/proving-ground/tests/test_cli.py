@@ -118,3 +118,51 @@ def test_a_model_run_without_foundry_is_an_error_not_a_crash(
         main(["run", "--config", "production", "--matches", "1", "--out", str(tmp_path / "p.json")])
 
     assert stopped.value.code == 2
+
+
+def test_the_summary_tabulates_the_scorecard_and_the_verdict(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    card = run(tmp_path, "candidate.json")
+    verdict = str(tmp_path / "verdict.json")
+    main(["gate", "--candidate", str(card), "--baseline", str(card), "--out", verdict])
+    capsys.readouterr()
+
+    main(["summary", "--dir", str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert out.startswith("## Release Gate: template is allowed")
+    assert "| Supported claims |" in out
+    assert "| pass | verifier_catch |" in out
+
+
+def test_the_summary_never_repeats_claim_text(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    card = run(tmp_path, "candidate.json")
+    wire = json.loads(card.read_text())
+    wire["failures"] = [
+        {
+            "matchId": "m1001",
+            "itemId": "it-northlight-sport-in-m1001-goal-HCY-s0287-a1-v1",
+            "claimId": "cl-1",
+            "text": "| injected | [link](https://evil.example) |",
+            "eventIds": ["m1001-e0287"],
+            "reasons": ["names minute 3, when none of its events happened"],
+        }
+    ]
+    card.write_text(json.dumps(wire))
+
+    main(["summary", "--dir", str(tmp_path)])
+
+    out = capsys.readouterr().out
+    assert "evil.example" not in out
+    assert "1 failed claim listed in the scorecard artifact." in out
+
+
+def test_a_summary_without_a_scorecard_says_so(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    main(["summary", "--dir", str(tmp_path)])
+
+    assert "No scorecard was produced" in capsys.readouterr().out

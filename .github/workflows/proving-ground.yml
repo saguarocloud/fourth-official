@@ -1,0 +1,97 @@
+name: proving-ground
+
+# The Release Gate (ADR-014): a pull request that changes what the Analyst is told, which models it
+# drafts on, how drafts are checked, or the Proving Ground itself is run over the benchmark's
+# 20-match smoke subset on the models, and blocked if it is worse than the production baseline
+# committed on the base branch.
+on:
+  pull_request:
+    paths:
+      - services/explain/src/fourth_official_explain/**
+      - services/verifier/src/**
+      - services/moments/src/**
+      - services/replay/src/**
+      - services/proving-ground/**
+      - infra/main.bicep
+      - .github/workflows/proving-ground.yml
+
+permissions:
+  contents: read
+  # To exchange the job's GitHub token for the proving identity's, which can only call the models.
+  id-token: write
+
+concurrency:
+  group: proving-ground-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  SMOKE_MATCHES: "20"
+  BASELINE: eval/results/production-20.json
+
+jobs:
+  gate:
+    name: release gate
+    # A fork's pull request gets neither secrets nor an OIDC token: it is never run on the models.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          version: "0.13.0"
+          enable-cache: true
+      - name: Install
+        run: uv sync --all-packages --locked
+      - name: Baseline from the base branch
+        # Never the pull request's own copy: a pull request cannot move the bar it is judged by.
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 "https://github.com/${GITHUB_REPOSITORY}.git" "refs/heads/${BASE_REF}"
+          if git cat-file -e "FETCH_HEAD:${BASELINE}" 2>/dev/null; then
+            git show "FETCH_HEAD:${BASELINE}" > "${RUNNER_TEMP}/baseline.json"
+          else
+            echo "::notice::No baseline on ${BASE_REF} yet; this run is recorded but not gated."
+          fi
+      - name: Sign in as the proving identity
+        env:
+          AUDIENCE: api://AzureADTokenExchange
+        run: |
+          curl --fail --silent --show-error \
+            -H "Authorization: bearer ${ACTIONS_ID_TOKEN_REQUEST_TOKEN}" \
+            "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=${AUDIENCE}" \
+            | jq -r .value > "${RUNNER_TEMP}/oidc-token"
+          echo "AZURE_FEDERATED_TOKEN_FILE=${RUNNER_TEMP}/oidc-token" >> "$GITHUB_ENV"
+      - name: Run the candidate on the models
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.PROVING_AZURE_CLIENT_ID }}
+          AZURE_TENANT_ID: ${{ secrets.PROVING_AZURE_TENANT_ID }}
+          FOUNDRY_PROJECT_ENDPOINT: ${{ secrets.PROVING_FOUNDRY_PROJECT_ENDPOINT }}
+        run: >
+          uv run python -m fourth_official_proving run
+          --config production --name candidate --matches "${SMOKE_MATCHES}"
+          --out "${RUNNER_TEMP}/candidate.json"
+      - name: Release Gate
+        run: |
+          if [ ! -f "${RUNNER_TEMP}/baseline.json" ]; then exit 0; fi
+          uv run python -m fourth_official_proving gate \
+            --candidate "${RUNNER_TEMP}/candidate.json" \
+            --baseline "${RUNNER_TEMP}/baseline.json" \
+            --out "${RUNNER_TEMP}/verdict.json"
+      - name: Summary
+        if: always()
+        run: uv run python -m fourth_official_proving summary --dir "${RUNNER_TEMP}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Keep the scorecards
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: proving-ground
+          path: |
+            ${{ runner.temp }}/candidate.json
+            ${{ runner.temp }}/baseline.json
+            ${{ runner.temp }}/verdict.json
+          if-no-files-found: ignore
+          retention-days: 14
