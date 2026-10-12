@@ -20,6 +20,7 @@ from starlette.types import Receive, Scope, Send
 
 from fourth_official_api.start_ledger import LedgerError
 from fourth_official_contracts import FeedEntry, TenantItemEntry, TenantPolicy, WireModel
+from fourth_official_policy.book import PolicyBook
 from fourth_official_replay import FeedLog, Matchday, MatchdayBusyError
 
 # A reader with nothing new still hears from the server this often, so proxies keep it open.
@@ -73,11 +74,11 @@ def for_partner(tenant_id: str) -> Callable[[FeedEntry], bool]:
 
 
 def _tenant(request: Request, tenant_id: str) -> TenantPolicy:
-    tenants: dict[str, TenantPolicy] = request.app.state.tenants
-    policy = tenants.get(tenant_id)
-    if policy is None:
+    """The partner's policy as it stands now (Policy Studio may have edited it)."""
+    book: PolicyBook = request.app.state.policies
+    if tenant_id not in book.tenants():
         raise HTTPException(status_code=404, detail="unknown partner")
-    return policy
+    return book.current(tenant_id)
 
 
 def _page(
@@ -259,7 +260,7 @@ def matchday_router(
         """The broadcast partners: their language, how they disclose AI involvement, which items
         wait for an editor, and the duty editor who decides on them."""
         response.headers["Cache-Control"] = "no-store"
-        policies: dict[str, TenantPolicy] = request.app.state.tenants
+        book: PolicyBook = request.app.state.policies
         return {
             "tenants": [
                 {
@@ -270,7 +271,7 @@ def matchday_router(
                     "approvalRequired": list(policy.approval_required),
                     "dutyEditor": policy.duty_editor,
                 }
-                for _, policy in sorted(policies.items())
+                for policy in (book.current(t) for t in sorted(book.tenants()))
             ]
         }
 

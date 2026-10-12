@@ -16,6 +16,8 @@ from fourth_official_api.explainers import (
     template_explainer,
 )
 from fourth_official_api.matchday_routes import matchday_router
+from fourth_official_api.policy_routes import policy_router
+from fourth_official_api.policy_store import azure_policy_book
 from fourth_official_api.provenance import Issuer, provenance_router
 from fourth_official_api.proving import proving_router
 from fourth_official_api.security import SecurityHeaders
@@ -23,6 +25,7 @@ from fourth_official_api.settings import Settings
 from fourth_official_api.start_ledger import blob_start_ledger
 from fourth_official_match_data import MatchStore, demo_store
 from fourth_official_policy import bundled_store
+from fourth_official_policy.book import InMemoryBookStore, PolicyBook
 from fourth_official_provenance import InMemoryStore, LocalSigner
 from fourth_official_provenance.azure import azure_provenance
 from fourth_official_replay import Matchday, ReplayConfig, StartLedger
@@ -70,7 +73,18 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
             policies = [loaded.policy for loaded in bundled_store().all()]
-            app.state.tenants = {policy.tenant_id: policy for policy in policies}
+            book_store = (
+                await stack.enter_async_context(
+                    azure_policy_book(
+                        settings.policy_book.container_url, settings.policy_book.client_id
+                    )
+                )
+                if settings.policy_book
+                else InMemoryBookStore()
+            )
+            book = PolicyBook(policies, book_store)
+            await book.open()
+            app.state.policies = book
             day = matchday
             starts = ledger
             if starts is None and settings.start_ledger is not None:
@@ -105,7 +119,7 @@ def create_app(
                     config=ReplayConfig(speed=settings.replay_speed),
                     ledger=starts,
                     runs_per_day=settings.runs_per_day,
-                    partners=partners_for(policies, localizer),
+                    partners=partners_for(policies, localizer, book),
                 )
             app.state.matchday = day
             issuer = provenance
@@ -147,6 +161,7 @@ def create_app(
 
     app.include_router(matchday_router(_summaries(store)))
     app.include_router(decision_router())
+    app.include_router(policy_router())
     app.include_router(provenance_router())
     app.include_router(proving_router(settings.proving_results))
     docs = [path for path in (app.docs_url, app.redoc_url) if path is not None]

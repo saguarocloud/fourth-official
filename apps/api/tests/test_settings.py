@@ -239,3 +239,37 @@ def test_the_proving_grounds_results_directory_can_be_set(monkeypatch: pytest.Mo
     monkeypatch.setenv("PROVING_RESULTS_DIR", "/srv/results")
 
     assert Settings.from_env().proving_results == Path("/srv/results")
+
+
+def test_the_policy_book_is_kept_in_memory_unless_a_container_is_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("POLICY_BOOK_URL", raising=False)
+
+    assert Settings.from_env().policy_book is None
+
+
+def test_the_policy_book_container_is_read_with_the_app_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("POLICY_BOOK_URL", "https://stexample.blob.core.windows.net/policies")
+    monkeypatch.setenv("AZURE_CLIENT_ID", "00000000-0000-0000-0000-000000000001")
+
+    book = Settings.from_env().policy_book
+
+    assert book is not None
+    assert book.container_url == "https://stexample.blob.core.windows.net/policies"
+    assert book.client_id == "00000000-0000-0000-0000-000000000001"
+
+
+@pytest.mark.parametrize(
+    "url",
+    ["http://stexample.blob.core.windows.net/policies", "https://evil.example/policies", "x"],
+)
+def test_a_policy_book_url_outside_azure_storage_is_refused(
+    monkeypatch: pytest.MonkeyPatch, url: str
+) -> None:
+    monkeypatch.setenv("POLICY_BOOK_URL", url)
+
+    with pytest.raises(ValueError, match="POLICY_BOOK_URL"):
+        Settings.from_env()

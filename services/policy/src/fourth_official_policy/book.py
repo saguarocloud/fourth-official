@@ -51,7 +51,7 @@ class UnchangedPolicyError(PolicyError):
 
 
 class BookStore(Protocol):
-    async def load(self) -> Mapping[str, PolicyHistory]: ...
+    async def load(self) -> Mapping[TenantId, PolicyHistory]: ...
 
     async def save(self, history: PolicyHistory) -> None: ...
 
@@ -60,9 +60,9 @@ class InMemoryBookStore:
     """For tests and local runs: kept for as long as the process lives."""
 
     def __init__(self) -> None:
-        self._histories: dict[str, PolicyHistory] = {}
+        self._histories: dict[TenantId, PolicyHistory] = {}
 
-    async def load(self) -> Mapping[str, PolicyHistory]:
+    async def load(self) -> Mapping[TenantId, PolicyHistory]:
         return dict(self._histories)
 
     async def save(self, history: PolicyHistory) -> None:
@@ -82,10 +82,10 @@ class PolicyBook:
         *,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
     ) -> None:
-        self._bundled = {p.tenant_id: p for p in bundled}
+        self._bundled: dict[TenantId, TenantPolicy] = {p.tenant_id: p for p in bundled}
         self._store = store
         self._clock = clock
-        self._histories: dict[str, PolicyHistory] = {}
+        self._histories: dict[TenantId, PolicyHistory] = {}
         self._lock = asyncio.Lock()
 
     def _now(self) -> datetime:
@@ -122,6 +122,9 @@ class PolicyBook:
             reason=reason,
             fields=fields,
         )
+
+    def tenants(self) -> tuple[TenantId, ...]:
+        return tuple(self._bundled)
 
     def current(self, tenant_id: TenantId) -> TenantPolicy:
         return self._histories[tenant_id].current
