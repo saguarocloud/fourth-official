@@ -19,6 +19,7 @@ from fourth_official_contracts.metrics import METRIC_SNAPSHOT_ADAPTER
 from fourth_official_contracts.moments import MOMENT_ADAPTER
 from fourth_official_contracts.overlays import OVERLAY_SPEC_ADAPTER
 from fourth_official_contracts.provenance import SIGNED_PROVENANCE_ADAPTER
+from fourth_official_contracts.scorecard import GATE_VERDICT_ADAPTER, SCORECARD_ADAPTER
 from fourth_official_contracts.tenants import TENANT_POLICY_ADAPTER
 from fourth_official_contracts.verdicts import VERDICT_ADAPTER
 
@@ -82,6 +83,16 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             OVERLAY_SPEC_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "overlay-spec.schema.json",
             "OverlaySpec",
+        ),
+        "scorecard.schema.json": _with_header(
+            SCORECARD_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "scorecard.schema.json",
+            "Scorecard",
+        ),
+        "gate-verdict.schema.json": _with_header(
+            GATE_VERDICT_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "gate-verdict.schema.json",
+            "GateVerdict",
         ),
         "signed-provenance.schema.json": _with_header(
             SIGNED_PROVENANCE_ADAPTER.json_schema(by_alias=True, mode="validation"),

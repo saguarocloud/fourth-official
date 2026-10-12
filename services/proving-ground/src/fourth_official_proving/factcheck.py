@@ -2,24 +2,11 @@
 finally happened. Code reads the claim's references; no model judges anything here."""
 
 from collections.abc import Iterator, Sequence
-from dataclasses import dataclass
 
-from fourth_official_contracts import Insight, claim_references
+from fourth_official_contracts import FailedClaim, Insight, claim_references
 from fourth_official_proving.truth import Truth
 
 HEADLINE = "headline"
-
-
-@dataclass(frozen=True, slots=True)
-class FailedClaim:
-    """A published claim the truth does not support, and why, in words."""
-
-    match_id: str
-    insight_id: str
-    claim_id: str
-    text: str
-    event_ids: tuple[str, ...]
-    reasons: tuple[str, ...]
 
 
 def _reasons(

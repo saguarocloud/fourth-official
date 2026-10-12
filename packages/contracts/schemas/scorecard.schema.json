@@ -1,0 +1,260 @@
+{
+  "$defs": {
+    "Configuration": {
+      "additionalProperties": false,
+      "description": "What was run: the prompts the agents used and the model deployments they drafted on.",
+      "properties": {
+        "analystPrompt": {
+          "pattern": "^(template|[a-z][a-z-]{1,31}/v[0-9]{1,3}\\.[0-9]{1,3})$",
+          "title": "Analystprompt",
+          "type": "string"
+        },
+        "localizerPrompt": {
+          "pattern": "^(template|[a-z][a-z-]{1,31}/v[0-9]{1,3}\\.[0-9]{1,3})$",
+          "title": "Localizerprompt",
+          "type": "string"
+        },
+        "models": {
+          "items": {
+            "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Models",
+          "type": "array"
+        },
+        "name": {
+          "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "analystPrompt",
+        "localizerPrompt",
+        "models"
+      ],
+      "title": "Configuration",
+      "type": "object"
+    },
+    "FailedClaim": {
+      "additionalProperties": false,
+      "description": "A claim on air at full time that the ground truth does not support, and why.",
+      "properties": {
+        "claimId": {
+          "pattern": "^(cl-[0-9]{1,3}|headline)$",
+          "title": "Claimid",
+          "type": "string"
+        },
+        "eventIds": {
+          "items": {
+            "pattern": "^m[0-9]{1,12}-e[0-9]{4,9}$",
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Eventids",
+          "type": "array"
+        },
+        "insightId": {
+          "maxLength": 72,
+          "title": "Insightid",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "reasons": {
+          "items": {
+            "maxLength": 200,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Reasons",
+          "type": "array"
+        },
+        "text": {
+          "maxLength": 280,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchId",
+        "insightId",
+        "claimId",
+        "text",
+        "eventIds",
+        "reasons"
+      ],
+      "title": "FailedClaim",
+      "type": "object"
+    },
+    "Latency": {
+      "additionalProperties": false,
+      "properties": {
+        "p50": {
+          "maximum": 600000,
+          "minimum": 0,
+          "title": "P50",
+          "type": "number"
+        },
+        "p95": {
+          "maximum": 600000,
+          "minimum": 0,
+          "title": "P95",
+          "type": "number"
+        }
+      },
+      "required": [
+        "p50",
+        "p95"
+      ],
+      "title": "Latency",
+      "type": "object"
+    },
+    "Metrics": {
+      "additionalProperties": false,
+      "properties": {
+        "correctionsCarried": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "costUsd": {
+          "anyOf": [
+            {
+              "maximum": 10000,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Costusd"
+        },
+        "firstAttemptPass": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "keyMomentPrecision": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "latencyMs": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Latency"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "modelWritten": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "policyViolations": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Policyviolations",
+          "type": "integer"
+        },
+        "storylineRecall": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "supportedClaims": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "verifierCatch": {
+          "$ref": "#/$defs/Ratio"
+        }
+      },
+      "required": [
+        "supportedClaims",
+        "storylineRecall",
+        "keyMomentPrecision",
+        "verifierCatch",
+        "policyViolations",
+        "modelWritten",
+        "firstAttemptPass",
+        "correctionsCarried",
+        "latencyMs",
+        "costUsd"
+      ],
+      "title": "Metrics",
+      "type": "object"
+    },
+    "Ratio": {
+      "additionalProperties": false,
+      "description": "`hit` of `of` cases, for example 45 of 50 planted storylines surfaced.",
+      "properties": {
+        "hit": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Hit",
+          "type": "integer"
+        },
+        "of": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Of",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hit",
+        "of"
+      ],
+      "title": "Ratio",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/scorecard.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "configuration": {
+      "$ref": "#/$defs/Configuration"
+    },
+    "failures": {
+      "items": {
+        "$ref": "#/$defs/FailedClaim"
+      },
+      "maxItems": 200,
+      "title": "Failures",
+      "type": "array"
+    },
+    "firstMatch": {
+      "pattern": "^m[0-9]{1,12}$",
+      "title": "Firstmatch",
+      "type": "string"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "matches": {
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Matches",
+      "type": "integer"
+    },
+    "metrics": {
+      "$ref": "#/$defs/Metrics"
+    }
+  },
+  "required": [
+    "configuration",
+    "matches",
+    "firstMatch",
+    "generatedAt",
+    "metrics",
+    "failures"
+  ],
+  "title": "Scorecard",
+  "type": "object"
+}

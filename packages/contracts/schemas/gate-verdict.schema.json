@@ -1,0 +1,74 @@
+{
+  "$defs": {
+    "GateCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "detail": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Detail",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "rule": {
+          "enum": [
+            "unsupported_claims",
+            "policy_violations",
+            "storyline_recall",
+            "model_written",
+            "latency_p95"
+          ],
+          "title": "Rule",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule",
+        "passed",
+        "detail"
+      ],
+      "title": "GateCheck",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/gate-verdict.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The Release Gate's answer for a candidate against the baseline: allowed only if every\nrule passes.",
+  "properties": {
+    "allowed": {
+      "title": "Allowed",
+      "type": "boolean"
+    },
+    "baseline": {
+      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+      "title": "Baseline",
+      "type": "string"
+    },
+    "candidate": {
+      "pattern": "^[a-z0-9][a-z0-9-]{0,39}$",
+      "title": "Candidate",
+      "type": "string"
+    },
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/GateCheck"
+      },
+      "maxItems": 16,
+      "minItems": 1,
+      "title": "Checks",
+      "type": "array"
+    }
+  },
+  "required": [
+    "candidate",
+    "baseline",
+    "allowed",
+    "checks"
+  ],
+  "title": "GateVerdict",
+  "type": "object"
+}
