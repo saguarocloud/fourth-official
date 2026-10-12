@@ -1,5 +1,5 @@
 # Local entry points. CI runs the same commands (.github/workflows/ci.yml).
-.PHONY: install check check-python check-web check-infra smoke-containers contracts demo-truth test fmt
+.PHONY: install check check-python check-web check-infra smoke-containers contracts demo-truth proving-ground test fmt
 
 install:
 	uv sync --all-packages
@@ -40,3 +40,7 @@ fmt:
 	uv run ruff format .
 	uv run ruff check --fix .
 	cd apps/web && npm run format
+
+# The Proving Ground over the full benchmark, written by template (free and deterministic).
+proving-ground:
+	uv run python -m fourth_official_proving run --config template --matches 100 --out eval/results/template.json

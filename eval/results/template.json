@@ -1,0 +1,45 @@
+{
+  "configuration": {
+    "analystPrompt": "template",
+    "localizerPrompt": "template",
+    "models": [],
+    "name": "template"
+  },
+  "failures": [],
+  "firstMatch": "m1001",
+  "generatedAt": "2026-10-12T00:39:51.835Z",
+  "matches": 100,
+  "metrics": {
+    "correctionsCarried": {
+      "hit": 162,
+      "of": 162
+    },
+    "costUsd": null,
+    "firstAttemptPass": {
+      "hit": 0,
+      "of": 0
+    },
+    "keyMomentPrecision": {
+      "hit": 363,
+      "of": 414
+    },
+    "latencyMs": null,
+    "modelWritten": {
+      "hit": 0,
+      "of": 414
+    },
+    "policyViolations": 0,
+    "storylineRecall": {
+      "hit": 264,
+      "of": 266
+    },
+    "supportedClaims": {
+      "hit": 1067,
+      "of": 1067
+    },
+    "verifierCatch": {
+      "hit": 2124,
+      "of": 2124
+    }
+  }
+}
