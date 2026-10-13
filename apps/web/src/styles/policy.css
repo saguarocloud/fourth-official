@@ -468,6 +468,10 @@
   gap: var(--space-3);
 }
 
+.policy-panel[hidden] {
+  display: none;
+}
+
 .policy-footnote {
   max-width: 75ch;
 }

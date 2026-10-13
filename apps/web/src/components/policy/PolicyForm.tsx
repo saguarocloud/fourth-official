@@ -14,7 +14,7 @@ const terms = (text: string): string[] =>
   text
     .split(",")
     .map((t) => t.trim())
-    .filter((t) => t.length > 0);
+    .filter((t, at, all) => t.length > 0 && all.indexOf(t) === at);
 
 // In the order the form lists the choices, so ticking one off and on again changes nothing.
 function toggled<T extends string>(
@@ -214,7 +214,9 @@ function Whole({ id, label, hint, value, scale = 1, min, max, step, onChange }: 
         onChange={(event) => {
           const typed = event.target.value;
           setText(typed);
-          onChange(typed.trim() === "" ? Number.NaN : Math.round(Number(typed) * scale));
+          // Scaled without rounding (only float noise is trimmed), so a part of a whole number
+          // reaches problemsOf and is refused rather than quietly saved as another number.
+          onChange(typed.trim() === "" ? Number.NaN : Number((Number(typed) * scale).toFixed(6)));
         }}
       />
     </div>

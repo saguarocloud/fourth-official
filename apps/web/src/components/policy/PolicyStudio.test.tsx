@@ -202,6 +202,38 @@ describe("PolicyStudio", () => {
     expect(posts(fetch)).toBe(0);
   });
 
+  it("refuses a part of an item a minute rather than rounding it", async () => {
+    const fetch = serve();
+    await opened();
+
+    editing();
+    fireEvent.change(screen.getByLabelText("Items a minute"), { target: { value: "2.5" } });
+    because("Try");
+    fireEvent.click(screen.getByRole("button", { name: "Save version 4" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Items a minute");
+    expect(posts(fetch)).toBe(0);
+  });
+
+  it("sends a term typed twice once", async () => {
+    const fetch = serve(() => Response.json({ version: 4, action: "edited" }));
+    await opened();
+
+    editing();
+    fireEvent.change(screen.getByLabelText("Avoided terms"), {
+      target: { value: "Wahnsinn, Skandal, Wahnsinn" },
+    });
+    because("Twice");
+    fireEvent.click(screen.getByRole("button", { name: "Save version 4" }));
+
+    await waitFor(() =>
+      expect((sent(fetch).policy as Record<string, unknown>).avoidTerms).toEqual([
+        "Wahnsinn",
+        "Skandal",
+      ]),
+    );
+  });
+
   it("carries form edits into the raw view", async () => {
     serve();
     await opened();
