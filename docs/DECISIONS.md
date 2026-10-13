@@ -328,3 +328,19 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - The template configuration runs the full benchmark in about a minute with no model cost, so the harness itself is tested in the ordinary suite.
 - Model runs cost tokens: about $0.15 for the 20-match smoke subset. On a pull request that touches the pipeline, CI runs the base branch's production configuration and the pull request's side by side (about $0.30), so latency is compared like for like and the bar comes from the base branch's code, never the pull request's. Both run as a proving identity trusted only for this repository's pull requests, holding Azure AI User on the one Foundry project (not the account). Narrower roles, Cognitive Services OpenAI User and an inference-only custom role, are refused by the project endpoint.
 - The fact check reads references (`{{player:…}}`, `{{minute:…}}`, `{{score}}`), not prose. A claim that misstates a player's role while naming a player who did take part passes it. An LLM judge layer would cover that, at a cost.
+
+## ADR-015: Policy Studio edits a versioned policy book, sandboxed for the demo
+
+**Date:** 2026-10-12 · **Status:** Accepted
+
+**Context.** Plan §8.7 asks for policies edited in a form and a raw view, with diff, history and "who changed what", taking effect on the next item without a restart, and invalid policies refused in words. Plan §10.5 also says the public demo opens read-only with no login, with a persona switcher acting on a sandboxed demo matchday that can be reset; admin functions require Entra ID, which this build does not have yet.
+
+**Choice.**
+- **A policy book.** Each partner's policy history: every version and the change that made it (editor, time, reason, fields). An edit writes the next version; nothing is overwritten. The newest 100 versions are kept, so edits never run out and a reset always fits. Kept in Blob Storage, one blob per partner, written by the API's identity on that container only.
+- **Live.** The pipeline reads each partner's current policy at every item (`Partners(source=...)`).
+- **Sandboxed for the demo.** As with editors' decisions (ADR-011), an edit is recorded against the partner's duty editor, a named demo identity; edits come only from the studio's pages and at most 10 a minute studio-wide; **Reset** restores the release's policies. Within a valid policy a visitor can hold every item for an editor, slow a partner to one item a minute, or block topics; they cannot disable corrections or AI disclosure, or change who a policy belongs to. With Entra ID, edits would require `Tenant.Compliance` or `Studio.Admin` and record the signed-in user.
+
+**Consequences.**
+- Policy changes are auditable and reversible, and the demo shows a real effect on the next item.
+- Anyone using the public demo can change what judges see until someone resets. Reset is one click away on the screen.
+- The book has one writer (one API replica). More replicas would need conditional writes.

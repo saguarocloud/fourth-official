@@ -68,6 +68,26 @@ resource writerCanUseLedger 'Microsoft.Authorization/roleAssignments@2022-04-01'
   }
 }
 
+// Policy Studio's book: every partner's policy history, one blob per partner (versioned too).
+resource policies 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-01-01' = {
+  parent: blobs
+  name: 'policies'
+  properties: {
+    publicAccess: 'None'
+  }
+}
+
+resource writerCanKeepPolicies 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(policies.id, writerPrincipalId, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+  scope: policies
+  properties: {
+    // Storage Blob Data Contributor, on the policy book's container only.
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
+    principalId: writerPrincipalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
 resource provenance 'Microsoft.Storage/storageAccounts/blobServices/containers@2025-01-01' = {
   parent: blobs
   name: provenanceContainerName
@@ -85,5 +105,6 @@ resource writerCanKeepRecords 'Microsoft.Authorization/roleAssignments@2022-04-0
   }
 }
 
+output policyBookUrl string = '${account.properties.primaryEndpoints.blob}${policies.name}'
 output provenanceContainerUrl string = '${account.properties.primaryEndpoints.blob}${provenance.name}'
 output startLedgerUrl string = '${account.properties.primaryEndpoints.blob}${container.name}/starts.json'

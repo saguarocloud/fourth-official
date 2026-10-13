@@ -58,3 +58,15 @@ The policy directory must hold exactly one `<partner>.yaml` for each partner, an
 - symlinks, files over 64 KB (checked before reading), and text that is not UTF-8;
 - repeated keys, which would silently drop a rule;
 - YAML aliases.
+
+## Policy Studio: editing policies (ADR-015)
+
+The bundled `policies/*.yaml` are each partner's version 1. Policy Studio edits a partner's policy by writing its next version to the **policy book** (`fourth_official_policy.book`), kept in Blob Storage (`policies/<tenant>.json`) when `POLICY_BOOK_URL` is set and in memory otherwise.
+
+- **Every item reads the current version.** The pipeline asks the book for each partner's policy at every item, so an edit governs the next item without a restart: approval rules, disclosure, blocked topics and terms, the item rate, the template allow-list (the director refuses a template the policy no longer allows) and correction behaviour. The latency budget is recorded but not yet enforced: Operations will measure against it.
+- **Every change is kept** with who (the partner's duty editor, a named demo identity: the demo has no sign-in), when, why and which fields. The newest 100 versions are kept per partner.
+- **Who a policy belongs to is not editable** here: the partner, its locale and its duty editor.
+- **Validated like a policy file.** Fields from the form or raw YAML (read by the same strict loader, 64 KB at most) must make a valid policy; a refusal says why in words, a version edited since is a conflict, and an edit that changes nothing is refused.
+- **Edits come from the studio's own pages** (the `X-Requested-By` header, no foreign origin), at most 10 a minute across the whole studio. **Reset** writes the release's policies back as each changed partner's next version: the demo's way back after any visitor's edits.
+- **One writer.** The API runs one replica and holds the book in that process; it writes without conditional requests. A second writer would need ETags.
+- A release that changes a bundled policy reaches a kept book only through Reset.

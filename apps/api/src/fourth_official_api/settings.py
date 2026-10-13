@@ -28,6 +28,15 @@ START_LEDGER_URL = re.compile(
 
 
 @dataclass(frozen=True, slots=True)
+class PolicyBookSettings:
+    """Where Policy Studio's book is kept, so edits survive restarts."""
+
+    container_url: str
+    # The client ID of the app's managed identity (empty: the developer's own credential).
+    client_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class StartLedgerSettings:
     """Where the matchday's starts are kept, so its spend guards survive restarts."""
 
@@ -71,6 +80,8 @@ class Settings:
     runs_per_day: int = DEFAULT_RUNS_PER_DAY
     # None: records are signed with a key that lives as long as the process, and kept in memory.
     provenance: ProvenanceSettings | None = None
+    # None: the policy book is kept in memory and resets with the process.
+    policy_book: PolicyBookSettings | None = None
     # The Proving Ground's recorded runs, served read-only (relative to the working directory).
     proving_results: Path = Path("eval/results")
 
@@ -86,6 +97,7 @@ class Settings:
             start_ledger=_ledger_from_env(),
             runs_per_day=_runs_from_env(),
             provenance=_provenance_from_env(),
+            policy_book=_policy_book_from_env(),
             proving_results=Path(
                 os.environ.get("PROVING_RESULTS_DIR", "").strip() or "eval/results"
             ),
@@ -119,6 +131,17 @@ def _speed_from_env() -> float:
     if not 1.0 <= speed <= MAX_REPLAY_SPEED:
         raise ValueError(f"REPLAY_SPEED must be between 1 and {MAX_REPLAY_SPEED:g}")
     return speed
+
+
+def _policy_book_from_env() -> PolicyBookSettings | None:
+    url = os.environ.get("POLICY_BOOK_URL", "").strip()
+    if not url:
+        return None
+    if not CONTAINER_URL.fullmatch(url):
+        raise ValueError("POLICY_BOOK_URL must be a container URL in Azure Storage, no query")
+    return PolicyBookSettings(
+        container_url=url, client_id=os.environ.get("AZURE_CLIENT_ID", "").strip()
+    )
 
 
 def _ledger_from_env() -> StartLedgerSettings | None:

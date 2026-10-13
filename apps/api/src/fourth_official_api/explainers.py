@@ -7,7 +7,7 @@ from functools import partial
 from azure.identity.aio import DefaultAzureCredential
 
 from fourth_official_api.settings import FoundrySettings
-from fourth_official_contracts import Moment, TenantPolicy
+from fourth_official_contracts import Moment, TenantId, TenantPolicy
 from fourth_official_explain import Explanation, explain
 from fourth_official_explain.analyst import AgentDrafter
 from fourth_official_explain.localize import Localizer
@@ -15,6 +15,7 @@ from fourth_official_explain.localizer import AgentLocalizer, foundry_localizer
 from fourth_official_explain.production import LOCALIZER, analyst_drafters
 from fourth_official_explain.prompts import load_prompt
 from fourth_official_policy import blocked_topics_in
+from fourth_official_policy.book import PolicyBook
 from fourth_official_replay import Explainer, Partner, Partners
 from fourth_official_verifier import MatchFacts
 
@@ -68,16 +69,26 @@ async def foundry_localizer_for(settings: FoundrySettings) -> AsyncIterator[Agen
         )
 
 
+def _partner(policy: TenantPolicy) -> Partner:
+    return Partner(policy=policy, blocked=partial(blocked_topics_in, policy=policy))
+
+
 def partners_for(
-    policies: Sequence[TenantPolicy], localizer: Localizer | None
+    policies: Sequence[TenantPolicy], localizer: Localizer | None, book: PolicyBook | None = None
 ) -> Callable[[], Partners]:
     """A fresh set of partners for each match of each run: their policies, blocked topics and
-    the Localizer (or templates alone, without one)."""
+    the Localizer (or templates alone, without one). With a policy book, each item reads its
+    partner's policy as it stands then, so an edit in Policy Studio governs the next item."""
+
+    def source(tenant_id: TenantId) -> Partner:
+        assert book is not None  # noqa: S101 - only passed as the source when there is a book
+        return _partner(book.current(tenant_id))
 
     def make() -> Partners:
         return Partners(
-            [Partner(policy=p, blocked=partial(blocked_topics_in, policy=p)) for p in policies],
+            [_partner(p) for p in policies],
             localizer=localizer,
+            source=source if book is not None else None,
         )
 
     return make

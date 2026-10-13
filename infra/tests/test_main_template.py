@@ -357,7 +357,7 @@ def test_storage_is_keyless_private_and_locally_redundant(compiled: CompiledTemp
     assert account.properties["minimumTlsVersion"] == "TLS1_2"
     assert account.properties["supportsHttpsTrafficOnly"] is True
     containers = compiled.of_type("Microsoft.Storage/storageAccounts/blobServices/containers")
-    assert len(containers) == 2  # the start ledger, and the provenance records
+    assert len(containers) == 3  # the start ledger, the provenance records, the policy book
     assert {c.properties["publicAccess"] for c in containers} == {"None"}
 
 
@@ -370,9 +370,9 @@ def test_only_the_api_identity_writes_the_ledger_and_the_records(
         if STORAGE_BLOB_DATA_CONTRIBUTOR in str(a.properties["roleDefinitionId"])
     ]
 
-    # One grant per container, each scoped to its container, never to the account: the ledger to
-    # the agents identity, the records to the signer identity.
-    assert len(grants) == 2
+    # One grant per container, each scoped to its container, never to the account: the ledger and
+    # the policy book to the agents identity, the records to the signer identity.
+    assert len(grants) == 3
     principals = {str(g.properties["principalId"]) for g in grants}
     assert any("writerPrincipalId" in p for p in principals)
     assert any("recordsWriterPrincipalId" in p for p in principals)
@@ -409,8 +409,10 @@ def test_the_api_runs_the_analyst_with_a_durable_ledger_and_a_small_daily_allowa
         "PROVENANCE_KEY_ID",
         "PROVENANCE_CONTAINER_URL",
         "PROVENANCE_CLIENT_ID",
+        "POLICY_BOOK_URL",
     }
     assert env["MATCHDAY_RUNS_PER_DAY"] == "6"
+    assert "outputs.policyBookUrl" in env["POLICY_BOOK_URL"]
     assert ".internal." in env["MATCH_DATA_URL"]
     assert "/mcp" in env["MATCH_DATA_URL"]
     (api,) = [m for m in compiled.modules if m.name == "api"]

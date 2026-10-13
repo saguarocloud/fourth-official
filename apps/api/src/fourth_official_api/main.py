@@ -1,7 +1,7 @@
 """FastAPI application factory."""
 
 import asyncio
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Sequence
 from contextlib import AsyncExitStack, asynccontextmanager
 from typing import Literal
 
@@ -16,13 +16,17 @@ from fourth_official_api.explainers import (
     template_explainer,
 )
 from fourth_official_api.matchday_routes import matchday_router
+from fourth_official_api.policy_routes import policy_router
+from fourth_official_api.policy_store import azure_policy_book
 from fourth_official_api.provenance import Issuer, provenance_router
 from fourth_official_api.proving import proving_router
 from fourth_official_api.security import SecurityHeaders
 from fourth_official_api.settings import Settings
 from fourth_official_api.start_ledger import blob_start_ledger
+from fourth_official_contracts import TenantPolicy
 from fourth_official_match_data import MatchStore, demo_store
 from fourth_official_policy import bundled_store
+from fourth_official_policy.book import BookStore, InMemoryBookStore, PolicyBook
 from fourth_official_provenance import InMemoryStore, LocalSigner
 from fourth_official_provenance.azure import azure_provenance
 from fourth_official_replay import Matchday, ReplayConfig, StartLedger
@@ -54,12 +58,29 @@ def _summaries(store: MatchStore) -> dict[str, dict[str, str]]:
     return summaries
 
 
+async def _open_book(
+    stack: AsyncExitStack,
+    settings: Settings,
+    policies: Sequence[TenantPolicy],
+    store: BookStore | None,
+) -> PolicyBook:
+    """Policy Studio's book: kept in Blob Storage when configured, else in memory."""
+    if store is None and settings.policy_book is not None:
+        store = await stack.enter_async_context(
+            azure_policy_book(settings.policy_book.container_url, settings.policy_book.client_id)
+        )
+    book = PolicyBook(policies, store if store is not None else InMemoryBookStore())
+    await book.open()
+    return book
+
+
 def create_app(
     settings: Settings,
     *,
     matchday: Matchday | None = None,
     ledger: StartLedger | None = None,
     provenance: Issuer | None = None,
+    policy_store: BookStore | None = None,
 ) -> FastAPI:
     """Build the API with explicit settings, so tests never depend on process environment. A
     given `matchday` is used as is; otherwise one is built at startup with the Analyst on Foundry
@@ -70,7 +91,8 @@ def create_app(
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         async with AsyncExitStack() as stack:
             policies = [loaded.policy for loaded in bundled_store().all()]
-            app.state.tenants = {policy.tenant_id: policy for policy in policies}
+            book = await _open_book(stack, settings, policies, policy_store)
+            app.state.policies = book
             day = matchday
             starts = ledger
             if starts is None and settings.start_ledger is not None:
@@ -105,7 +127,7 @@ def create_app(
                     config=ReplayConfig(speed=settings.replay_speed),
                     ledger=starts,
                     runs_per_day=settings.runs_per_day,
-                    partners=partners_for(policies, localizer),
+                    partners=partners_for(policies, localizer, book),
                 )
             app.state.matchday = day
             issuer = provenance
@@ -147,6 +169,7 @@ def create_app(
 
     app.include_router(matchday_router(_summaries(store)))
     app.include_router(decision_router())
+    app.include_router(policy_router())
     app.include_router(provenance_router())
     app.include_router(proving_router(settings.proving_results))
     docs = [path for path in (app.docs_url, app.redoc_url) if path is not None]

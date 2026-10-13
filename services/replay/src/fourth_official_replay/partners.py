@@ -9,7 +9,7 @@ Partners are served concurrently, and a failure for one is logged and stays with
 import asyncio
 import logging
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from functools import partial
 from typing import Literal
@@ -100,6 +100,11 @@ def _data_entry(
     )
 
 
+# A partner as its policy stands now: read at every item, so a policy changed mid-match governs
+# the next item without a restart (Policy Studio).
+PartnerSource = Callable[[TenantId], Partner]
+
+
 class Partners:
     """One match's items for each partner. Holds each partner's director schedule."""
 
@@ -109,9 +114,10 @@ class Partners:
         *,
         localizer: Localizer | None,
         concurrency: int = DEFAULT_CONCURRENCY,
+        source: PartnerSource | None = None,
     ) -> None:
         self._partners = tuple(partners)
-        self._policies = {p.policy.tenant_id: p.policy for p in self._partners}
+        self._source = source
         self._localizer = localizer
         # Bounds the Localizer's model calls in flight, however many moments arrive at once.
         self._slots = asyncio.Semaphore(concurrency)
@@ -121,11 +127,29 @@ class Partners:
         }
         self._lock = asyncio.Lock()
 
+    def _now(self, partner: Partner) -> Partner:
+        """The partner as its policy stands now: from the live source if there is one."""
+        return self._source(partner.policy.tenant_id) if self._source else partner
+
+    def _policy(self, tenant_id: TenantId) -> TenantPolicy | None:
+        for partner in self._partners:
+            if partner.policy.tenant_id == tenant_id:
+                return self._now(partner).policy
+        return None
+
     async def _place(
         self, tenant_id: TenantId, template: Template, at: MatchClock
     ) -> Timing | None:
         async with self._lock:
-            schedule, timing = place(self._schedules[tenant_id], template, at)
+            schedule = self._schedules[tenant_id]
+            policy = self._policy(tenant_id)
+            if policy is not None and template not in policy.templates:
+                # The partner's allow-list governs what airs, as Policy Studio last set it.
+                return None
+            if policy is not None and policy.max_items_per_minute != schedule.max_per_minute:
+                # The director keeps what is on air and paces what comes next by the new limit.
+                schedule = replace(schedule, max_per_minute=policy.max_items_per_minute)
+            schedule, timing = place(schedule, template, at)
             self._schedules[tenant_id] = schedule
             return timing
 
@@ -134,7 +158,10 @@ class Partners:
     ) -> list[EntryBuilder]:
         """Each partner's version of a verified insight, published as it is ready."""
         found = await asyncio.gather(
-            *(self._insight(p, insight, moment=moment, facts=facts, at=at) for p in self._partners),
+            *(
+                self._insight(self._now(p), insight, moment=moment, facts=facts, at=at)
+                for p in self._partners
+            ),
             return_exceptions=True,
         )
         return self._kept(found, f"insight {insight.insight_id}")
@@ -203,7 +230,9 @@ class Partners:
         ones the editor saw, unchanged."""
         if item.state != "pending_approval" or item.localized is None or item.rendered is None:
             raise NotAwaitingError
-        policy = self._policies[item.tenant_id]
+        policy = self._policy(item.tenant_id)
+        if policy is None:
+            raise NotAwaitingError
         try:
             approval = Approval(
                 editor=policy.duty_editor, decided_at=now, decision=decision, reason=reason
@@ -271,7 +300,7 @@ class Partners:
         builders: list[EntryBuilder] = []
         actions: list[CorrectionAction] = []
         for item in items:
-            policy = self._policies.get(item.tenant_id)
+            policy = self._policy(item.tenant_id)
             if policy is None or item.localized is None:
                 continue
             behaviour = policy.correction_behaviour
@@ -317,7 +346,7 @@ class Partners:
     ) -> list[EntryBuilder]:
         """A strap for every partner: a correction is never held for approval."""
         found = await asyncio.gather(
-            *(self._correction(p, correction, facts, at) for p in self._partners),
+            *(self._correction(self._now(p), correction, facts, at) for p in self._partners),
             return_exceptions=True,
         )
         return self._kept(found, f"correction {correction.correction_id}")
