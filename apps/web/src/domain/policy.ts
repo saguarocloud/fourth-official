@@ -92,14 +92,9 @@ const CORRECTIONS: Readonly<Record<string, string>> = {
   escalate: "Hold the new version for an editor",
 };
 
-const named = (names: Readonly<Record<string, string>>) => (value: unknown) =>
-  isStrings(value)
-    ? value.length === 0
-      ? "None"
-      : value.map((v) => names[v] ?? v).join(", ")
-    : (names[String(value)] ?? String(value));
-const words = (value: unknown) =>
-  isStrings(value) ? (value.length === 0 ? "None" : value.join(", ")) : String(value);
+const none = (items: readonly string[]) => (items.length === 0 ? "None" : items.join(", "));
+const named = (names: Readonly<Record<string, string>>) => (value: string) => names[value] ?? value;
+const asIs = (value: string) => value;
 
 /** A field Policy Studio may change, how it is labelled and how its value reads. */
 export interface FieldInfo {
@@ -108,42 +103,83 @@ export interface FieldInfo {
   readonly read: (value: unknown) => string;
 }
 
+interface Field extends FieldInfo {
+  // How one item of a list field reads; absent for a field that holds a single value.
+  readonly item?: (value: string) => string;
+}
+
+function list(field: EditableField, label: string, item: (value: string) => string): Field {
+  return {
+    field,
+    label,
+    item,
+    read: (value) => (isStrings(value) ? none(value.map(item)) : String(value)),
+  };
+}
+
+function single(field: EditableField, label: string, read: (value: unknown) => string): Field {
+  return { field, label, read };
+}
+
+const FIELDS: readonly Field[] = [
+  single("displayName", "Name on air", String),
+  list("tone", "Tone", asIs),
+  list("preferTerms", "Preferred terms", asIs),
+  list("avoidTerms", "Avoided terms", asIs),
+  list("blockedTopics", "Blocked topics", named(TOPICS)),
+  list("approvalRequired", "Held for the duty editor", named(KINDS)),
+  single("disclosureMode", "AI disclosure", (v) => named(DISCLOSURE)(String(v))),
+  single("latencyBudgetMs", "Latency budget", (v) => `${Number(v) / 1000} s`),
+  single("maxItemsPerMinute", "Items a minute", String),
+  list("templates", "Graphics allowed", named(TEMPLATES)),
+  single("correctionBehaviour", "When a correction arrives", (v) => named(CORRECTIONS)(String(v))),
+];
+
 /** The fields a studio editor may change, in the order a policy lists them. Who the policy
  * belongs to (the partner, its locale, its duty editor) is not among them. */
-export const EDITABLE_FIELDS: readonly FieldInfo[] = [
-  { field: "displayName", label: "Name on air", read: words },
-  { field: "tone", label: "Tone", read: words },
-  { field: "preferTerms", label: "Preferred terms", read: words },
-  { field: "avoidTerms", label: "Avoided terms", read: words },
-  { field: "blockedTopics", label: "Blocked topics", read: named(TOPICS) },
-  { field: "approvalRequired", label: "Held for the duty editor", read: named(KINDS) },
-  { field: "disclosureMode", label: "AI disclosure", read: named(DISCLOSURE) },
-  { field: "latencyBudgetMs", label: "Latency budget", read: (v) => `${Number(v) / 1000} s` },
-  { field: "maxItemsPerMinute", label: "Items a minute", read: (v) => String(v) },
-  { field: "templates", label: "Graphics allowed", read: named(TEMPLATES) },
-  { field: "correctionBehaviour", label: "When a correction arrives", read: named(CORRECTIONS) },
-];
+export const EDITABLE_FIELDS: readonly FieldInfo[] = FIELDS;
 
 export const LABELS = { TOPICS, KINDS, TEMPLATES, DISCLOSURE, CORRECTIONS } as const;
 
-/** One field a version changed, read before and after. */
+/** One field a version changed, read before and after. A list field also names the items it
+ * gained and the items it lost, so a reader need not compare the two lists by eye. */
 export interface FieldChange {
   readonly field: EditableField;
   readonly label: string;
   readonly before: string;
   readonly after: string;
+  readonly added?: readonly string[];
+  readonly removed?: readonly string[];
+}
+
+const without = (items: readonly string[], others: readonly string[]) =>
+  items.filter((item) => !others.includes(item));
+
+// A list is a set here: the API and the agents never read meaning into its order.
+function same(before: unknown, after: unknown): boolean {
+  if (isStrings(before) && isStrings(after)) {
+    return without(before, after).length === 0 && without(after, before).length === 0;
+  }
+  return before === after;
 }
 
 /** What `after` changed from `before`, field by field, in plain words. */
 export function changesOf(before: TenantPolicy, after: TenantPolicy): FieldChange[] {
-  return EDITABLE_FIELDS.filter(
-    ({ field }) => JSON.stringify(before[field]) !== JSON.stringify(after[field]),
-  ).map(({ field, label, read }) => ({
-    field,
-    label,
-    before: read(before[field]),
-    after: read(after[field]),
-  }));
+  return FIELDS.filter(({ field }) => !same(before[field], after[field])).map(
+    ({ field, label, read, item }) => {
+      const change = { field, label, before: read(before[field]), after: read(after[field]) };
+      const was = before[field];
+      const is = after[field];
+      if (!item || !isStrings(was) || !isStrings(is)) return change;
+      return { ...change, added: without(is, was).map(item), removed: without(was, is).map(item) };
+    },
+  );
+}
+
+/** When a change was made, as hours and minutes in UTC. */
+export function utcTime(changedAt: string): string {
+  const at = new Date(changedAt);
+  return Number.isNaN(at.getTime()) ? changedAt : at.toISOString().slice(11, 16);
 }
 
 const ACTION_WORDS: Readonly<Record<PolicyChange["action"], string>> = {
@@ -155,8 +191,7 @@ const ACTION_WORDS: Readonly<Record<PolicyChange["action"], string>> = {
 /** The ledger's line for a change: who, when, and why. */
 export function versionLine(change: PolicyChange): string {
   if (change.action === "bundled") return "Shipped with the release";
-  const at = change.changedAt.slice(11, 16);
-  return `${ACTION_WORDS[change.action]} by ${change.editor} at ${at} UTC: “${change.reason}”`;
+  return `${ACTION_WORDS[change.action]} by ${change.editor} at ${utcTime(change.changedAt)} UTC: “${change.reason}”`;
 }
 
 // The order a policy file lists its fields in.

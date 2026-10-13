@@ -1,14 +1,20 @@
 "use client";
 
-import { FilePen, Package, RotateCcw, type LucideIcon } from "lucide-react";
+import { RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { type KeyboardEvent, useEffect, useRef, useState } from "react";
 
 import { AppShell } from "@/components/shell/AppShell";
 import type { PolicyChange, PolicyHistory, TenantPolicy } from "@/contracts/policyHistory";
 import { PARTNERS } from "@/domain/broadcast";
-import { changesOf, EDITABLE_FIELDS, versionLine } from "@/domain/policy";
+import {
+  changesOf,
+  EDITABLE_FIELDS,
+  type FieldChange,
+  utcTime,
+  versionLine,
+} from "@/domain/policy";
 import { plural } from "@/lib/plural";
 
 import { PolicyEditor } from "./PolicyEditor";
@@ -17,24 +23,21 @@ import { type Lookup, resetPolicies, usePolicyHistory } from "./usePolicyHistory
 const DEFAULT_PARTNER = PARTNERS[0]!.id;
 const RESET_REASON = "Back to the release";
 
-const ACTION_ICONS: Readonly<Record<PolicyChange["action"], LucideIcon>> = {
-  bundled: Package,
-  edited: FilePen,
-  reset: RotateCcw,
-};
 const ACTION_NAMES: Readonly<Record<PolicyChange["action"], string>> = {
   bundled: "Release",
-  edited: "Edit",
+  edited: "Edited",
   reset: "Reset",
 };
 
 function Ledger({
   history,
   selected,
+  drafting,
   onSelect,
 }: {
   readonly history: PolicyHistory;
   readonly selected: number;
+  readonly drafting: boolean;
   readonly onSelect: (version: number) => void;
 }) {
   const changes = [...history.changes].reverse();
@@ -43,34 +46,60 @@ function Ledger({
       <h2 id="versions-heading" className="panel-heading ledger__heading">
         Versions · {history.versions.length}
       </h2>
+      {drafting && (
+        <p className="ledger__draft">
+          <span className="ledger__version">
+            Version {(changes[0] as PolicyChange).version + 1}
+          </span>
+          <span className="ledger__action">Unsaved</span>
+        </p>
+      )}
       <ol aria-label="Versions" className="ledger__list">
-        {changes.map((change) => {
-          const Icon = ACTION_ICONS[change.action];
-          return (
-            <li key={change.version}>
-              <button
-                type="button"
-                className="ledger__entry"
-                aria-current={change.version === selected ? "true" : undefined}
-                onClick={() => onSelect(change.version)}
-              >
-                <h3 className="ledger__version">Version {change.version}</h3>
-                <span className="ledger__action">
-                  <Icon aria-hidden="true" strokeWidth={1.75} />
-                  {ACTION_NAMES[change.action]}
+        {changes.map((change) => (
+          <li key={change.version}>
+            <button
+              type="button"
+              className="ledger__entry"
+              aria-current={change.version === selected ? "true" : undefined}
+              onClick={() => onSelect(change.version)}
+            >
+              <span className="ledger__version">Version {change.version}</span>
+              <span className="ledger__action">{ACTION_NAMES[change.action]}</span>
+              <span className="ledger__line">{versionLine(change)}</span>
+              {change.fields.length > 0 && (
+                <span className="ledger__fields">
+                  {plural(change.fields.length, "field", "fields")} changed
                 </span>
-                <span className="ledger__line">{versionLine(change)}</span>
-                {change.fields.length > 0 && (
-                  <span className="ledger__fields">
-                    {plural(change.fields.length, "field", "fields")}
-                  </span>
-                )}
-              </button>
-            </li>
-          );
-        })}
+              )}
+            </button>
+          </li>
+        ))}
       </ol>
     </nav>
+  );
+}
+
+// A list says what it gained and lost, so nobody compares two lists by eye; a single value
+// reads as it now stands, beside the struck value it replaced.
+function Change({ change }: { readonly change: FieldChange }) {
+  if (!change.added || !change.removed) return change.after;
+  return (
+    <ul className="version__delta">
+      {change.added.map((item) => (
+        <li key={`+${item}`} className="version__added">
+          <span aria-hidden="true">+ </span>
+          <span className="sr-only">Added: </span>
+          {item}
+        </li>
+      ))}
+      {change.removed.map((item) => (
+        <li key={`-${item}`} className="version__removed">
+          <span aria-hidden="true">− </span>
+          <span className="sr-only">Removed: </span>
+          {item}
+        </li>
+      ))}
+    </ul>
   );
 }
 
@@ -96,12 +125,12 @@ function VersionView({
           Version {version}
           {current && <span className="version__current"> · current</span>}
         </h2>
-        <p className="version__line">{versionLine(change)}</p>
         {current && (
           <button type="button" className="key" data-intent="primary" onClick={onEdit}>
             <span>Edit this policy</span>
           </button>
         )}
+        <p className="version__line">{versionLine(change)}</p>
       </div>
       {before ? (
         <table className="version__changes">
@@ -117,8 +146,10 @@ function VersionView({
             {changed.map((c) => (
               <tr key={c.field}>
                 <th scope="row">{c.label}</th>
-                <td className="version__before">{c.before}</td>
-                <td className="version__after">{c.after}</td>
+                <td className={c.added ? "version__was" : "version__before"}>{c.before}</td>
+                <td className="version__after">
+                  <Change change={c} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -140,10 +171,24 @@ function VersionView({
 
 function ResetKey({ onReset }: { readonly onReset: () => void }) {
   const [confirming, setConfirming] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<string | null>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const keep = useRef<HTMLButtonElement>(null);
+  const opened = useRef(false);
+
+  // The keyboard goes into the confirmation when it opens, and back to the key when it closes.
+  useEffect(() => {
+    if (confirming) keep.current?.focus();
+    else if (opened.current) trigger.current?.focus();
+    opened.current = confirming;
+  }, [confirming]);
 
   async function reset() {
+    if (busy) return;
+    setBusy(true);
     const outcome = await resetPolicies(RESET_REASON);
+    setBusy(false);
     setConfirming(false);
     if (outcome.ok) {
       setFailure(null);
@@ -151,18 +196,38 @@ function ResetKey({ onReset }: { readonly onReset: () => void }) {
     } else setFailure(outcome.detail);
   }
 
+  function onKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === "Escape" && !busy) setConfirming(false);
+  }
+
   return (
     <div className="reset">
       {confirming ? (
-        <div role="group" aria-label="Reset to the release" className="reset__confirm">
-          <p>Every partner&apos;s policy goes back to the release&apos;s, as a new version.</p>
-          <button type="button" className="key" data-intent="danger" onClick={() => void reset()}>
-            <span>Reset every partner</span>
-          </button>
+        <div
+          role="group"
+          aria-label="Reset to the release"
+          className="reset__confirm"
+          onKeyDown={onKey}
+        >
+          <p>
+            All {PARTNERS.length} partners go back to the release&apos;s policy as a new version;
+            the ledger keeps every earlier version.
+          </p>
           <button
             type="button"
             className="key"
+            data-intent="danger"
+            disabled={busy}
+            onClick={() => void reset()}
+          >
+            <span>{busy ? "Resetting…" : "Reset every partner"}</span>
+          </button>
+          <button
+            ref={keep}
+            type="button"
+            className="key"
             data-intent="quiet"
+            disabled={busy}
             onClick={() => setConfirming(false)}
           >
             <span>Keep the policies</span>
@@ -170,6 +235,7 @@ function ResetKey({ onReset }: { readonly onReset: () => void }) {
         </div>
       ) : (
         <button
+          ref={trigger}
           type="button"
           className="key"
           data-intent="danger"
@@ -193,15 +259,15 @@ function Verdict({ lookup, name }: { readonly lookup: Lookup; readonly name: str
   let text = "Reading the partner's policy.";
   if (lookup.status === "unavailable") {
     tone = "red";
-    text = "The policy service did not answer. Retrying when you choose a partner again.";
+    text = "The policy service did not answer. Nothing has changed; try again.";
   } else if (lookup.status === "ready") {
     const latest = lookup.history.changes.at(-1) as PolicyChange;
     const how =
       latest.action === "bundled"
         ? "as shipped with the release"
-        : `${latest.action === "reset" ? "reset" : "edited"} by ${latest.editor} at ${latest.changedAt.slice(11, 16)} UTC`;
+        : `${latest.action === "reset" ? "reset" : "edited"} by ${latest.editor} at ${utcTime(latest.changedAt)} UTC: ${plural(latest.fields.length, "field", "fields")} changed`;
     tone = "green";
-    text = `${name} is on version ${latest.version}: ${how}. A change governs the next item.`;
+    text = `${name} is on version ${latest.version}, ${how}. Changes apply from the next item.`;
   }
   return (
     <p role="status" aria-label="Policy verdict" className="verdict" data-tone={tone}>
@@ -230,6 +296,7 @@ function Desk({
       <Ledger
         history={history}
         selected={shown}
+        drafting={editing}
         onSelect={(v) => {
           setSelected(v);
           setEditing(false);
@@ -273,18 +340,20 @@ export function PolicyStudio() {
         <Verdict lookup={lookup} name={partner.name} />
       </header>
       <div className="policy-controls">
-        <nav aria-label="Partners" className="match-switcher">
-          <ul>
+        <nav aria-label="Partners">
+          <ul className="partner-keys">
             {PARTNERS.map((p) => (
               <li key={p.id}>
                 <Link
                   href={`/policy?partner=${p.id}`}
-                  className="match-switcher__key"
+                  className="partner-key policy-partner"
                   aria-current={p.id === partner.id ? "page" : undefined}
                   scroll={false}
                 >
-                  <span className="match-switcher__codes">{p.code}</span>
-                  <span className="policy-controls__name">{p.name}</span>
+                  <span aria-hidden="true" className="partner-key__cap policy-partner__cap">
+                    {p.code}
+                  </span>
+                  <span className="policy-partner__name">{p.name}</span>
                 </Link>
               </li>
             ))}

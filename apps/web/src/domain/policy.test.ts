@@ -33,12 +33,16 @@ describe("changesOf", () => {
         label: "Avoided terms",
         before: "Wahnsinn",
         after: "Wahnsinn, Skandal",
+        added: ["Skandal"],
+        removed: [],
       },
       {
         field: "approvalRequired",
         label: "Held for the duty editor",
         before: "Recaps",
         after: "Recaps, Insights",
+        added: ["Insights"],
+        removed: [],
       },
       { field: "maxItemsPerMinute", label: "Items a minute", before: "4", after: "3" },
     ]);
@@ -46,6 +50,22 @@ describe("changesOf", () => {
 
   it("says nothing changed between identical policies", () => {
     expect(changesOf(RELEASED, { ...RELEASED, version: 9 })).toEqual([]);
+  });
+
+  it("names what a list lost as well as what it gained", () => {
+    const after = { ...RELEASED, blockedTopics: ["betting", "referee_criticism"] } as TenantPolicy;
+
+    expect(changesOf(RELEASED, after)[0]).toMatchObject({
+      label: "Blocked topics",
+      added: ["Criticism of referees"],
+      removed: ["Injury speculation", "Transfer rumours", "Off the field"],
+    });
+  });
+
+  it("does not count a list put in another order as a change", () => {
+    const reordered = { ...RELEASED, templates: [...RELEASED.templates].reverse() } as TenantPolicy;
+
+    expect(changesOf(RELEASED, reordered)).toEqual([]);
   });
 
   it("writes empty lists as none", () => {
@@ -65,6 +85,12 @@ describe("versionLine", () => {
       "Edited by L. Vogt at 09:15 UTC: “Hold insights for the duty editor”",
     );
     expect(versionLine(HISTORY.changes[0]!)).toBe("Shipped with the release");
+  });
+
+  it("reads the time in UTC whatever offset it was written with", () => {
+    const change = { ...HISTORY.changes[1]!, changedAt: "2026-10-12T11:15:00+02:00" };
+
+    expect(versionLine(change)).toContain("at 09:15 UTC");
   });
 });
 

@@ -5,9 +5,9 @@ import fixture from "@/fixtures/policy-history-rheinblick.json";
 
 import { resetPolicies, saveEdit, usePolicyHistory } from "./usePolicyHistory";
 
-function serve(...responses: Response[]) {
+function serve(...responses: (Response | Promise<Response>)[]) {
   const fetch = vi.fn();
-  for (const response of responses) fetch.mockResolvedValueOnce(response);
+  for (const response of responses) fetch.mockReturnValueOnce(Promise.resolve(response));
   vi.stubGlobal("fetch", fetch);
   return fetch;
 }
@@ -42,6 +42,28 @@ describe("usePolicyHistory", () => {
 
     await waitFor(() => expect(result.current.lookup.status).toBe("ready"));
     expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps the partner's last history on show while it reads it again", async () => {
+    serve(Response.json(fixture), new Promise<Response>(() => undefined));
+    const { result } = renderHook(() => usePolicyHistory("rheinblick-sport"));
+    await waitFor(() => expect(result.current.lookup.status).toBe("ready"));
+
+    act(() => result.current.reload());
+
+    expect(result.current.lookup.status).toBe("ready");
+  });
+
+  it("never shows one partner's history for another", async () => {
+    serve(Response.json(fixture), new Promise<Response>(() => undefined));
+    const { result, rerender } = renderHook(({ id }) => usePolicyHistory(id), {
+      initialProps: { id: "rheinblick-sport" },
+    });
+    await waitFor(() => expect(result.current.lookup.status).toBe("ready"));
+
+    rerender({ id: "northlight-sport" });
+
+    expect(result.current.lookup).toEqual({ status: "loading" });
   });
 });
 

@@ -23,12 +23,38 @@ export function declaresMoreThan(request: Request, limit: number): boolean {
   return Number.isFinite(declared) && declared > limit;
 }
 
+// The body's bytes, read only as far as `limit`: a body sent in chunks with no length declared
+// is cut off there rather than buffered whole first.
+async function bytesUpTo(request: Request, limit: number): Promise<Uint8Array | null> {
+  if (!request.body) return new Uint8Array();
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > limit) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(size);
+  let at = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, at);
+    at += chunk.byteLength;
+  }
+  return bytes;
+}
+
 /** The JSON body, or null if it is larger than `limit` bytes or not JSON. */
 export async function jsonBody(request: Request, limit: number): Promise<unknown> {
-  const text = await request.text();
-  if (new TextEncoder().encode(text).length > limit) return null;
+  const bytes = await bytesUpTo(request, limit);
+  if (!bytes) return null;
   try {
-    return JSON.parse(text) as unknown;
+    return JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)) as unknown;
   } catch {
     return null;
   }

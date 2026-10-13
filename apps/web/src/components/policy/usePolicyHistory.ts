@@ -14,6 +14,7 @@ const LOADING: Lookup = { status: "loading" };
 
 interface Settled {
   readonly key: string;
+  readonly tenantId: string;
   readonly lookup: Lookup;
 }
 
@@ -24,7 +25,8 @@ async function lookUp(tenantId: string, signal: AbortSignal): Promise<Lookup> {
   return history ? { status: "ready", history } : { status: "unavailable" };
 }
 
-/** A partner's policy history, read on arrival and again on reload (after a save, say). */
+/** A partner's policy history, read on arrival and again on reload (after a save, say). While it
+ * reads a partner again, the history it last read for that partner stays on show. */
 export function usePolicyHistory(tenantId: string): {
   readonly lookup: Lookup;
   readonly reload: () => void;
@@ -38,12 +40,15 @@ export function usePolicyHistory(tenantId: string): {
     lookUp(tenantId, controller.signal)
       .catch((): Lookup => ({ status: "unavailable" }))
       .then((lookup) => {
-        if (!controller.signal.aborted) setSettled({ key, lookup });
+        if (!controller.signal.aborted) setSettled({ key, tenantId, lookup });
       });
     return () => controller.abort();
   }, [tenantId, key]);
 
-  const lookup = settled?.key === key ? settled.lookup : LOADING;
+  const shown =
+    settled &&
+    (settled.key === key || (settled.tenantId === tenantId && settled.lookup.status === "ready"));
+  const lookup = shown ? settled.lookup : LOADING;
   return { lookup, reload: () => setAttempt((n) => n + 1) };
 }
 
