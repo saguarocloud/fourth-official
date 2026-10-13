@@ -14,6 +14,7 @@ export const CONTRACTS = [
   { schema: "signed-provenance.schema.json", output: "provenance.ts" },
   { schema: "scorecard.schema.json", output: "scorecard.ts" },
   { schema: "gate-verdict.schema.json", output: "gateVerdict.ts" },
+  { schema: "policy-history.schema.json", output: "policyHistory.ts" },
 ];
 export const BANNER =
   "/* Generated from packages/contracts/schemas by `npm run contracts`. Do not edit. */";

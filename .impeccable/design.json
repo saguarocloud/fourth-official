@@ -391,6 +391,14 @@
       {
         "name": "proving-phone",
         "value": "720px"
+      },
+      {
+        "name": "policy-beside",
+        "value": "1024px"
+      },
+      {
+        "name": "policy-phone",
+        "value": "720px"
       }
     ],
     "partnerThemes": [
@@ -540,6 +548,22 @@
           "rule": "One label per measure, identical in the poll, the table and the benchmark."
         },
         "phone": "At 720px and below each poll station puts lamp and call, title and figure on one line (auto | 1fr | auto); production and the rule wrap beneath; padding 16px."
+      },
+      {
+        "name": "Policy Studio",
+        "path": "/policy",
+        "rail": "none; main takes the rail's column from 1024px (data-rail=\"none\")",
+        "firstViewport": "Title and verdict naming the version, who made it and when; the controls row: partner keys (links in a nav labelled 'Partners', /policy?partner=…, the cap carrying the code in a widened cap, the current one aria-current=page with the pressed look) left and the danger key 'Reset to the release' right; the desk, 22rem | minmax(0, 1fr) from 1024px: the version ledger (sticky) left, the selected version's changes and the policy in full right, with 'Edit this policy' on the current one; synthetic-data footnote at 75ch (no sign-in; edits recorded against the duty editor, a named demo identity; anyone can reset). A ledger of versions, never a settings page of toggles that overwrite with no history.",
+        "verdict": {
+          "edited": "Rheinblick Sport is on version 2, edited by L. Vogt at 16:32 UTC: 2 fields changed. Changes apply from the next item. (green; 'reset by …' after a reset)",
+          "release": "Partner is on version 1, as shipped with the release. Changes apply from the next item. (green)",
+          "loading": "Reading the partner's policy. (neutral)",
+          "unavailable": "The policy service did not answer. Nothing has changed; try again. (red, with Try again)"
+        },
+        "reset": "Never on one press: the key opens an inline confirmation group ('Reset to the release'): 'All 3 partners go back to the release's policy as a new version; the ledger keeps every earlier version.', danger 'Reset every partner' ('Resetting…'), quiet 'Keep the policies'. Focus moves to Keep the policies on open and back to the trigger on close; Esc closes it (not while resetting). A reset is a new version for every partner with the reason 'Back to the release'; a failure shows as a refusal beneath the key.",
+        "keyboard": "No screen shortcuts. The editor's Form/Raw YAML tabs follow the ARIA tabs pattern (roving tabindex; Left/Right wrap, Home/End). Esc closes the reset confirmation.",
+        "colour": "A policy change is not an item state, so it uses no state colour (the Signal Light Rule): replaced values are struck in ink-3, added items ink-1. Colour on the screen: the verdict lamp, the danger edge of the Reset keys, the refusal's red-tinted edge.",
+        "phone": "At 720px and below the partner keys become a three-up grid of code-only keys (names visually hidden, kept for screen readers) with Reset wrapping beneath; the version's Edit key sits under its title."
       },
       {
         "name": "Verify",
@@ -821,6 +845,40 @@
       "kind": "custom",
       "refersTo": null,
       "description": "Proving Ground: 'The full benchmark', a panel-1 panel; a 65ch ink-2 lede ('The harness's own reference run: …') over facts in auto-fit minmax(12rem, 1fr) columns, 16px 600 tabular values."
+    },
+    {
+      "name": "Change Ledger",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Pattern (Policy Studio): a governed setting as a ledger of versions, each saying who made it, when, why and what it changed, read before and after; the next version written beside the ledger with a required reason, joining it only when saved; a reset is itself a new version; what was replaced stays visible, struck in ink-3. No state colour: a change of settings is not an item state."
+    },
+    {
+      "name": "Ledger",
+      "kind": "nav",
+      "refersTo": "ledger-entry",
+      "description": "Policy Studio: 'Versions · N', a call sheet on panel-1 with a sticky heading; max 28rem stacked, sticky beside the version from 1024px (at most the viewport tall). Ordered list, newest first. Each entry a full-width button (1fr | auto, 12px 16px, ink-2): 'Version N' 14px 600 ink-1 with the action as a silk-screened ink-3 word at the right (Edited, Reset, Release); the who-when-why line in 13px ('Edited by L. Vogt at 16:32 UTC: “…”' or 'Shipped with the release'); 'N fields changed' in 13px ink-3, sentence case, omitted when none. Hover panel-2; selected (aria-current=true) panel-3. Inset focus ring (the list scrolls). While drafting, a dashed strong-hairline unsaved row above the list: 'Version N+1' and 'Unsaved'.",
+      "html": "<nav class=\"ds-lg\" aria-labelledby=\"ds-lg-h\"><h2 id=\"ds-lg-h\">Versions · 2</h2><p class=\"ds-lg__draft\"><b>Version 3</b><i>Unsaved</i></p><ol aria-label=\"Versions\"><li><button aria-current=\"true\"><b>Version 2</b><i>Edited</i><span>Edited by L. Vogt at 16:32 UTC: “Hold insights for the duty editor during the derby”</span><span class=\"ds-lg__n\">2 fields changed</span></button></li><li><button><b>Version 1</b><i>Release</i><span>Shipped with the release</span></button></li></ol></nav>",
+      "css": ".ds-lg { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:352px; background:#0d1013; border:1px solid #20272d; border-radius:2px; } .ds-lg h2 { margin:0; padding:12px 16px; border-bottom:1px solid #20272d; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#a1abb4; } .ds-lg ol { margin:0; padding:0; list-style:none; } .ds-lg li + li { border-top:1px solid #20272d; } .ds-lg button, .ds-lg__draft { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:4px 12px; width:100%; padding:12px 16px; border:0; background:transparent; color:#a1abb4; font:inherit; text-align:left; cursor:pointer; } .ds-lg__draft { width:auto; margin:8px; padding:8px 12px; border:1px dashed #2d363e; border-radius:2px; cursor:default; } .ds-lg button:hover { background:#151a1e; } .ds-lg button[aria-current=true] { background:#1c2227; } .ds-lg button:focus-visible { outline:none; box-shadow:inset 0 0 0 2px #f2f5f7, inset 0 0 0 4px #07090b; } .ds-lg b { font-size:14px; font-weight:600; color:#e9edf0; } .ds-lg i { font-style:normal; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:#7c8791; } .ds-lg button span { grid-column:1 / -1; font-size:13px; overflow-wrap:anywhere; } .ds-lg .ds-lg__n { color:#7c8791; }"
+    },
+    {
+      "name": "Version View",
+      "kind": "custom",
+      "refersTo": "policy-panel",
+      "description": "Policy Studio: a panel-1 panel padded 24px. Head: 'Version N' 20px 600 with ' · current' in 400 ink-2 and, on the current version, the primary 'Edit this policy' at the right (under the title on phones); the who-when-why line beneath in 13px ink-2. Changes table (Field | Version N−1 | Version N; 11px uppercase ink-3 heads over a strong hairline; field column 40%): a single value struck in ink-3 beside the new one in ink-1; a list shows the old list unstruck in ink-3 and, in the new column, '+ item' ink-1 for each added and '− item' struck ink-3 for each removed (signs aria-hidden; 'Added:'/'Removed:' for screen readers); lists compare as sets. The oldest version has a note instead ('The oldest version kept. The policy as it stood:'). Then the policy in full: a dl in auto-fit minmax(16rem, 1fr) columns, 11px uppercase ink-3 terms over 13px ink-1 values in plain words.",
+      "html": "<table class=\"ds-vc\"><thead><tr><th>Field</th><th>Version 1</th><th>Version 2</th></tr></thead><tbody><tr><th scope=\"row\">Held for the duty editor</th><td class=\"ds-vc__was\">Recaps</td><td><ul><li><span aria-hidden=\"true\">+ </span>Insights</li></ul></td></tr><tr><th scope=\"row\">Items a minute</th><td class=\"ds-vc__before\">4</td><td>3</td></tr></tbody></table>",
+      "css": ".ds-vc { font-family:var(--font-ui, Geist, system-ui, sans-serif); width:640px; border-collapse:collapse; table-layout:fixed; font-size:13px; color:#e9edf0; background:#0d1013; } .ds-vc thead th { padding:8px 12px; border-bottom:1px solid #2d363e; font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; text-align:left; color:#7c8791; } .ds-vc thead th:first-child { width:40%; } .ds-vc td, .ds-vc tbody th { padding:8px 12px; border-bottom:1px solid #20272d; text-align:left; vertical-align:top; } .ds-vc tbody th { font-weight:600; } .ds-vc__was { color:#7c8791; } .ds-vc__before, .ds-vc__removed { color:#7c8791; text-decoration:line-through; text-decoration-thickness:1px; } .ds-vc ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; }"
+    },
+    {
+      "name": "Policy Editor",
+      "kind": "custom",
+      "refersTo": "policy-panel",
+      "description": "Policy Studio: the next version in place of the version view. Head 'Version N · draft from version M' and 'Recorded against L. Vogt (demo identity). It governs the next item.'. Tabs 'Form' and 'Raw YAML' (ARIA tabs pattern; 13px 500 ink-2, selected ink-1 on a 2px board-white underline) sharing one draft; once the YAML is edited the form is locked behind a 60ch notice with the small quiet key 'Discard the YAML edits'. 'Why (required)' with an ink-3 hint ('Recorded in the ledger with L. Vogt's name.'), 200 characters max, empty refused with focus moved to it. Refusal: role=alert ink-1 lines on a red-tinted edge; on 409 adds the small key 'Reload the latest version'. Keys: primary 'Save version N' ('Saving…'), quiet 'Cancel'. The draft keeps its base version, so a stale save is refused rather than overwriting."
+    },
+    {
+      "name": "Policy Form",
+      "kind": "custom",
+      "refersTo": "policy-input",
+      "description": "Policy Studio: four fieldsets under silk-screen legends (11px uppercase ink-3, a hairline above all but the first, 32px apart), fields in auto-fit minmax(18rem, 1fr): On air (Name on air, Tone, Preferred terms, Avoided terms; comma-separated), Content (Blocked topics, Held for the duty editor, Graphics allowed as checkboxes; Correction strap '(always)', disabled), Disclosure and corrections (radio groups named in words), Limits (Latency budget in seconds 1 to 30 in half seconds, Items a minute 1 to 30; tabular, max 10rem). Labels 13px 600 ink-1 over 11px ink-3 hints; inputs on panel-0 with a strong hairline edge; accent-color led-white, never a state colour."
     }
   ],
   "narrative": {
@@ -898,7 +956,8 @@
       "**Do** name the duty editor as a demo identity wherever a decision names an editor; this demo has no sign-in.",
       "**Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.",
       "**Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.",
-      "**Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much."
+      "**Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much.",
+      "**Do** keep a governed setting as a change ledger: every version with who, when and why, what it changed read before and after, a required reason for the next one, and a reset as a new version rather than an erasure."
     ],
     "donts": [
       "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
@@ -911,7 +970,8 @@
       "**Don't** mark moment kinds with colour; a kind is an icon and a label.",
       "**Don't** repeat a correction's state with a lamp when its strap already names it.",
       "**Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is \"Signed and unchanged\".",
-      "**Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state."
+      "**Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state.",
+      "**Don't** colour a policy change: struck values are ink-3, added items ink-1, and no version, action or field takes a state colour."
     ]
   }
 }

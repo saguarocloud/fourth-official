@@ -191,6 +191,20 @@ components:
     backgroundColor: "{colors.panel-0}"
     rounded: "{rounded.key}"
     padding: "12px"
+  ledger-entry:
+    textColor: "{colors.ink-2}"
+    padding: "12px 16px"
+  ledger-entry-current:
+    backgroundColor: "{colors.panel-3}"
+  policy-panel:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "24px"
+  policy-input:
+    backgroundColor: "{colors.panel-0}"
+    textColor: "{colors.ink-1}"
+    rounded: "{rounded.key}"
+    padding: "8px 12px"
 ---
 
 # Design System: Fourth Official
@@ -336,6 +350,14 @@ The main wall leads with the page header and verdict, then the match wall: a two
 - **Verdict:** red "The Release Gate blocks Analyst prompt v1.4 against production's v1.2 on N of 7 rules: rule title, candidate figure against production's (allowance); …." naming every no-go rule; green "The Release Gate allows …: all 7 rules call go."; neutral "Reading the recorded runs."; red "The recorded runs could not be read: the match service did not answer." and red "Too many reads from here. Wait a moment and try again.", both with a small "Try again" key beneath the header.
 - **Phones (720 and below):** each poll station puts lamp and call, title and figure on one line (`auto | 1fr | auto`), production and the rule wrapping beneath at full width; padding 16px.
 
+**Policy Studio** (`/policy`) has no live rail, so main takes the full width. A partner's policy as a ledger of versions, each with what it changed and why, the next one written in place; never a settings page of toggles that overwrite with no history. The first viewport runs: page header (title, verdict line); the controls row (`.policy-controls`, flex, wraps, space-between, `--space-3` by `--space-4` gaps) with the partner keys left and Reset to the release right; the desk (`.policy-desk`, `22rem | minmax(0, 1fr)` from 1024, aligned to the top, stacked below): the version ledger left, the selected version (or the editor) right; a small "Try again" key in its place when the service did not answer; the synthetic-data footnote at 75ch, which says this demo has no sign-in, an edit is recorded against the partner's duty editor (a named demo identity), and anyone can reset the policies to the release's.
+- **Verdict** (who changed it last, and when it takes effect): green "Rheinblick Sport is on version 2, edited by L. Vogt at 16:32 UTC: 2 fields changed. Changes apply from the next item." ("reset by …" after a reset; "…on version 1, as shipped with the release." for the bundled version); neutral "Reading the partner's policy."; red "The policy service did not answer. Nothing has changed; try again."
+- **Partner keys:** Broadcast Preview's partner keys, as links in a `nav` labelled "Partners" (`/policy?partner=…`, `scroll={false}`), so a partner's policy has its own address. The cap carries the partner's code rather than a number, so it widens to fit (`width: auto`, 24px minimum, 6px side padding). There are no number shortcuts here. The current key is lit by the page it opens (`aria-current="page"`), not a pressed state, but looks the same: panel-3, ink-3 edge, ink-1, no bevel, its cap lit white with panel-0 text.
+- **Reset to the release:** a danger key with a 14px Lucide RotateCcw. It never resets on one press: it opens an inline confirmation in its place (a group labelled "Reset to the release", up to 40rem, right-aligned): a 13px ink-2 sentence ("All 3 partners go back to the release's policy as a new version; the ledger keeps every earlier version."), the danger key "Reset every partner" ("Resetting…" in flight) and the quiet key "Keep the policies". Focus moves to Keep the policies when it opens and back to the trigger when it closes; Esc inside the group closes it (not while resetting). A reset is a new version for every partner, recorded with the reason "Back to the release", never an erasure; a failure shows as a refusal (see Policy editor) beneath the key.
+- **Change applies forward:** an edit or reset governs the next item; nothing already on air changes. The verdict and the editor both say so.
+- **The Signal Light Rule here:** a policy change is not an item state, so it uses no state colour. Versions, actions, before and after values are ink-1, ink-2 and ink-3 only; what was replaced is struck in ink-3, never red or violet. The only colour on the screen is the verdict lamp, the danger edge of the Reset keys and the refusal's red-tinted edge.
+- **Phones (720 and below):** the partner keys become a three-up grid of code-only keys (the partner name stays for screen readers, visually hidden); the nav takes the full row and Reset wraps beneath it; in the version view the Edit key sits under the title rather than at its right.
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -349,6 +371,7 @@ Breakpoints:
 - **Corrections only:** 1280 and up puts the incident's facts beside its board and lays item boards out at `minmax(28rem, 1fr)`; 720 and below stacks each board's panels and the facts, and the fan switches to its stacked layout.
 - **Provenance only:** 1024 and up puts the sticky picker beside the record; 768 and up sets each claim's margin note beside it; 1280 and up puts the life beside the facts; 720 and below caps the picker at 15rem and pads the record 16px.
 - **Proving Ground only:** 1280 and up puts The call beside The poll; 1024 and up puts Unsupported claims beside the benchmark (when there are any); 720 and below folds each station to one line.
+- **Policy Studio only:** 1024 and up puts the sticky ledger beside the version (`22rem | 1fr`); 720 and below turns the partner keys into a three-up row of codes and puts the version's Edit key under its title.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -417,7 +440,7 @@ The fourth official's board, repurposed: what went out (red) and what replaced i
 The two panels shrink to fit a narrow rail (`repeat(2, minmax(0, 1fr))`, `min-width: 0`, and the readout SVG at `max-width: 100%; height: auto`), so a long OUT or IN text scales down rather than overflowing. On Match Live the rail ("Corrections") lists every correction, newest first (empty, a 13px ink-2 sentence says what will appear there); each caption gives the summary (14px ink-1), "N published items corrected." (or "No published item rested on it.") in ink-2, and "Issued hh:mm:ss UTC" in tabular figures. When a corrected item is on the page the summary is a link to it (underline in hairline-strong, `currentColor` on hover), and the item it reaches is outlined (see Wire item, `:target`). In brief form (`brief`, for a page that states the summary and times itself, as the Corrections incident does) the caption keeps only the impact line.
 
 ### Verdict line
-One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute; on Corrections, how many corrections and what they reached (see Layout).
+One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute; on Corrections, how many corrections and what they reached; on Policy Studio, which version the partner is on, who made it and when (see Layout).
 
 ### Match keys (Match Live)
 One square-cut key per match in a `nav` labelled "Matches": 36px tall, 12px side padding, panel-2 face with strong hairline edge and the key bevel, 13px weight 500 ink-2, club codes ("ARD v KES") in tabular figures with full names for screen readers. Hover and current (`aria-current="page"`) go panel-3 and ink-1; current drops the bevel, like a pressed key. A running match adds a 6px red lamp and "LIVE" as an 11px uppercase label in ink-1; a finished one a quiet "FT" in ink-3; otherwise nothing.
@@ -465,7 +488,7 @@ A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), 
 13px, left-aligned headers in ink-2 weight 500 over a strong hairline, 8px by 12px cells on hairline rows, panel-2 row hover, right-aligned tabular numerics, uppercase label caption.
 
 ### Partner keys (Broadcast Preview)
-A vision mixer's bus: one key per partner in a group labelled "Partner on the monitor", numbered 1 to 3. 40px tall (44px on phones), panel-2 face, strong hairline edge, key bevel, 13px weight 500 ink-2. Contents, in order: a 24px cap (panel-0, Geist Mono, ink-3), the partner name, its language as an 11px uppercase label in ink-3, and an 8px tally lamp, lit red when that partner has a graphic on air (announced ", on air"), unlit (led-off) otherwise. The current key is `aria-pressed`: panel-3, ink-3 edge, ink-1, no bevel, and its cap lights white with panel-0 text.
+A vision mixer's bus: one key per partner in a group labelled "Partner on the monitor", numbered 1 to 3. 40px tall (44px on phones), panel-2 face, strong hairline edge, key bevel, 13px weight 500 ink-2. Contents, in order: a 24px cap (panel-0, Geist Mono, ink-3), the partner name, its language as an 11px uppercase label in ink-3, and an 8px tally lamp, lit red when that partner has a graphic on air (announced ", on air"), unlit (led-off) otherwise. The current key is `aria-pressed`: panel-3, ink-3 edge, ink-1, no bevel, and its cap lights white with panel-0 text. Policy Studio reuses them as links (see Layout): the cap carries the partner code and widens to fit, there is no language or tally, and the current key is `aria-current="page"` with the same pressed look.
 
 ### Key cap
 The visible shortcut on a small key (`.key-cap`): 18px tall, 18px minimum width, 4px side padding, panel-0 face, strong hairline edge, 2px radius, Geist Mono 10px in ink-3, hidden from screen readers (the key carries `aria-keyshortcuts`). Every shortcut has one.
@@ -560,6 +583,34 @@ Each failure from either run, candidate first: a panel-1 item padded 16px with a
 ### Benchmark panel (Proving Ground)
 "The full benchmark": a panel-1 panel padded 24px. A 65ch ink-2 lede ("The harness's own reference run: N matches from …, explained by the template with no model and no cost.") over a facts `dl` in auto-fit `minmax(12rem, 1fr)` columns: 11px uppercase ink-3 terms over 16px 600 ink-1 tabular values, using the measure names above.
 
+### Change ledger (pattern; Policy Studio)
+How a governed setting is shown: never as a form that overwrites in place, but as a ledger of versions, each saying who made it, when, why and what it changed, read before and after. The next version is written beside the ledger and joins it only when saved, with a reason. What it replaced stays visible, struck in ink-3; nothing is erased, and a reset is itself a new version. It carries no state colour: a change of settings is not an item state.
+
+### Ledger (Policy Studio)
+"Versions · N": a call sheet on panel-1 with a hairline edge, its heading sticky inside it; 28rem tall at most when stacked, sticky beside the version from 1024 (`top: --space-4`, at most the viewport tall), scrolling inside (`overscroll-behavior: contain`). An ordered list labelled "Versions", newest first, hairline-divided. Each entry is a full-width button (`1fr | auto`, 12px by 16px padding, ink-2): "Version N" (14px, 600, ink-1) with, at the right, the action that made it as a silk-screened word in ink-3, not a key: Edited, Reset or Release; beneath, the who-when-why line in 13px ("Edited by L. Vogt at 16:32 UTC: “Hold insights for the duty editor during the derby”", or "Shipped with the release"), breaking anywhere; then "N fields changed" in 13px ink-3, sentence case, omitted when nothing changed. Hover panel-2; the selected entry (`aria-current="true"`) panel-3. The list scrolls, so the focus ring is inset (`inset 0 0 0 2px led-white, inset 0 0 0 4px panel-0`). While a draft is open, an unsaved row sits above the list: "Version N+1" and "Unsaved" in the same type, in a dashed strong-hairline box inset 8px, not a button. Choosing any entry closes the draft.
+
+### Version (Policy Studio)
+The selected version, read as what it changed, then the policy in full: a panel-1 panel padded 24px with a hairline edge, `24px` gaps.
+- **Head:** title and key on one line: "Version N" (20px, 600, ink-1) with " · current" in 400 ink-2 on the newest; on the current version only, the primary key "Edit this policy" at the right (beneath the title on phones); beneath, full width, the who-when-why line in 13px ink-2.
+- **Changes:** a table (caption for screen readers, "What version N changed") headed Field | Version N−1 | Version N in 11px uppercase ink-3 over a strong hairline; 8px by 12px cells on hairline rows, fixed layout, the field column 40%. Each changed field in 600 ink-1 as a row header. A single value reads as it stood, struck in ink-3 (1px), beside what it became in ink-1 ("4" struck → "3"). A list reads as what it gained and lost, so nobody compares two lists by eye: the old list stands unstruck in ink-3, and the new column lists "+ item" in ink-1 for each added and "− item" struck in ink-3 for each removed (the signs hidden from screen readers, which hear "Added:" and "Removed:"). Lists compare as sets; order never counts as a change. The oldest version kept has no table, only a 13px ink-2 note: "The oldest version kept. The policy as it stood:".
+- **In full:** above a hairline, a `dl` labelled "Version N in full" in auto-fit `minmax(16rem, 1fr)` columns: 11px uppercase ink-3 terms over 13px ink-1 values, every editable field in the policy file's order (Name on air, Tone, Preferred terms, Avoided terms, Blocked topics, Held for the duty editor, AI disclosure, Latency budget, Items a minute, Graphics allowed, When a correction arrives), each value in plain words ("8 s", "Hold the new version for an editor", "None" for an empty list), never the raw enum.
+
+### Policy editor (Policy Studio)
+The next version, written in place of the version view, in the same panel.
+- **Head:** "Version N" with " · draft from version M" in 400 ink-2; beneath, "Recorded against L. Vogt (demo identity). It governs the next item." in 13px ink-2. The draft keeps the version it was made on: if the policy moves on meanwhile, saving is refused as stale rather than overwriting.
+- **Tabs:** "Form" and "Raw YAML", following the ARIA tabs pattern (`tablist` labelled "How to edit", roving `tabindex`, Left and Right wrap, Home and End): 13px weight 500 ink-2 with no face, the selected one ink-1 on a 2px board-white underline, above a hairline. Both share one draft: the raw view shows the form's edits as YAML (every string double-quoted, read back strictly), and once the YAML itself is edited it is what is saved; the form then stays locked behind a 60ch 13px ink-2 notice ("The raw YAML has edits the form cannot show. Saving saves the YAML; discard its edits to use the form again.") with the small quiet key "Discard the YAML edits". The raw view is a labelled textarea ("The policy as YAML", with the hint that it is read strictly and the partner, locale and duty editor stay as they are) in the data font at 13px/1.6 on panel-0, 24 rows, resizable vertically.
+- **Why (required):** "Why" in 600 ink-1 with "(required)" in 400 ink-3, an 11px ink-3 hint ("Recorded in the ledger with L. Vogt's name."), a full-width input, 200 characters at most. An empty reason is refused before any request, with focus moved to the input.
+- **Refusal:** a `role="alert"` block, 12px by 16px padding, ink-1 13px lines on a red-tinted strong-hairline edge, saying in words what is wrong (the reason missing, a number out of range, or the API's own reason). On a 409, when the policy moved on, it adds the small key "Reload the latest version", which closes the draft and reads the ledger again.
+- **Keys:** the primary "Save version N" ("Saving…" in flight) and the quiet "Cancel".
+
+### Policy form (Policy Studio)
+Every control the studio may change, in four fieldsets, each under a silk-screened legend (11px uppercase ink-3) with a hairline above all but the first, 32px apart; the fields in auto-fit `minmax(18rem, 1fr)` columns, 24px gaps. Who the policy belongs to (partner, locale, duty editor) is not among them.
+- **On air:** Name on air; Tone ("Up to six words, separated by commas."); Preferred terms; Avoided terms ("A term cannot be both preferred and avoided."). Terms are typed as comma-separated text, kept as typed.
+- **Content:** Blocked topics, Held for the duty editor and Graphics allowed as checkbox lists in plain words; Correction strap is always allowed (disabled, "(always)" in ink-3).
+- **Disclosure and corrections:** AI disclosure and When a correction arrives as radio groups, each option named in words ("EU strict: label every AI item, name the editor", "Hold the new version for an editor").
+- **Limits:** Latency budget in seconds, 1 to 30 in half seconds (stored as milliseconds), and Items a minute, 1 to 30; tabular number inputs at most 10rem wide; a cleared field stays blank rather than becoming 0.
+- **Fields:** 13px 600 ink-1 labels over an 11px ink-3 hint, inputs on panel-0 with a strong hairline edge and the key radius, the focus ring on `:focus-visible`; checkboxes and radios take `accent-color: led-white`, never a state colour.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -581,6 +632,7 @@ Each failure from either run, candidate first: a panel-1 item padded 16px with a
 - **Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.
 - **Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.
 - **Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much.
+- **Do** keep a governed setting as a change ledger: every version with who, when and why, what it changed read before and after, a required reason for the next one, and a reset as a new version rather than an erasure.
 
 ### Don't:
 - **Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).
@@ -594,6 +646,7 @@ Each failure from either run, candidate first: a panel-1 item padded 16px with a
 - **Don't** use partner or tenant brand colours or the graphics face in the chrome; they belong only inside the Broadcast Preview monitor's stage.
 - **Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is "Signed and unchanged".
 - **Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state.
+- **Don't** colour a policy change: struck values are ink-3, added items ink-1, and no version, action or field takes a state colour.
 
 ### Open items
 - Nothing on air links to Verify yet: no QR code or short link on the partner graphics or in the Broadcast Preview monitor, so a viewer can only reach `/verify/[itemId]` from a shared URL.

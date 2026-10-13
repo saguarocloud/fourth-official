@@ -1,0 +1,85 @@
+{
+  "changes": [
+    {
+      "action": "bundled",
+      "changedAt": "2026-10-12T09:05:00.000Z",
+      "editor": "L. Vogt",
+      "fields": [],
+      "reason": "Shipped with the release",
+      "tenantId": "rheinblick-sport",
+      "version": 1
+    },
+    {
+      "action": "edited",
+      "changedAt": "2026-10-12T09:15:00.000Z",
+      "editor": "L. Vogt",
+      "fields": ["avoidTerms", "approvalRequired", "maxItemsPerMinute"],
+      "reason": "Hold insights for the duty editor",
+      "tenantId": "rheinblick-sport",
+      "version": 2
+    },
+    {
+      "action": "reset",
+      "changedAt": "2026-10-12T09:20:00.000Z",
+      "editor": "L. Vogt",
+      "fields": ["avoidTerms", "approvalRequired", "maxItemsPerMinute"],
+      "reason": "Back to the release after the review",
+      "tenantId": "rheinblick-sport",
+      "version": 3
+    }
+  ],
+  "tenantId": "rheinblick-sport",
+  "versions": [
+    {
+      "approvalRequired": ["recap"],
+      "avoidTerms": ["Wahnsinn"],
+      "blockedTopics": ["injury_speculation", "betting", "transfer_rumour", "off_field"],
+      "correctionBehaviour": "auto-amend",
+      "disclosureMode": "eu-strict",
+      "displayName": "Rheinblick Sport",
+      "dutyEditor": "L. Vogt",
+      "latencyBudgetMs": 8000,
+      "locale": "de-DE",
+      "maxItemsPerMinute": 4,
+      "preferTerms": ["Pressing", "Umschaltspiel", "Torchance"],
+      "templates": ["lower_third", "stat_card", "correction_strap", "score_bug"],
+      "tenantId": "rheinblick-sport",
+      "tone": ["formal", "precise"],
+      "version": 1
+    },
+    {
+      "approvalRequired": ["recap", "insight"],
+      "avoidTerms": ["Wahnsinn", "Skandal"],
+      "blockedTopics": ["injury_speculation", "betting", "transfer_rumour", "off_field"],
+      "correctionBehaviour": "auto-amend",
+      "disclosureMode": "eu-strict",
+      "displayName": "Rheinblick Sport",
+      "dutyEditor": "L. Vogt",
+      "latencyBudgetMs": 8000,
+      "locale": "de-DE",
+      "maxItemsPerMinute": 3,
+      "preferTerms": ["Pressing", "Umschaltspiel", "Torchance"],
+      "templates": ["lower_third", "stat_card", "correction_strap", "score_bug"],
+      "tenantId": "rheinblick-sport",
+      "tone": ["formal", "precise"],
+      "version": 2
+    },
+    {
+      "approvalRequired": ["recap"],
+      "avoidTerms": ["Wahnsinn"],
+      "blockedTopics": ["injury_speculation", "betting", "transfer_rumour", "off_field"],
+      "correctionBehaviour": "auto-amend",
+      "disclosureMode": "eu-strict",
+      "displayName": "Rheinblick Sport",
+      "dutyEditor": "L. Vogt",
+      "latencyBudgetMs": 8000,
+      "locale": "de-DE",
+      "maxItemsPerMinute": 4,
+      "preferTerms": ["Pressing", "Umschaltspiel", "Torchance"],
+      "templates": ["lower_third", "stat_card", "correction_strap", "score_bug"],
+      "tenantId": "rheinblick-sport",
+      "tone": ["formal", "precise"],
+      "version": 3
+    }
+  ]
+}

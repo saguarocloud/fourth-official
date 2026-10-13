@@ -7,8 +7,9 @@ uv run python scripts/record-feed-fixture.py
 
 import asyncio
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from functools import partial
+from itertools import count
 from pathlib import Path
 
 from fourth_official_contracts import (
@@ -21,6 +22,7 @@ from fourth_official_contracts import (
 from fourth_official_explain import Explanation, explain
 from fourth_official_match_data import demo_store
 from fourth_official_policy import blocked_topics_in, bundled_store
+from fourth_official_policy.book import InMemoryBookStore, PolicyBook
 from fourth_official_provenance import LocalSigner, record_for, sign_record
 from fourth_official_replay import FeedLog, Partner, Partners, fixed_clocks, replay
 from fourth_official_verifier import MatchFacts
@@ -125,10 +127,38 @@ async def record_provenance(name: str) -> None:
     print(f"wrote {len(answers)} records to {out}")
 
 
+async def record_policy_history(name: str) -> None:
+    """Rheinblick's policy history as Policy Studio would leave it: the release's version, an edit,
+    and a reset."""
+    # Five minutes later at every stamp, so each change has its own time.
+    clock = (datetime(2026, 10, 12, 9, 0, tzinfo=UTC) + timedelta(minutes=5 * n) for n in count())
+    book = PolicyBook(
+        [loaded.policy for loaded in bundled_store().all()],
+        InMemoryBookStore(),
+        clock=lambda: next(clock),
+    )
+    await book.open()
+    first = book.current("rheinblick-sport")
+    edited = first.to_wire() | {
+        "approvalRequired": ["recap", "insight"],
+        "maxItemsPerMinute": 3,
+        "avoidTerms": ["Wahnsinn", "Skandal"],
+    }
+    await book.edit(
+        "rheinblick-sport", edited, base_version=1, reason="Hold insights for the duty editor"
+    )
+    await book.reset(reason="Back to the release after the review")
+    out = FIXTURES / name
+    history = book.history("rheinblick-sport").to_wire()
+    out.write_text(json.dumps(history, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"wrote {len(history['versions'])} versions to {out}")
+
+
 async def main() -> None:
     await record("feed-m42.json", with_partners=False)
     await record("feed-m42-partners.json", with_partners=True)
     await record_provenance("provenance-m42.json")
+    await record_policy_history("policy-history-rheinblick.json")
 
 
 if __name__ == "__main__":
