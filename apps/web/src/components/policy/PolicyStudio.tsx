@@ -280,16 +280,28 @@ function Verdict({ lookup, name }: { readonly lookup: Lookup; readonly name: str
 function Desk({
   tenantId,
   history,
+  resets,
   reload,
 }: {
   readonly tenantId: string;
   readonly history: PolicyHistory;
+  readonly resets: number;
   readonly reload: () => void;
 }) {
   const current = (history.versions.at(-1) as TenantPolicy).version;
-  const [selected, setSelected] = useState(current);
+  // A version someone picked in the ledger; until then (and after a save) the desk follows the
+  // current version as each read of the history lands.
+  const [selected, setSelected] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
-  const shown = history.versions.some((v) => v.version === selected) ? selected : current;
+  // A reset puts the desk back on the current version; an open draft stays, and is refused as
+  // stale when it is saved.
+  const [seenResets, setSeenResets] = useState(resets);
+  if (seenResets !== resets) {
+    setSeenResets(resets);
+    setSelected(null);
+  }
+  const shown =
+    selected !== null && history.versions.some((v) => v.version === selected) ? selected : current;
   const policy = history.versions.at(-1) as TenantPolicy;
   return (
     <div className="policy-desk">
@@ -307,9 +319,9 @@ function Desk({
           tenantId={tenantId}
           policy={policy}
           dutyEditor={policy.dutyEditor}
-          onSaved={(version) => {
+          onSaved={() => {
             setEditing(false);
-            setSelected(version);
+            setSelected(null);
             reload();
           }}
           onCancel={() => setEditing(false)}
@@ -333,6 +345,7 @@ export function PolicyStudio() {
   const partner =
     PARTNERS.find((p) => p.id === asked) ?? PARTNERS.find((p) => p.id === DEFAULT_PARTNER)!;
   const { lookup, reload } = usePolicyHistory(partner.id);
+  const [resets, setResets] = useState(0);
   return (
     <AppShell current="/policy" studio="Meridian League Studios" replay>
       <header className="page-header">
@@ -359,10 +372,21 @@ export function PolicyStudio() {
             ))}
           </ul>
         </nav>
-        <ResetKey onReset={reload} />
+        <ResetKey
+          onReset={() => {
+            setResets((n) => n + 1);
+            reload();
+          }}
+        />
       </div>
       {lookup.status === "ready" ? (
-        <Desk key={partner.id} tenantId={partner.id} history={lookup.history} reload={reload} />
+        <Desk
+          key={partner.id}
+          tenantId={partner.id}
+          history={lookup.history}
+          resets={resets}
+          reload={reload}
+        />
       ) : (
         lookup.status === "unavailable" && (
           <button type="button" className="key" data-size="sm" onClick={reload}>

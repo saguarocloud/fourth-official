@@ -394,6 +394,52 @@ describe("PolicyStudio", () => {
     expect(posts(fetch)).toBe(1);
   });
 
+  it("shows the new current version once a reset lands, whatever was selected", async () => {
+    let history: PolicyHistory = fixture as unknown as PolicyHistory;
+    const fetch = vi.fn((_url: string, init?: RequestInit) =>
+      Promise.resolve(Response.json(init?.method === "POST" ? { changes: [] } : history)),
+    );
+    vi.stubGlobal("fetch", fetch);
+    await opened();
+
+    fireEvent.click(screen.getByRole("button", { name: /Version 2/ }));
+    history = withVersion4();
+    fireEvent.click(screen.getByRole("button", { name: "Reset to the release" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset every partner" }));
+
+    expect(
+      await screen.findByRole("heading", { name: /^Version 4\s*· current$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the saved version as current once it is read back", async () => {
+    let history: PolicyHistory = fixture as unknown as PolicyHistory;
+    const fetch = vi.fn((_url: string, init?: RequestInit) => {
+      if (init?.method === "POST") return Promise.resolve(Response.json({ version: 4 }));
+      return Promise.resolve(Response.json(history));
+    });
+    vi.stubGlobal("fetch", fetch);
+    await opened();
+
+    editing();
+    because("Saved");
+    history = withVersion4();
+    fireEvent.click(screen.getByRole("button", { name: "Save version 4" }));
+    await screen.findByRole("heading", { name: /^Version 4\s*· current$/ });
+    const five = withVersion4();
+    history = {
+      ...five,
+      versions: [...five.versions, { ...five.versions.at(-1)!, version: 5 }],
+      changes: [...five.changes, { ...five.changes.at(-1)!, version: 5, action: "reset" }],
+    };
+    fireEvent.click(screen.getByRole("button", { name: "Reset to the release" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset every partner" }));
+
+    expect(
+      await screen.findByRole("heading", { name: /^Version 5\s*· current$/ }),
+    ).toBeInTheDocument();
+  });
+
   it("keeps the keyboard in the reset confirmation and gives it back", async () => {
     serve();
     await opened();
