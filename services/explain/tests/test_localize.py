@@ -20,6 +20,7 @@ from fourth_official_explain.localize import (
     LocalizedClaimDraft,
     LocalizedDraft,
     localize,
+    needs_localizer,
     to_localized,
 )
 from fourth_official_explain.metering import TokenCount, spend
@@ -274,3 +275,8 @@ def test_each_localizer_attempt_records_the_tokens_its_call_spent() -> None:
     tried, template = result.attempts[0], result.attempts[-1]
     assert (tried.input_tokens, tried.output_tokens) == (100, 10)
     assert (template.input_tokens, template.output_tokens) == (0, 0)
+
+
+def test_only_a_partner_in_another_language_needs_the_localizer() -> None:
+    assert not needs_localizer(policy("northlight-sport", "en-GB"))
+    assert needs_localizer(TRIBUNA)

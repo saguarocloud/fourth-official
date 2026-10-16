@@ -7,8 +7,9 @@ Partners are served concurrently, and a failure for one is logged and stays with
 """
 
 import asyncio
+import contextlib
 import logging
-from collections.abc import Callable, Sequence
+from collections.abc import AsyncGenerator, Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 from functools import partial
@@ -45,7 +46,7 @@ from fourth_official_contracts import (
     item_id_for,
 )
 from fourth_official_explain import Attempt
-from fourth_official_explain.localize import Localizer, localize
+from fourth_official_explain.localize import Localizer, localize, needs_localizer
 from fourth_official_policy import approval_required, disclose
 from fourth_official_replay.corrections import moments_of, regenerated, restated, touched
 from fourth_official_replay.errors import DecisionError, NoRoomOnAirError, NotAwaitingError
@@ -157,16 +158,34 @@ class Partners:
 
     async def insight(
         self, insight: Insight, moment: Moment, facts: MatchFacts, at: MatchClock
-    ) -> list[EntryBuilder]:
-        """Each partner's version of a verified insight, published as it is ready."""
-        found = await asyncio.gather(
-            *(
-                self._insight(self._now(p), insight, moment=moment, facts=facts, at=at)
-                for p in self._partners
-            ),
-            return_exceptions=True,
-        )
-        return self._kept(found, f"insight {insight.insight_id}")
+    ) -> AsyncGenerator[EntryBuilder]:
+        """Each partner's version of a verified insight, in the order they are ready: a partner
+        that needs no Localizer never waits for one that does. A partner that fails is logged
+        and left out; the others carry on."""
+
+        # Each partner's policy as it stands now, before any of them starts: an edit made while
+        # they work governs the next insight, never this one halfway.
+        partners = [self._now(p) for p in self._partners]
+
+        async def guarded(partner: Partner) -> EntryBuilder | None:
+            try:
+                return await self._insight(partner, insight, moment=moment, facts=facts, at=at)
+            except Exception:
+                tenant = partner.policy.tenant_id
+                logger.exception("insight %s failed for %s", insight.insight_id, tenant)
+                return None
+
+        tasks = [asyncio.ensure_future(guarded(p)) for p in partners]
+        try:
+            for done in asyncio.as_completed(tasks):
+                built = await done
+                if built is not None:
+                    yield built
+        finally:
+            # However the caller stops, no partner's work outlives it.
+            for task in tasks:
+                task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _insight(
         self,
@@ -178,7 +197,9 @@ class Partners:
         at: MatchClock,
     ) -> EntryBuilder | None:
         policy = partner.policy
-        async with self._slots:
+        # Only a model call takes one of the Localizer's slots: the canonical words never queue.
+        slot = self._slots if needs_localizer(policy) else contextlib.nullcontext()
+        async with slot:
             result = await localize(
                 insight, moment, facts, policy, localizer=self._localizer, blocked=partner.blocked
             )

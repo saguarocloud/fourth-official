@@ -1,11 +1,13 @@
 """Every verified insight, correction and score change reaches each partner as its own item: in
 its language, labelled as its policy requires, held for an editor where it must be, and timed."""
 
+import time
+from collections.abc import Callable
 from functools import cache, partial
 
 import anyio
 
-from fourth_official_contracts import Moment, Provenance, TenantItemEntry
+from fourth_official_contracts import FeedEntry, InsightEntry, Moment, Provenance, TenantItemEntry
 from fourth_official_explain import Explanation, explain
 from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
 from fourth_official_explain.metering import TokenCount, spend
@@ -226,3 +228,97 @@ def test_a_partner_item_carries_the_tokens_its_localizer_spent() -> None:
     )
     assert (tribuna.attempts[0].input_tokens, tribuna.attempts[0].output_tokens) == (700, 90)
     assert (tribuna.attempts[-1].input_tokens, tribuna.attempts[-1].output_tokens) == (0, 0)
+
+
+def test_a_partner_s_item_airs_when_it_is_ready_not_when_the_slowest_partner_s_is() -> None:
+    class SlowSpanish:
+        provenance = Provenance(
+            agent="localizer", prompt_version="v1.0", model="fast", produced_by="model"
+        )
+
+        async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
+            if request.policy.locale == "es-MX":
+                await anyio.sleep(1.0)
+            raise RuntimeError("no model in tests")
+
+    slow = Partners(
+        [
+            Partner(policy=p.policy, blocked=partial(blocked_topics_in, policy=p.policy))
+            for p in bundled_store().all()
+        ],
+        localizer=SlowSpanish(),
+    )
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(demo_store().record("m42"), log, template_only, sleep=no_wait, partners=slow)
+    )
+
+    entries, timing = log.snapshot()
+    stamp = dict(zip((e.entry_seq for e in entries), timing.published, strict=True))
+    first = next(e for e in entries if isinstance(e, InsightEntry)).insight.insight_id
+    items = {
+        e.tenant_id: stamp[e.entry_seq]
+        for e in entries
+        if isinstance(e, TenantItemEntry)
+        and e.localized is not None
+        and e.localized.insight_id == first
+    }
+    assert items["tribuna-austral"] - items["northlight-sport"] >= 0.5
+
+
+def test_when_publishing_one_partner_s_item_fails_the_others_still_in_work_are_stopped() -> None:
+    cancelled: dict[str, float] = {}
+    refused: list[float] = []
+
+    class Slow:
+        provenance = Provenance(
+            agent="localizer", prompt_version="v1.0", model="fast", produced_by="model"
+        )
+
+        async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
+            try:
+                await anyio.sleep(30)
+            except BaseException:
+                cancelled.setdefault(request.policy.tenant_id, time.monotonic())
+                raise
+            raise RuntimeError("never reached")
+
+    class Refusing(FeedLog):
+        async def publish(
+            self,
+            build: Callable[[int], FeedEntry],
+            *,
+            generation: int | None = None,
+            guard: Callable[[tuple[FeedEntry, ...]], None] | None = None,
+        ) -> FeedEntry:
+            entry = await super().publish(build, generation=generation, guard=guard)
+            if (
+                isinstance(entry, TenantItemEntry)
+                and entry.tenant_id == "northlight-sport"
+                and entry.item_kind == "insight"
+                and not refused
+            ):
+                refused.append(time.monotonic())
+                raise RuntimeError("the feed refused the item")
+            return entry
+
+    partners = Partners(
+        [
+            Partner(policy=p.policy, blocked=partial(blocked_topics_in, policy=p.policy))
+            for p in bundled_store().all()
+        ],
+        localizer=Slow(),
+    )
+    log = Refusing("m42")
+
+    async def first_insight() -> None:
+        with anyio.move_on_after(5):
+            await replay(
+                demo_store().record("m42"), log, template_only, sleep=no_wait, partners=partners
+            )
+
+    anyio.run(first_insight)
+
+    # The Spanish and German drafts were stopped as the English item failed, not left to run.
+    assert {"tribuna-austral", "rheinblick-sport"} <= set(cancelled)
+    assert all(at - refused[0] < 1.0 for at in cancelled.values())
