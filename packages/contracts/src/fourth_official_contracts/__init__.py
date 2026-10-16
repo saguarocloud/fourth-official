@@ -108,10 +108,13 @@ from fourth_official_contracts.moments import (
 from fourth_official_contracts.operations import (
     ErrorBudget,
     MatchOperations,
+    ModelPrice,
     Objective,
     OperationsReport,
     PartnerOperations,
+    Pricing,
     Spread,
+    TokenUse,
     parse_operations_report,
 )
 from fourth_official_contracts.overlays import (
@@ -274,6 +277,7 @@ __all__ = [
     "MetricSnapshot",
     "MetricWindow",
     "Metrics",
+    "ModelPrice",
     "Moment",
     "MomentEntry",
     "MomentId",
@@ -294,6 +298,7 @@ __all__ = [
     "PolicyHistory",
     "PossessionChangeEvent",
     "PressureEvent",
+    "Pricing",
     "Provenance",
     "ProvenanceClaim",
     "ProvenanceRecord",
@@ -320,6 +325,7 @@ __all__ = [
     "TenantId",
     "TenantItemEntry",
     "TenantPolicy",
+    "TokenUse",
     "TopicId",
     "UtcTimestamp",
     "VarCheckEvent",

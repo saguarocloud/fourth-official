@@ -73,4 +73,13 @@ def test_after_a_run_every_match_is_measured_for_every_partner(client: TestClien
             "rheinblick-sport",
         }
     assert report.on_air.count == sum(p.on_air.count for m in report.matches for p in m.partners)
+    # Templates wrote everything: no tokens, no model cost, and the prices the report used.
+    assert all(m.model_cost_microusd == 0 for m in report.matches)
+    assert {p.model for p in report.pricing.models} == {"fast", "fallback"}
+    # Each partner is judged against its policy's latency budget, as the book holds it now.
+    budgets = {
+        loaded.policy.tenant_id: loaded.policy.latency_budget_ms for loaded in bundled_store().all()
+    }
+    for match in report.matches:
+        assert {p.tenant_id: p.latency_budget_ms for p in match.partners} == budgets
     assert report.budget.of == report.on_air.count

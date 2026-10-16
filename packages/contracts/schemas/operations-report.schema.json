@@ -66,10 +66,22 @@
         "firstPass": {
           "$ref": "#/$defs/Ratio"
         },
+        "infraCostMicrousd": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Infracostmicrousd",
+          "type": "integer"
+        },
         "matchId": {
           "pattern": "^m[0-9]{1,12}$",
           "title": "Matchid",
           "type": "string"
+        },
+        "modelCostMicrousd": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Modelcostmicrousd",
+          "type": "integer"
         },
         "modelDrafts": {
           "$ref": "#/$defs/Ratio"
@@ -109,6 +121,9 @@
           ],
           "title": "State",
           "type": "string"
+        },
+        "tokens": {
+          "$ref": "#/$defs/TokenUse"
         }
       },
       "required": [
@@ -124,9 +139,42 @@
         "modelErrors",
         "corrections",
         "correctedItems",
+        "tokens",
+        "modelCostMicrousd",
+        "infraCostMicrousd",
         "partners"
       ],
       "title": "MatchOperations",
+      "type": "object"
+    },
+    "ModelPrice": {
+      "additionalProperties": false,
+      "description": "What a model deployment's tokens cost, in micro-dollars per million tokens.",
+      "properties": {
+        "inputMicrousdPerMillion": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Inputmicrousdpermillion",
+          "type": "integer"
+        },
+        "model": {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+          "title": "Model",
+          "type": "string"
+        },
+        "outputMicrousdPerMillion": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Outputmicrousdpermillion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "model",
+        "inputMicrousdPerMillion",
+        "outputMicrousdPerMillion"
+      ],
+      "title": "ModelPrice",
       "type": "object"
     },
     "Objective": {
@@ -174,6 +222,12 @@
       "additionalProperties": false,
       "description": "One partner's items in one match: how many it published, how many it held for its editor,\nand, for the ones it aired without one, how long from the event to air.",
       "properties": {
+        "costMicrousd": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Costmicrousd",
+          "type": "integer"
+        },
         "held": {
           "maximum": 1000000,
           "minimum": 0,
@@ -185,6 +239,19 @@
           "minimum": 0,
           "title": "Items",
           "type": "integer"
+        },
+        "latencyBudgetMs": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latencybudgetms"
         },
         "onAir": {
           "$ref": "#/$defs/Spread"
@@ -198,6 +265,12 @@
           "title": "Tenantid",
           "type": "string"
         },
+        "tokens": {
+          "$ref": "#/$defs/TokenUse"
+        },
+        "withinBudget": {
+          "$ref": "#/$defs/Ratio"
+        },
         "withinTarget": {
           "$ref": "#/$defs/Ratio"
         }
@@ -207,9 +280,39 @@
         "items",
         "held",
         "onAir",
-        "withinTarget"
+        "withinTarget",
+        "tokens",
+        "costMicrousd",
+        "latencyBudgetMs",
+        "withinBudget"
       ],
       "title": "PartnerOperations",
+      "type": "object"
+    },
+    "Pricing": {
+      "additionalProperties": false,
+      "description": "The prices the report's costs were computed with.",
+      "properties": {
+        "infraMicrousdPerHour": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Inframicrousdperhour",
+          "type": "integer"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/ModelPrice"
+          },
+          "maxItems": 8,
+          "title": "Models",
+          "type": "array"
+        }
+      },
+      "required": [
+        "models",
+        "infraMicrousdPerHour"
+      ],
+      "title": "Pricing",
       "type": "object"
     },
     "Ratio": {
@@ -280,6 +383,30 @@
       ],
       "title": "Spread",
       "type": "object"
+    },
+    "TokenUse": {
+      "additionalProperties": false,
+      "description": "Tokens model calls spent, as the service reported them.",
+      "properties": {
+        "input": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Input",
+          "type": "integer"
+        },
+        "output": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Output",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "title": "TokenUse",
+      "type": "object"
     }
   },
   "$id": "https://github.com/saguarocloud/fourth-official/schemas/operations-report.schema.json",
@@ -313,6 +440,9 @@
     },
     "onAir": {
       "$ref": "#/$defs/Spread"
+    },
+    "pricing": {
+      "$ref": "#/$defs/Pricing"
     }
   },
   "required": [
@@ -320,7 +450,8 @@
     "objectives",
     "budget",
     "onAir",
-    "matches"
+    "matches",
+    "pricing"
   ],
   "title": "OperationsReport",
   "type": "object"

@@ -19,6 +19,10 @@ def partner(**overrides: object) -> dict[str, Any]:
         "held": 1,
         "onAir": spread(),
         "withinTarget": {"hit": 2, "of": 2},
+        "tokens": {"input": 2400, "output": 420},
+        "costMicrousd": 1440,
+        "latencyBudgetMs": 8000,
+        "withinBudget": {"hit": 2, "of": 2},
         **overrides,
     }
 
@@ -37,6 +41,9 @@ def match(**overrides: object) -> dict[str, Any]:
         "modelErrors": 1,
         "corrections": spread(1, 40, 40),
         "correctedItems": 6,
+        "tokens": {"input": 90000, "output": 12000},
+        "modelCostMicrousd": 46500,
+        "infraCostMicrousd": 1157,
         "partners": [partner()],
         **overrides,
     }
@@ -53,6 +60,16 @@ def report(**overrides: object) -> dict[str, Any]:
         "budget": {"withinPercent": 95, "targetMs": 8000, "late": 0, "of": 2},
         "onAir": spread(),
         "matches": [match()],
+        "pricing": {
+            "models": [
+                {
+                    "model": "fast",
+                    "inputMicrousdPerMillion": 250000,
+                    "outputMicrousdPerMillion": 2000000,
+                }
+            ],
+            "infraMicrousdPerHour": 6944,
+        },
         **overrides,
     }
 
@@ -98,3 +115,25 @@ def test_late_items_are_items_measured() -> None:
 def test_a_match_is_reported_once() -> None:
     with pytest.raises(ValidationError, match="once"):
         parse_operations_report(report(matches=[match(), match()]))
+
+
+def test_a_partner_costs_no_more_than_its_match() -> None:
+    with pytest.raises(ValidationError, match="cost"):
+        parse_operations_report(
+            report(matches=[match(modelCostMicrousd=10, partners=[partner(costMicrousd=11)])])
+        )
+
+
+def test_each_model_is_priced_once() -> None:
+    price = {"model": "fast", "inputMicrousdPerMillion": 1, "outputMicrousdPerMillion": 1}
+    with pytest.raises(ValidationError, match="once"):
+        parse_operations_report(
+            report(pricing={"models": [price, price], "infraMicrousdPerHour": 0})
+        )
+
+
+def test_items_within_the_partner_s_budget_are_the_items_timed() -> None:
+    with pytest.raises(ValidationError, match="budget"):
+        parse_operations_report(
+            report(matches=[match(partners=[partner(withinBudget={"hit": 1, "of": 1})])])
+        )

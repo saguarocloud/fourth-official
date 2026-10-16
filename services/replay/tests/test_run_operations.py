@@ -12,14 +12,18 @@ from fourth_official_contracts import (
     Moment,
     MomentEntry,
     Spread,
+    TenantId,
     TenantItemEntry,
+    TokenUse,
 )
 from fourth_official_contracts.scorecard import Ratio
 from fourth_official_explain import Explanation, explain
 from fourth_official_explain.pipeline import Attempt
+from fourth_official_explain.production import PRICES
 from fourth_official_match_data import demo_store
 from fourth_official_replay import FeedLog, fixed_clocks, replay
 from fourth_official_replay.operations import (
+    COSTS,
     TARGETS,
     Measured,
     Targets,
@@ -43,8 +47,16 @@ async def model_then_template(moment: Moment, facts: MatchFacts) -> Explanation:
     explanation = await explain(moment, facts, [])
     template = explanation.attempts[-1]
     tried = (
-        Attempt(1, "analyst", "fast", "error", error="TimeoutError"),
-        Attempt(2, "analyst", "fallback", "failed", ("UNSUPPORTED_CLAIM",)),
+        Attempt(1, "analyst", "fast", "error", error="TimeoutError", input_tokens=4000),
+        Attempt(
+            2,
+            "analyst",
+            "fallback",
+            "failed",
+            ("UNSUPPORTED_CLAIM",),
+            input_tokens=1500,
+            output_tokens=200,
+        ),
     )
     return dataclasses.replace(
         explanation, attempts=(*tried, dataclasses.replace(template, number=3))
@@ -224,3 +236,71 @@ def test_durations_stay_within_what_the_contract_allows(seconds: float) -> None:
     late = measure("m42", "running", log.entries, timing, now=timing.started + seconds)
 
     assert 0 <= late.match.run_ms <= 3_600_000
+
+
+def test_a_match_s_model_cost_prices_every_attempt_s_tokens() -> None:
+    match = finished(run(with_models=True)).match
+    insights = match.fallbacks.of
+
+    assert match.tokens == TokenUse(input=5500 * insights, output=200 * insights)
+    # Per insight: fast 4000 in, fallback 1500 in and 200 out, at the production prices.
+    exact = insights * (4000 * 250_000 + 1500 * 400_000 + 200 * 1_600_000)
+    assert match.model_cost_microusd == (exact + 500_000) // 1_000_000
+    # The template partners wrote with no model: nothing to charge them.
+    assert all(p.cost_microusd == 0 for p in match.partners)
+    assert all(p.tokens == TokenUse(input=0, output=0) for p in match.partners)
+
+
+def test_the_infrastructure_is_shared_by_the_matches_for_as_long_as_they_ran() -> None:
+    log = run()
+    timing = log.timing
+    alone = measure("m42", "running", log.entries, timing, now=timing.started + 3600.0, costs=COSTS)
+    shared = measure(
+        "m42", "running", log.entries, timing, now=timing.started + 3600.0, costs=COSTS, sharing=3
+    )
+
+    assert alone.match.infra_cost_microusd == COSTS.infra_microusd_per_hour
+    assert shared.match.infra_cost_microusd == round(COSTS.infra_microusd_per_hour / 3)
+
+
+def test_the_report_names_the_prices_it_used() -> None:
+    result = report([], generated_at=fixed_clocks().wall(), costs=COSTS)
+
+    assert {m.model for m in result.pricing.models} == set(PRICES)
+    fast = next(m for m in result.pricing.models if m.model == "fast")
+    assert (fast.input_microusd_per_million, fast.output_microusd_per_million) == (
+        250_000,
+        2_000_000,
+    )
+    assert result.pricing.infra_microusd_per_hour == COSTS.infra_microusd_per_hour
+
+
+def test_the_infrastructure_rate_is_the_registry_s_list_price() -> None:
+    # Container Registry Basic, $0.1666 a day; everything else ran within free grants or under a
+    # cent a month (docs/cost-model.md).
+    assert COSTS.infra_microusd_per_hour == 6_942
+
+
+def test_each_partner_is_held_to_its_own_policy_s_latency_budget() -> None:
+    log = run()
+    budgets: dict[TenantId, int] = {
+        "northlight-sport": 1,
+        "tribuna-austral": 10**6,
+        "rheinblick-sport": 8000,
+    }
+
+    match = measure("m42", "finished", log.entries, log.timing, now=1e9, budgets=budgets).match
+
+    by = {p.tenant_id: p for p in match.partners}
+    for tenant_id, partner in by.items():
+        assert partner.latency_budget_ms == budgets[tenant_id]
+        assert partner.within_budget.of == partner.on_air.count
+    assert by["northlight-sport"].within_budget.hit == 0
+    assert by["tribuna-austral"].within_budget.hit == by["tribuna-austral"].on_air.count
+
+
+def test_a_partner_without_a_known_budget_is_judged_against_none() -> None:
+    match = finished(run()).match
+
+    assert all(p.latency_budget_ms is None for p in match.partners)
+    assert all(p.within_budget == Ratio(hit=0, of=0) for p in match.partners)

@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi import APIRouter, Request, Response
 
+from fourth_official_policy.book import PolicyBook
 from fourth_official_replay import Matchday
 from fourth_official_replay.operations import measure, report
 
@@ -23,11 +24,24 @@ def operations_router() -> APIRouter:
     @router.get("/operations")
     def operations(request: Request, response: Response) -> dict[str, Any]:
         matchday: Matchday = request.app.state.matchday
+        book: PolicyBook = request.app.state.policies
+        budgets = {tenant: book.current(tenant).latency_budget_ms for tenant in book.tenants()}
+        statuses = matchday.status()
+        # The matches of a run share the infrastructure while they run.
+        sharing = sum(status.state != "idle" for status in statuses)
         measured = []
-        for status in matchday.status():
+        for status in statuses:
             feed = matchday.feed(status.match_id)
             measured.append(
-                measure(status.match_id, status.state, feed.entries, feed.timing, now=feed.now())
+                measure(
+                    status.match_id,
+                    status.state,
+                    feed.entries,
+                    feed.timing,
+                    now=feed.now(),
+                    sharing=sharing,
+                    budgets=budgets,
+                )
             )
         response.headers.update(NO_STORE)
         return report(measured, generated_at=datetime.now(UTC)).to_wire()

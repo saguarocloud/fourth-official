@@ -4,12 +4,14 @@ Control Room.
 Like the scorecard, every measure is kept as counts and durations, never as a ready-made
 percentage, so a reader computes a rate the same way everywhere and nothing stored can drift from
 its counts. Durations are wall-clock milliseconds measured by the platform itself, and every
-percentile is computed by code from the measured durations (nearest rank).
+percentile is computed by code from the measured durations (nearest rank). Money is whole
+micro-dollars (millionths of a US dollar), priced by code from tokens and the report's own pricing
+(docs/cost-model.md).
 """
 
 from typing import Annotated, Literal
 
-from pydantic import Field, TypeAdapter, model_validator
+from pydantic import Field, StringConstraints, TypeAdapter, model_validator
 
 from fourth_official_contracts.primitives import MatchId, UtcTimestamp, WireModel
 from fourth_official_contracts.scorecard import Count, Ratio
@@ -19,6 +21,9 @@ MAX_MATCHES = 100
 MAX_PARTNERS = 8
 # An hour: no measured duration of a running match is longer.
 Millis = Annotated[int, Field(ge=0, le=3_600_000)]
+# Tokens and micro-dollars: a matchday's worth, with room to spare.
+Amount = Annotated[int, Field(ge=0, le=1_000_000_000)]
+ModelAlias = Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9.-]{0,63}$")]
 ObjectiveKey = Literal["on_air_p50", "on_air_p95", "correction_p95"]
 MatchState = Literal["idle", "running", "finished", "failed"]
 
@@ -39,6 +44,13 @@ class Spread(WireModel):
         return self
 
 
+class TokenUse(WireModel):
+    """Tokens model calls spent, as the service reported them."""
+
+    input: Amount
+    output: Amount
+
+
 class PartnerOperations(WireModel):
     """One partner's items in one match: how many it published, how many it held for its editor,
     and, for the ones it aired without one, how long from the event to air."""
@@ -49,6 +61,13 @@ class PartnerOperations(WireModel):
     on_air: Spread
     # Items aired without an editor that went on air within the on-air target.
     within_target: Ratio
+    # What the Localizer spent writing this partner's items, and what that cost.
+    tokens: TokenUse
+    cost_microusd: Amount
+    # The partner's own latency budget (its policy, at the time of the report), and the items
+    # aired without an editor that went on air within it; none when the budget is not known.
+    latency_budget_ms: Millis | None
+    within_budget: Ratio
 
     @model_validator(mode="after")
     def _items_add_up(self) -> "PartnerOperations":
@@ -56,6 +75,9 @@ class PartnerOperations(WireModel):
             raise ValueError("a partner cannot have held more items than it published")
         if self.on_air.count != self.within_target.of or self.on_air.count > self.items:
             raise ValueError("the items timed are the items aired, and no more than published")
+        judged = 0 if self.latency_budget_ms is None else self.on_air.count
+        if self.within_budget.of != judged:
+            raise ValueError("the items judged against the budget are the items timed, if any")
         return self
 
 
@@ -81,6 +103,11 @@ class MatchOperations(WireModel):
     # How long the corrections desk took over each correction.
     corrections: Spread
     corrected_items: Count
+    # Every model call of the match (the Analyst's and the Localizer's), what they cost, and the
+    # match's share of the platform's infrastructure for as long as it ran.
+    tokens: TokenUse
+    model_cost_microusd: Amount
+    infra_cost_microusd: Amount
     partners: Annotated[tuple[PartnerOperations, ...], Field(max_length=MAX_PARTNERS, strict=False)]
 
     @model_validator(mode="after")
@@ -88,6 +115,8 @@ class MatchOperations(WireModel):
         tenants = [p.tenant_id for p in self.partners]
         if len(set(tenants)) != len(tenants):
             raise ValueError("each partner is reported once per match")
+        if sum(p.cost_microusd for p in self.partners) > self.model_cost_microusd:
+            raise ValueError("the partners' model cost is part of the match's, never more")
         return self
 
 
@@ -115,6 +144,28 @@ class ErrorBudget(WireModel):
         return self
 
 
+class ModelPrice(WireModel):
+    """What a model deployment's tokens cost, in micro-dollars per million tokens."""
+
+    model: ModelAlias
+    input_microusd_per_million: Amount
+    output_microusd_per_million: Amount
+
+
+class Pricing(WireModel):
+    """The prices the report's costs were computed with."""
+
+    models: Annotated[tuple[ModelPrice, ...], Field(max_length=8, strict=False)]
+    infra_microusd_per_hour: Amount
+
+    @model_validator(mode="after")
+    def _each_model_once(self) -> "Pricing":
+        names = [m.model for m in self.models]
+        if len(set(names)) != len(names):
+            raise ValueError("each model is priced once")
+        return self
+
+
 class OperationsReport(WireModel):
     """The matchday's operations: objectives, the error budget, and each match."""
 
@@ -124,6 +175,7 @@ class OperationsReport(WireModel):
     # Event to on air, every partner in every match.
     on_air: Spread
     matches: Annotated[tuple[MatchOperations, ...], Field(max_length=MAX_MATCHES, strict=False)]
+    pricing: Pricing
 
     @model_validator(mode="after")
     def _each_once(self) -> "OperationsReport":
