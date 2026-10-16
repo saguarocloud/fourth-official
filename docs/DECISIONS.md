@@ -360,3 +360,20 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - The Operations screen and the Control Room read measured values, and a reader can recompute any of them from the counts.
 - Measures live as long as the process: a restart, or the API scaling to zero, starts them afresh with the next run, as the feeds do. Durable history arrives with App Insights (OpenTelemetry).
 - Calls that fail before the service reports usage (a timeout, say) cost tokens that are not counted, so model cost is a floor, not an estimate.
+
+## ADR-017: Traces to Application Insights, signed in as the app, without the words
+
+**Date:** 2026-10-16 · **Status:** Accepted
+
+**Context.** Operations (ADR-016) showed the first insight of each match timing out on the fast model after 20 s, then the fallback. The measures say how long a moment took, not where the time went: a model call, a Match Data tool call, the Localizer, or waiting for a slot. Plan §10.4 already provisions Application Insights (workspace-based, local auth disabled, 0.5 GB a day cap) for OpenTelemetry traces; nothing sent to it yet.
+
+**Choice.**
+- **The Azure Monitor OpenTelemetry distro** in the API, configured once at process start and only when the deployment sets `APPLICATIONINSIGHTS_CONNECTION_STRING`. It traces requests (not health probes, nor the matchday streams, whose span would last as long as the connection, nor each chunk a response sends), and the Agent Framework's own instrumentation adds a span for every model call and tool call. A destination that cannot be configured leaves the API running without telemetry.
+- **The replay's own spans**: one per moment explained (match, moment, attempts, which model or the template wrote it, model errors) with one per partner localisation inside it (partner, locale, whether a model was needed, whether an item was published).
+- **Signed in as the app**: the identity the API already uses for the models (`AZURE_CLIENT_ID`) holds Monitoring Metrics Publisher on the component and nothing wider; the component accepts Entra ID only, so the connection string alone writes nothing.
+- **No words**: sensitive telemetry stays off (`enable_sensitive_data=False`): spans carry identifiers, outcomes and timings, never prompts, drafts or answers. **Logs are not exported**: an exception's text can quote a model's output, so logs stay in the console stream, which Log Analytics already keeps. Live metrics are off.
+
+**Consequences.**
+- A slow moment can be followed call by call in Application Insights, and Operations' figures can be cross-checked against traces.
+- Ingestion stays within the workspace's 0.5 GB daily cap; at the matchday's volume (a few hundred spans per run) it costs nothing measurable.
+- Local runs and tests send nothing.
