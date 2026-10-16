@@ -33,6 +33,7 @@ from fourth_official_policy.book import InMemoryBookStore, PolicyBook
 from fourth_official_provenance import LocalSigner, record_for, sign_record
 from fourth_official_replay import FeedLog, Partner, Partners, fixed_clocks, replay
 from fourth_official_replay.operations import measure, report
+from fourth_official_replay.wall import played_from, wall
 from fourth_official_verifier import MatchFacts
 
 FIXTURES = Path(__file__).resolve().parents[1] / "apps/web/src/fixtures"
@@ -212,9 +213,11 @@ class Spending:
         raise TimeoutError
 
 
-async def record_operations(name: str) -> None:
+async def record_operations(name: str, wall_name: str) -> None:
+    """The matchday's operations report and its Control Room wall, from the same replays."""
     store = demo_store()
     measured = []
+    played = []
     matches = store.match_ids()
     drafted = drafting()
     for match_id in matches:
@@ -237,6 +240,7 @@ async def record_operations(name: str) -> None:
         )
         budgets = {p.policy.tenant_id: p.policy.latency_budget_ms for p in bundled_store().all()}
         entries, timing = log.snapshot()
+        played.append(played_from(store.record(match_id), "finished", log))
         measured.append(
             measure(
                 match_id,
@@ -252,6 +256,10 @@ async def record_operations(name: str) -> None:
     wire = report(measured, generated_at=FIXTURE_TIME).to_wire()
     out.write_text(json.dumps(wire, indent=1, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote operations for {len(measured)} matches to {out}")
+    board = wall(played, generated_at=FIXTURE_TIME).to_wire()
+    out = FIXTURES / wall_name
+    out.write_text(json.dumps(board, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"wrote the wall of {len(played)} matches to {out}")
 
 
 async def main() -> None:
@@ -259,7 +267,7 @@ async def main() -> None:
     await record("feed-m42-partners.json", with_partners=True)
     await record_provenance("provenance-m42.json")
     await record_policy_history("policy-history-rheinblick.json")
-    await record_operations("operations.json")
+    await record_operations("operations.json", "wall.json")
 
 
 if __name__ == "__main__":

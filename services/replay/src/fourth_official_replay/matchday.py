@@ -22,7 +22,7 @@ from datetime import datetime
 from typing import Literal, Protocol
 
 from fourth_official_contracts import ClockEntry, CorrectionEntry, FeedEntry, TenantItemEntry
-from fourth_official_match_data import MatchStore
+from fourth_official_match_data import MatchRecord, MatchStore
 from fourth_official_replay.corrections import item_rests_on, moments_of
 from fourth_official_replay.errors import (
     CorrectedSinceError,
@@ -145,6 +145,10 @@ class Matchday:
 
     def feed(self, match_id: str) -> FeedLog:
         return self._feeds[match_id]
+
+    def record(self, match_id: str) -> MatchRecord:
+        """The match as the store holds it: its clubs and events."""
+        return self._store.record(match_id)
 
     def status(self) -> tuple[MatchStatus, ...]:
         return tuple(

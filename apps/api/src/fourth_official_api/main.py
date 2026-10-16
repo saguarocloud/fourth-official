@@ -25,6 +25,7 @@ from fourth_official_api.proving import proving_router
 from fourth_official_api.security import SecurityHeaders
 from fourth_official_api.settings import Settings
 from fourth_official_api.start_ledger import blob_start_ledger
+from fourth_official_api.wall_routes import wall_router
 from fourth_official_contracts import TenantPolicy
 from fourth_official_match_data import MatchStore, demo_store
 from fourth_official_policy import bundled_store
@@ -172,6 +173,7 @@ def create_app(
     app.include_router(matchday_router(_summaries(store)))
     app.include_router(decision_router())
     app.include_router(operations_router())
+    app.include_router(wall_router())
     app.include_router(policy_router())
     app.include_router(provenance_router())
     app.include_router(proving_router(settings.proving_results))
