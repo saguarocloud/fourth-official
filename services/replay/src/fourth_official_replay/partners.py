@@ -9,7 +9,7 @@ Partners are served concurrently, and a failure for one is logged and stays with
 import asyncio
 import contextlib
 import logging
-from collections.abc import AsyncIterator, Callable, Sequence
+from collections.abc import AsyncGenerator, Callable, Sequence
 from dataclasses import dataclass, replace
 from datetime import datetime
 from functools import partial
@@ -158,7 +158,7 @@ class Partners:
 
     async def insight(
         self, insight: Insight, moment: Moment, facts: MatchFacts, at: MatchClock
-    ) -> AsyncIterator[EntryBuilder]:
+    ) -> AsyncGenerator[EntryBuilder]:
         """Each partner's version of a verified insight, in the order they are ready: a partner
         that needs no Localizer never waits for one that does. A partner that fails is logged
         and left out; the others carry on."""

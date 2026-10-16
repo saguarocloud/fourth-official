@@ -7,6 +7,7 @@ never holds up the match.
 """
 
 import asyncio
+import contextlib
 import itertools
 import logging
 import time
@@ -286,10 +287,11 @@ class _Replay:
             await self._publish_insight(explanation)
             if self.partners is not None:
                 # Each partner's item goes out the moment it is ready.
-                async for build in self.partners.insight(
-                    explanation.insight, moment, self.facts, self.now
-                ):
-                    await self.log.publish(build)
+                items = self.partners.insight(explanation.insight, moment, self.facts, self.now)
+                # Closed however the loop ends, so no partner's work outlives a failed publish.
+                async with contextlib.aclosing(items) as ready:
+                    async for build in ready:
+                        await self.log.publish(build)
                 # Published after a correction it rests on: the desk deals with it now.
                 for correction in list(self.issued):
                     await self.desk(correction, frozenset({explanation.insight.insight_id}))
