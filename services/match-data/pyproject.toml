@@ -8,7 +8,7 @@ dependencies = [
   "fourth-official-moments",
   "fourth-official-simulator",
   "fourth-official-stats",
-  "mcp>=1.30,<2",
+  "mcp>=1.30,<3",
 ]
 
 [tool.uv.sources]
