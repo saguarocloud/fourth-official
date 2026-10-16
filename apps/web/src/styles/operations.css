@@ -1,0 +1,222 @@
+/* Operations: the matchday run as a statement of service. ------------------------------------ */
+
+.statement__top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+  margin-bottom: var(--space-6);
+}
+
+@media (min-width: 1280px) {
+  .statement__top {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 26rem);
+  }
+}
+
+.levels,
+.amount,
+.statement__section {
+  min-width: 0;
+  padding: var(--space-5);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-key);
+  background: var(--panel-1);
+}
+
+.levels {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.levels .panel-heading,
+.amount .panel-heading,
+.statement__section .panel-heading {
+  margin-bottom: 0;
+}
+
+.statement__section {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-5);
+}
+
+.statement__pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+@media (min-width: 1280px) {
+  .statement__pair {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+/* Wide tables scroll inside their panel on narrow screens, never the page; a figure never
+   breaks across lines. */
+.statement__scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.statement__scroll .data-table {
+  min-width: 44rem;
+}
+
+.levels .data-table td[data-numeric],
+.statement__section .data-table td[data-numeric],
+.statement__section .data-table td:first-child {
+  white-space: nowrap;
+}
+
+.statement__match {
+  display: grid;
+  gap: 2px;
+}
+
+.statement__state {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+
+.statement__note,
+.statement__stale {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  max-width: 75ch;
+}
+
+.statement__footnote {
+  max-width: 75ch;
+}
+
+/* An objective's standing: a lamp lit green when met, red when missed, unlit before measuring. */
+.standing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-2);
+}
+
+.standing__lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--led-off);
+}
+
+.standing[data-met="true"] .standing__lamp {
+  background: var(--led-green);
+}
+
+.standing[data-met="false"] {
+  color: var(--ink-1);
+}
+
+.standing[data-met="false"] .standing__lamp {
+  background: var(--led-red);
+}
+
+/* The error budget: twenty LED segments, each five percent of it. */
+.budget {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--hairline);
+}
+
+.budget__title {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.budget__objective {
+  font-size: var(--text-md);
+  font-weight: 600;
+  color: var(--ink-1);
+}
+
+.budget__meter {
+  display: grid;
+  grid-template-columns: repeat(20, minmax(0, 1fr));
+  gap: 3px;
+  max-width: 40rem;
+  padding: var(--space-2);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+}
+
+.budget__segment {
+  height: 14px;
+  border-radius: 2px;
+  background: var(--led-off);
+}
+
+.budget__segment[data-lit] {
+  background: var(--led-green);
+}
+
+.budget__meter[data-over] .budget__segment[data-lit] {
+  background: var(--led-red);
+}
+
+.budget__reading {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+/* The amount, lit on the board. */
+.amount {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.amount__readout {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+  padding: var(--space-4);
+  border-radius: var(--radius-key);
+  background: var(--panel-0);
+}
+
+.amount__note {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.amount__lines {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline);
+}
+
+.amount__lines div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.amount__lines dt {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.amount__lines dd {
+  font-size: var(--text-sm);
+  color: var(--ink-1);
+}
+
+@media (max-width: 720px) {
+  .levels,
+  .amount,
+  .statement__section {
+    padding: var(--space-4);
+  }
+}
