@@ -5,9 +5,15 @@ from typing import Any
 
 import pytest
 from azure.identity import ManagedIdentityCredential
+from fastapi.testclient import TestClient
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.util.http import parse_excluded_urls
 
 from fourth_official_api import main, telemetry
+from fourth_official_api.main import create_app
 from fourth_official_api.settings import Settings, TelemetrySettings
 
 CONNECTION = "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://example.in.applicationinsights.azure.com/"
@@ -93,7 +99,7 @@ def test_the_api_starts_telemetry_then_traces_its_requests_but_not_probes_or_str
     assert call["app"] is app
     # Probes say nothing; a matchday stream is a span as long as its connection; and no span for
     # every chunk a response sends.
-    assert call["excluded_urls"] == "healthz,stream"
+    assert call["excluded_urls"] == telemetry.EXCLUDED_URLS
     assert call["exclude_spans"] == ["send", "receive"]
 
 
@@ -107,3 +113,37 @@ def test_without_telemetry_the_app_is_not_instrumented(monkeypatch: pytest.Monke
     main.app_from_env()
 
     assert instrumented == []
+
+
+def test_probes_and_streams_get_no_span_while_the_api_s_reads_do() -> None:
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    app = create_app(Settings(version="test"))
+    telemetry.instrument(app, tracer_provider=provider)
+
+    with TestClient(app) as client:
+        client.get("/healthz")
+        client.get("/api/matches")
+        client.get("/api/matches?view=stream")
+
+    names = [s.name for s in exporter.get_finished_spans()]
+    assert "GET /healthz" not in names
+    assert names.count("GET /api/matches") == 2
+    assert not [n for n in names if n.endswith((" http send", " http receive"))]
+
+
+@pytest.mark.parametrize(
+    ("url", "traced"),
+    [
+        ("http://api/healthz", False),
+        ("http://api/healthz?probe=1", False),
+        ("http://api/api/matches/m42/stream", False),
+        ("http://api/api/tenants/northlight-sport/matches/m42/stream?after=3", False),
+        ("http://api/api/matches", True),
+        ("http://api/api/matches?view=stream", True),
+        ("http://streaming.example/api/operations", True),
+    ],
+)
+def test_only_probes_and_the_matchday_streams_are_left_untraced(url: str, traced: bool) -> None:
+    assert parse_excluded_urls(telemetry.EXCLUDED_URLS).url_disabled(url) is not traced
