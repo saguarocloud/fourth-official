@@ -310,7 +310,8 @@ function Desk({
         selected={shown}
         drafting={editing}
         onSelect={(v) => {
-          setSelected(v);
+          // Picking the current version means following it, not pinning it.
+          setSelected(v === current ? null : v);
           setEditing(false);
         }}
       />
@@ -327,6 +328,7 @@ function Desk({
           onCancel={() => setEditing(false)}
           onReload={() => {
             setEditing(false);
+            setSelected(null);
             reload();
           }}
         />

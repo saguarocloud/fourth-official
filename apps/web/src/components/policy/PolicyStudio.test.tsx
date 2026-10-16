@@ -412,6 +412,29 @@ describe("PolicyStudio", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows the latest version after reloading for a conflict", async () => {
+    let history: PolicyHistory = fixture as unknown as PolicyHistory;
+    const fetch = vi.fn((_url: string, init?: RequestInit) => {
+      if (init?.method !== "POST") return Promise.resolve(Response.json(history));
+      return Promise.resolve(
+        Response.json({ detail: "version 4 was written since version 3" }, { status: 409 }),
+      );
+    });
+    vi.stubGlobal("fetch", fetch);
+    await opened();
+
+    fireEvent.click(screen.getByRole("button", { name: /Version 3/ }));
+    editing();
+    because("Mine");
+    history = withVersion4();
+    fireEvent.click(screen.getByRole("button", { name: "Save version 4" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Reload the latest version" }));
+
+    expect(
+      await screen.findByRole("heading", { name: /^Version 4\s*· current$/ }),
+    ).toBeInTheDocument();
+  });
+
   it("shows the saved version as current once it is read back", async () => {
     let history: PolicyHistory = fixture as unknown as PolicyHistory;
     const fetch = vi.fn((_url: string, init?: RequestInit) => {
