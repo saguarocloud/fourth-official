@@ -1,11 +1,12 @@
 // Generate TypeScript types from the contract JSON Schemas (the Pydantic models are the source of
-// truth; `make contracts` exports the schemas). Run `npm run contracts` after the schemas change; a
-// test fails while the generated files are stale.
+// truth; `make contracts` exports the schemas). Run `npm run contracts` after the schemas change;
+// src/contracts/generated.test.ts fails while the generated files are stale.
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { compile } from "json-schema-to-typescript";
+import { format, resolveConfig } from "prettier";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const schemas = join(here, "../../../packages/contracts/schemas");
@@ -35,10 +36,16 @@ export async function generate(name) {
   });
 }
 
+/** The generated types for `name`, formatted as the project formats `target`. */
+export async function render(name, target) {
+  const options = (await resolveConfig(target)) ?? {};
+  return format(await generate(name), { ...options, filepath: target });
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   for (const { schema, output } of CONTRACTS) {
     const target = join(here, "../src/contracts", output);
-    await writeFile(target, await generate(schema));
+    await writeFile(target, await render(schema, target));
     console.log(`wrote ${target}`);
   }
 }
