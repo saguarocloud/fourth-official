@@ -1,9 +1,13 @@
 /**
- * Matchday model for the control room. Everything here is fictional: the Meridian League, its
- * clubs and its broadcast partners do not exist.
+ * The Control Room's model: each match on the wall, the latest items, the latest correction and
+ * the matchday's headline figures, as the API computed them from the feeds (`controlRoom.ts`
+ * maps the reports onto it). Everything here is fictional: the Meridian League, its clubs and its
+ * broadcast partners do not exist.
  */
 
 import type { ItemState } from "@/components/ui/StatusLamp";
+
+import type { PartnerId } from "./broadcast";
 
 export const CLUBS = {
   HCY: { code: "HCY", name: "Harbour City" },
@@ -16,41 +20,43 @@ export const CLUBS = {
   SLT: { code: "SLT", name: "Saltmarsh" },
 } as const;
 
-export type ClubCode = keyof typeof CLUBS;
-export type Club = (typeof CLUBS)[ClubCode];
-
-export type PartnerId = "northlight" | "tribuna-austral" | "rheinblick";
-
-export interface Partner {
-  readonly id: PartnerId;
+export interface Club {
+  readonly code: string;
   readonly name: string;
-  readonly locale: "en-GB" | "es-MX" | "de-DE";
-  readonly market: string;
 }
 
-export type MatchStatus = "live" | "half_time" | "full_time";
+export type MatchStatus = "not_started" | "live" | "full_time";
+
+/** Elapsed time within a period, as on the broadcast clock. */
+export interface Clock {
+  readonly period: 1 | 2;
+  readonly minute: number;
+  readonly second: number;
+}
 
 export interface Match {
   readonly id: string;
-  readonly home: ClubCode;
-  readonly away: ClubCode;
+  readonly home: string;
+  readonly away: string;
   readonly homeScore: number;
   readonly awayScore: number;
-  readonly minute: number;
-  readonly second: number;
-  readonly period: 1 | 2;
+  /** None before kick-off. */
+  readonly clock: Clock | null;
   readonly status: MatchStatus;
   readonly featured: boolean;
-  readonly itemsPerMinute: number;
+  /** Partner items a minute of the run so far; none before it started. */
+  readonly itemsPerMinute: number | null;
   readonly pendingApprovals: number;
   readonly corrections: number;
-  readonly p95LatencyMs: number;
-  readonly onAir: Readonly<Record<PartnerId, boolean>>;
+  /** Event to air at the 95th percentile, as measured; none before anything aired. */
+  readonly p95LatencyMs: number | null;
+  /** Partners with a graphic on screen now. */
+  readonly onAir: readonly PartnerId[];
 }
 
 export interface ActivityEntry {
   readonly id: string;
-  /** Monotonic order across the matchday; higher is newer. */
+  /** Order across the matchday; higher is newer. */
   readonly sequence: number;
   readonly matchId: string;
   /** Football minute as broadcast (68:03 elapsed is the 69th minute). */
@@ -66,7 +72,7 @@ export interface ActivityEntry {
 export interface Correction {
   readonly matchId: string;
   readonly reason: string;
-  /** Match clock of the corrected event, e.g. "67:12". */
+  /** Match clock of the corrected event, e.g. "67:12" (unknown: "–"). */
   readonly eventAt: string;
   /** Match clock when the correction was received, e.g. "68:03". */
   readonly receivedAt: string;
@@ -75,59 +81,24 @@ export interface Correction {
   readonly itemsCorrected: number;
   readonly partners: number;
   readonly languages: number;
-  readonly elapsedMs: number;
-}
-
-export interface Matchday {
-  readonly studio: string;
-  readonly label: string;
-  readonly sloMs: number;
-  readonly costCents: number;
-  readonly partners: readonly Partner[];
-  readonly matches: readonly Match[];
-  readonly activity: readonly ActivityEntry[];
-  readonly latestCorrection: Correction | null;
+  /** How long the corrections desk took; none before it reported. */
+  readonly elapsedMs: number | null;
 }
 
 export interface MatchdaySummary {
   readonly liveMatches: number;
-  readonly itemsPerMinute: number;
   readonly pendingApprovals: number;
   readonly corrections: number;
-  /** Worst p95 event-to-air latency across live matches; null when nothing is live. */
+  /** Event to air at the 95th percentile across the run; none before anything aired. */
   readonly p95LatencyMs: number | null;
-  readonly sloMs: number;
+  /** The on-air objective; none when operations could not be read. */
+  readonly sloMs: number | null;
   readonly withinSlo: boolean;
-  readonly costCents: number;
+  readonly costMicrousd: number;
 }
 
-export function clubByCode(code: ClubCode): Club {
-  return CLUBS[code];
-}
-
-/**
- * Matchday headline numbers, always derived from the matches themselves. Throughput and latency
- * describe live matches; approvals and corrections stay counted after full time, because the
- * work is still open.
- */
-export function summarise(
-  matches: readonly Match[],
-  { sloMs, costCents }: { readonly sloMs: number; readonly costCents: number },
-): MatchdaySummary {
-  const live = matches.filter((m) => m.status !== "full_time");
-  const total = (from: readonly Match[], pick: (m: Match) => number) =>
-    from.reduce((sum, m) => sum + pick(m), 0);
-  const p95LatencyMs = live.length === 0 ? null : Math.max(...live.map((m) => m.p95LatencyMs));
-  return {
-    liveMatches: live.length,
-    itemsPerMinute: total(live, (m) => m.itemsPerMinute),
-    pendingApprovals: total(matches, (m) => m.pendingApprovals),
-    corrections: total(matches, (m) => m.corrections),
-    p95LatencyMs,
-    sloMs,
-    withinSlo: p95LatencyMs === null || p95LatencyMs <= sloMs,
-    costCents,
-  };
+export function clubByCode(code: string): Club {
+  return CLUBS[code as keyof typeof CLUBS] ?? { code, name: code };
 }
 
 export interface Verdict {
