@@ -5,7 +5,7 @@ from functools import cache, partial
 
 import anyio
 
-from fourth_official_contracts import Moment, Provenance, TenantItemEntry
+from fourth_official_contracts import InsightEntry, Moment, Provenance, TenantItemEntry
 from fourth_official_explain import Explanation, explain
 from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
 from fourth_official_explain.metering import TokenCount, spend
@@ -226,3 +226,39 @@ def test_a_partner_item_carries_the_tokens_its_localizer_spent() -> None:
     )
     assert (tribuna.attempts[0].input_tokens, tribuna.attempts[0].output_tokens) == (700, 90)
     assert (tribuna.attempts[-1].input_tokens, tribuna.attempts[-1].output_tokens) == (0, 0)
+
+
+def test_a_partner_s_item_airs_when_it_is_ready_not_when_the_slowest_partner_s_is() -> None:
+    class SlowSpanish:
+        provenance = Provenance(
+            agent="localizer", prompt_version="v1.0", model="fast", produced_by="model"
+        )
+
+        async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
+            if request.policy.locale == "es-MX":
+                await anyio.sleep(1.0)
+            raise RuntimeError("no model in tests")
+
+    slow = Partners(
+        [
+            Partner(policy=p.policy, blocked=partial(blocked_topics_in, policy=p.policy))
+            for p in bundled_store().all()
+        ],
+        localizer=SlowSpanish(),
+    )
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(demo_store().record("m42"), log, template_only, sleep=no_wait, partners=slow)
+    )
+
+    entries, timing = log.snapshot()
+    stamp = dict(zip((e.entry_seq for e in entries), timing.published, strict=True))
+    first = next(e for e in entries if isinstance(e, InsightEntry)).insight.insight_id
+    items = {
+        e.tenant_id: stamp[e.entry_seq]
+        for e in entries
+        if isinstance(e, TenantItemEntry)
+        and e.localized is not None
+        and e.localized.insight_id == first
+    }
+    assert items["tribuna-austral"] - items["northlight-sport"] >= 0.5

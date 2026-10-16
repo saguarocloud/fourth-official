@@ -253,6 +253,16 @@ async def _drafts(
     return None
 
 
+# The canonical insight's language: a partner broadcasting in it airs the canonical words.
+CANONICAL_LOCALE = "en-GB"
+
+
+def needs_localizer(policy: TenantPolicy) -> bool:
+    """Whether the partner's version is written by the Localizer (a model), not the canonical
+    insight as it stands."""
+    return policy.locale != CANONICAL_LOCALE
+
+
 async def localize(  # noqa: PLR0913 - the moment, its insight and the partner, plus the model
     canonical: Insight,
     moment: Moment,
@@ -266,7 +276,7 @@ async def localize(  # noqa: PLR0913 - the moment, its insight and the partner, 
 ) -> Localization:
     """The partner's version of a verified insight, and the record of how it was reached."""
     job = _Job(canonical, moment, facts, policy, blocked)
-    if policy.locale == "en-GB":
+    if not needs_localizer(policy):
         return _english(job)
     attempts: list[Attempt] = []
     if localizer is not None:
