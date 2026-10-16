@@ -1,12 +1,15 @@
 """Record the featured match's feed (template explanations, no model) for the web app's tests:
-the match feed alone, and the same match with every partner's items.
+the match feed alone, and the same match with every partner's items; and a matchday's operations
+report, from replays timed by a fixed clock with synthetic model attempts and tokens.
 
 uv run python scripts/record-feed-fixture.py
 (cd apps/web && npx prettier --write src/fixtures)   # the web app's format check covers them
 """
 
 import asyncio
+import dataclasses
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from itertools import count
@@ -17,14 +20,19 @@ from fourth_official_contracts import (
     FeedEntry,
     InsightEntry,
     Moment,
+    Provenance,
     TenantItemEntry,
 )
 from fourth_official_explain import Explanation, explain
+from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
+from fourth_official_explain.metering import TokenCount, spend
+from fourth_official_explain.pipeline import Attempt
 from fourth_official_match_data import demo_store
 from fourth_official_policy import blocked_topics_in, bundled_store
 from fourth_official_policy.book import InMemoryBookStore, PolicyBook
 from fourth_official_provenance import LocalSigner, record_for, sign_record
 from fourth_official_replay import FeedLog, Partner, Partners, fixed_clocks, replay
+from fourth_official_replay.operations import measure, report
 from fourth_official_verifier import MatchFacts
 
 FIXTURES = Path(__file__).resolve().parents[1] / "apps/web/src/fixtures"
@@ -154,11 +162,95 @@ async def record_policy_history(name: str) -> None:
     print(f"wrote {len(history['versions'])} versions to {out}")
 
 
+# The recorded run: a reading of the log's clock every 6 ms of synthetic time.
+TICK_SECONDS = 0.006
+# Moments explained so far in the recording, so every third one falls back.
+_EXPLAINED = count()
+
+
+def ticking() -> Callable[[], float]:
+    readings = count()
+    return lambda: next(readings) * TICK_SECONDS
+
+
+async def drafted(moment: Moment, facts: MatchFacts) -> Explanation:
+    """The template's insight, as if the models had drafted it: most moments pass on the fast
+    model's first draft; every third falls back after a timeout and a refused draft. Synthetic,
+    so the screen has model attempts and tokens to show."""
+    explanation = await explain(moment, facts, [])
+    template = explanation.attempts[-1]
+    tokens = 2400 + moment.as_of_seq % 900
+    if next(_EXPLAINED) % 3 == 2:
+        tried = (
+            Attempt(1, "analyst", "fast", "error", error="TimeoutError", input_tokens=tokens),
+            Attempt(2, "analyst", "fallback", "failed", ("BARE_NUMBER",), None, tokens, 310),
+        )
+        return dataclasses.replace(
+            explanation, attempts=(*tried, dataclasses.replace(template, number=3))
+        )
+    passed = Attempt(1, "analyst", "fast", "passed", (), None, tokens, 260)
+    return dataclasses.replace(explanation, attempts=(passed,))
+
+
+class Spending:
+    """A Localizer that spends tokens and fails, so each partner's template stands in."""
+
+    provenance = Provenance(
+        agent="localizer", prompt_version="v1.0", model="fast", produced_by="model"
+    )
+
+    async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
+        spend(TokenCount(model="fast", input=900, output=140))
+        raise TimeoutError
+
+
+async def record_operations(name: str) -> None:
+    store = demo_store()
+    measured = []
+    matches = store.match_ids()
+    for match_id in matches:
+        log = FeedLog(match_id, clock=ticking())
+        await log.reset()
+        localizing = Partners(
+            [
+                Partner(policy=p.policy, blocked=partial(blocked_topics_in, policy=p.policy))
+                for p in bundled_store().all()
+            ],
+            localizer=Spending(),
+        )
+        await replay(
+            store.record(match_id),
+            log,
+            drafted,
+            sleep=no_wait,
+            partners=localizing,
+            clocks=fixed_clocks(),
+        )
+        budgets = {p.policy.tenant_id: p.policy.latency_budget_ms for p in bundled_store().all()}
+        entries, timing = log.snapshot()
+        measured.append(
+            measure(
+                match_id,
+                "finished",
+                entries,
+                timing,
+                now=log.now(),
+                sharing=len(matches),
+                budgets=budgets,
+            )
+        )
+    out = FIXTURES / name
+    wire = report(measured, generated_at=FIXTURE_TIME).to_wire()
+    out.write_text(json.dumps(wire, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    print(f"wrote operations for {len(measured)} matches to {out}")
+
+
 async def main() -> None:
     await record("feed-m42.json", with_partners=False)
     await record("feed-m42-partners.json", with_partners=True)
     await record_provenance("provenance-m42.json")
     await record_policy_history("policy-history-rheinblick.json")
+    await record_operations("operations.json")
 
 
 if __name__ == "__main__":

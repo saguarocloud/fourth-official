@@ -53,7 +53,7 @@ async def model_then_template(moment: Moment, facts: MatchFacts) -> Explanation:
             "analyst",
             "fallback",
             "failed",
-            ("UNSUPPORTED_CLAIM",),
+            ("BARE_NUMBER",),
             input_tokens=1500,
             output_tokens=200,
         ),
@@ -172,6 +172,7 @@ def test_model_attempts_count_as_drafts_judged_errors_and_fallbacks() -> None:
     match = finished(run(with_models=True)).match
     insights = match.fallbacks.of
 
+    assert insights == match.moments > 0
     assert match.fallbacks.hit == insights
     assert match.first_pass == Ratio(hit=0, of=insights)
     assert match.model_drafts == Ratio(hit=0, of=insights)
@@ -243,6 +244,7 @@ def test_a_match_s_model_cost_prices_every_attempt_s_tokens() -> None:
     match = finished(run(with_models=True)).match
     insights = match.fallbacks.of
 
+    assert insights > 0
     assert match.tokens == TokenUse(input=5500 * insights, output=200 * insights)
     # Per insight: fast 4000 in, fallback 1500 in and 200 out, at the production prices.
     exact = insights * (4000 * 250_000 + 1500 * 400_000 + 200 * 1_600_000)
@@ -305,3 +307,9 @@ def test_a_partner_without_a_known_budget_is_judged_against_none() -> None:
 
     assert all(p.latency_budget_ms is None for p in match.partners)
     assert all(p.within_budget == Ratio(hit=0, of=0) for p in match.partners)
+
+
+def test_a_match_pools_its_partners_items_on_air() -> None:
+    measured = finished(run())
+
+    assert measured.match.on_air == spread(list(measured.on_air))

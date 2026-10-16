@@ -35,6 +35,7 @@ def match(**overrides: object) -> dict[str, Any]:
         "eventsPlayed": 1400,
         "moments": 12,
         "explain": spread(12, 2500, 9000),
+        "onAir": spread(),
         "firstPass": {"hit": 9, "of": 12},
         "fallbacks": {"hit": 1, "of": 12},
         "modelDrafts": {"hit": 11, "of": 15},
@@ -173,3 +174,8 @@ def test_a_partner_spends_no_more_tokens_than_its_match() -> None:
 def test_first_passes_are_among_the_insights_published() -> None:
     with pytest.raises(ValidationError, match="insights"):
         parse_operations_report(report(matches=[match(firstPass={"hit": 1, "of": 13})]))
+
+
+def test_a_match_times_the_items_its_partners_timed() -> None:
+    with pytest.raises(ValidationError, match="partners"):
+        parse_operations_report(report(matches=[match(onAir=spread(5, 3000, 6000))]))

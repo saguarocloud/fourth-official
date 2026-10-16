@@ -87,6 +87,7 @@ export interface MatchOperations {
   modelDrafts: Ratio;
   modelErrors: Modelerrors;
   moments: Moments;
+  onAir: Spread;
   partners: Partners;
   runMs: Runms;
   state: State;

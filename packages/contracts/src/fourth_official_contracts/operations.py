@@ -93,6 +93,8 @@ class MatchOperations(WireModel):
     moments: Count
     # From a moment being published to its verified insight being published.
     explain: Spread
+    # Event to on air, every partner's items in this match pooled.
+    on_air: Spread
     # Insights whose first model draft passed the Verifier, of insights a model drafted.
     first_pass: Ratio
     # Insights the deterministic template wrote, of insights published.
@@ -123,6 +125,8 @@ class MatchOperations(WireModel):
             or sum(p.tokens.output for p in self.partners) > self.tokens.output
         ):
             raise ValueError("the partners' tokens are part of the match's, never more")
+        if self.on_air.count != sum(p.on_air.count for p in self.partners):
+            raise ValueError("a match times its partners' items, and only those")
         if self.first_pass.of > self.fallbacks.of or self.explain.count > self.fallbacks.of:
             raise ValueError("first passes and explanations are among the insights published")
         return self
