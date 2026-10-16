@@ -56,13 +56,15 @@ What the platform costs to stand, measured with Cost Management on the resource 
 | Storage | under $0.0001 | Ledger, policy book and provenance blobs |
 | Log Analytics | $0.00 | Within the daily cap |
 
-So the infrastructure rate is **6,942 micro-dollars an hour** (`INFRA_MICROUSD_PER_HOUR`). A match's share is the rate times how long the match ran, divided by the matches running at once. Change the rate when the platform's standing charges change.
+So the infrastructure rate is **6,942 micro-dollars an hour** (`INFRA_MICROUSD_PER_HOUR`). A match's share is the rate times how long the match ran, divided by the matches of the run (the matches that have started, running or done; the matchday starts them together). Change the rate when the platform's standing charges change.
 
 ### Limits
 
-- **A floor, not an estimate.** A call that fails before the service reports usage (a timeout) spends tokens nobody counts.
+- **A floor, not an estimate.** A call that fails before the service reports usage (a timeout) spends tokens nobody counts, and so does a localisation that fails so badly no item is published (its attempts are never on the feed).
 - **Memory only.** Measures live as long as the API process. A restart, or scaling to zero, starts afresh with the next run, as the feeds do.
 - **List prices.** No discounts, no commitment tiers, US dollars.
+- **Within an hour.** A duration longer than an hour is reported as an hour (and logged); a match never runs that long.
+- **Reports are reused for two seconds**, so a burst of requests computes the report once.
 
 ## Budget
 

@@ -74,6 +74,8 @@ class Costs:
 INFRA_MICROUSD_PER_HOUR = 6_942
 COSTS = Costs(prices=PRICES, infra_microusd_per_hour=INFRA_MICROUSD_PER_HOUR)
 logger = logging.getLogger(__name__)
+# Models already reported as unpriced, so the warning comes once per process, not per request.
+_UNPRICED: set[str] = set()
 MS_PER_HOUR = 3_600_000
 
 TARGETS = Targets(
@@ -104,7 +106,12 @@ def spread(values: Sequence[int]) -> Spread:
 
 
 def _ms(seconds: float) -> int:
-    return min(max(round(seconds * 1000), 0), MAX_MS)
+    measured = max(round(seconds * 1000), 0)
+    if measured > MAX_MS:
+        logger.warning(
+            "a duration of %d ms is reported as the %d ms the contract allows", measured, MAX_MS
+        )
+    return min(measured, MAX_MS)
 
 
 def _ratio(hits: Iterable[bool]) -> Ratio:
@@ -126,8 +133,9 @@ def _use(spent: Sequence[TokenCount]) -> TokenUse:
 
 def _cost(spent: Sequence[TokenCount], costs: Costs) -> int:
     priced = [c for c in spent if c.model in costs.prices]
-    if len(priced) != len(spent):
-        logger.warning("tokens of a model without a price are counted but not priced")
+    for model in {c.model for c in spent} - set(costs.prices) - _UNPRICED:
+        _UNPRICED.add(model)
+        logger.warning("tokens of %s are counted but not priced: it has no price", model)
     return micro_dollars(priced, costs.prices)
 
 
@@ -228,7 +236,7 @@ def measure(  # noqa: PLR0913 - the match and its record, then how to judge and 
     clock): a running match has lasted until now, a finished one until its last entry. The
     infrastructure is shared by the `sharing` matches of the run, and each partner's items are
     judged against its latency budget in `budgets`."""
-    stamp = dict(zip((e.entry_seq for e in entries), timing.published, strict=False))
+    stamp = dict(zip((e.entry_seq for e in entries), timing.published, strict=True))
     played = dict(timing.played)
     if state == "idle":
         run_ms = 0

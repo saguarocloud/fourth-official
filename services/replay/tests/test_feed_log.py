@@ -201,3 +201,18 @@ def test_the_log_reads_its_own_clock_for_whoever_measures_its_run() -> None:
     log = FeedLog("m42", clock=ticking())
 
     assert log.now() == 0.5
+
+
+def test_a_snapshot_pairs_every_entry_with_the_time_it_was_published() -> None:
+    log = FeedLog("m42", clock=ticking())
+
+    async def run() -> None:
+        await log.reset()
+        await log.publish(clock)
+        await log.publish(clock)
+
+    anyio.run(run)
+
+    entries, timing = log.snapshot()
+    assert [e.entry_seq for e in entries] == [1, 2]
+    assert len(timing.published) == len(entries)

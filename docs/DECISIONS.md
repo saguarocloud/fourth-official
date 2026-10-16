@@ -353,7 +353,7 @@ One entry per decision: context, options, choice, consequences. Newest last.
 
 **Choice.**
 - **Times live beside the feed, not in it.** Each match's log reads one monotonic clock: when the run started, when each entry was published, when the replay played each event. Latency is measured on the platform's own clock and never reaches a client's feed.
-- **Tokens live on the attempt.** Each model attempt records the tokens its calls reported, collected per attempt through a context variable, so concurrent moments never mix. They travel on the feed's attempt records (absent in older records, which read as none). Signed provenance keeps its own attempt shape without them: cost is operations, not provenance, so already issued records still verify.
+- **Tokens live on the attempt.** Each model attempt records the tokens its calls reported, collected per attempt through a context variable, so concurrent moments never mix. They travel on the feed's attempt records: a wire addition (`inputTokens`, `outputTokens` on every attempt), absent in older records, which read as none. Signed provenance keeps its own attempt shape without them: cost is operations, not provenance, so already issued records still verify.
 - **Code computes everything.** Percentiles are nearest rank; rates stay counts (`hit` of `of`), as in the scorecard; money is whole micro-dollars at prices defined once and shared with the Proving Ground (`fourth_official_explain.production.PRICES`). `GET /api/operations` computes the report on request. The method is in `docs/cost-model.md`.
 
 **Consequences.**

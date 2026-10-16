@@ -83,3 +83,10 @@ def test_after_a_run_every_match_is_measured_for_every_partner(client: TestClien
     for match in report.matches:
         assert {p.tenant_id: p.latency_budget_ms for p in match.partners} == budgets
     assert report.budget.of == report.on_air.count
+
+
+def test_the_report_is_computed_at_most_every_few_seconds(client: TestClient) -> None:
+    first = client.get("/api/operations").json()
+    second = client.get("/api/operations").json()
+
+    assert second["generatedAt"] == first["generatedAt"]

@@ -57,6 +57,7 @@ class PartnerOperations(WireModel):
 
     tenant_id: TenantId
     items: Count
+    # Items held for an editor when they were published (approved later or not).
     held: Count
     on_air: Spread
     # Items aired without an editor that went on air within the on-air target.
@@ -117,6 +118,13 @@ class MatchOperations(WireModel):
             raise ValueError("each partner is reported once per match")
         if sum(p.cost_microusd for p in self.partners) > self.model_cost_microusd:
             raise ValueError("the partners' model cost is part of the match's, never more")
+        if (
+            sum(p.tokens.input for p in self.partners) > self.tokens.input
+            or sum(p.tokens.output for p in self.partners) > self.tokens.output
+        ):
+            raise ValueError("the partners' tokens are part of the match's, never more")
+        if self.first_pass.of > self.fallbacks.of or self.explain.count > self.fallbacks.of:
+            raise ValueError("first passes and explanations are among the insights published")
         return self
 
 
@@ -185,6 +193,13 @@ class OperationsReport(WireModel):
         matches = [m.match_id for m in self.matches]
         if len(set(matches)) != len(matches):
             raise ValueError("each match is reported once")
+        if self.budget.of != self.on_air.count:
+            raise ValueError("the error budget counts the items timed on air")
+        pooled = {"on_air_p50": self.on_air.p50_ms, "on_air_p95": self.on_air.p95_ms}
+        if any(o.key in pooled and o.measured_ms != pooled[o.key] for o in self.objectives):
+            raise ValueError("the on-air objectives report the pooled percentiles")
+        if self.on_air.count != sum(p.on_air.count for m in self.matches for p in m.partners):
+            raise ValueError("the pooled items are every match's partners' items")
         return self
 
 

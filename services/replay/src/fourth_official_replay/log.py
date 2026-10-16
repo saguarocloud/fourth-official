@@ -65,6 +65,11 @@ class FeedLog:
             self._started, tuple(self._published), MappingProxyType(dict(self._played))
         )
 
+    def snapshot(self) -> tuple[tuple[FeedEntry, ...], RunTiming]:
+        """The entries and the run's timing read together, so every entry has its time. Read it
+        on the event loop: the log is not shared with other threads."""
+        return self.entries, self.timing
+
     def now(self) -> float:
         """A reading of the clock the log times its run with."""
         return self._clock()

@@ -195,7 +195,8 @@ def test_a_finished_run_lasts_until_its_last_entry_and_a_running_one_until_now()
     assert finished(log).match.run_ms == round((last - timing.started) * 1000)
     running = measure("m42", "running", log.entries, log.timing, now=timing.started + 2.0)
     assert running.match.run_ms == 2000
-    idle = measure("m42", "idle", (), log.timing, now=timing.started + 2.0)
+    fresh = FeedLog("m42")
+    idle = measure("m42", "idle", (), fresh.timing, now=fresh.now() + 2.0)
     assert idle.match.run_ms == 0
 
 
