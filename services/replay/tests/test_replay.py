@@ -344,3 +344,21 @@ def test_the_web_app_partners_fixture_is_this_replay_with_partners() -> None:
     )
 
     assert json.loads(fixture.read_text(encoding="utf-8")) == [e.to_wire() for e in log.entries]
+
+
+def test_the_log_notes_when_each_event_was_played_and_before_anything_it_led_to() -> None:
+    record = demo_store().record("m42")
+    readings = iter(range(1_000_000))
+    log = FeedLog("m42", clock=lambda: float(next(readings)))
+
+    async def run() -> None:
+        await replay(record, log, template_only, sleep=no_wait)
+
+    anyio.run(run)
+
+    timing = log.timing
+    assert set(timing.played) == {e.seq for e in record.match.events}
+    published = dict(zip((e.entry_seq for e in log.entries), timing.published, strict=True))
+    for entry in log.entries:
+        if isinstance(entry, ClockEntry):
+            assert timing.played[entry.as_of_seq] < published[entry.entry_seq]

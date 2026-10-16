@@ -13,6 +13,7 @@ export const CONTRACTS = [
   { schema: "feed-entry.schema.json", output: "feed.ts" },
   { schema: "signed-provenance.schema.json", output: "provenance.ts" },
   { schema: "scorecard.schema.json", output: "scorecard.ts" },
+  { schema: "operations-report.schema.json", output: "operations.ts" },
   { schema: "gate-verdict.schema.json", output: "gateVerdict.ts" },
   { schema: "policy-history.schema.json", output: "policyHistory.ts" },
 ];

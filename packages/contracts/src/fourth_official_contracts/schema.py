@@ -17,6 +17,7 @@ from fourth_official_contracts.insights import INSIGHT_ADAPTER
 from fourth_official_contracts.localized import LOCALIZED_INSIGHT_ADAPTER
 from fourth_official_contracts.metrics import METRIC_SNAPSHOT_ADAPTER
 from fourth_official_contracts.moments import MOMENT_ADAPTER
+from fourth_official_contracts.operations import OPERATIONS_REPORT_ADAPTER
 from fourth_official_contracts.overlays import OVERLAY_SPEC_ADAPTER
 from fourth_official_contracts.policy_history import POLICY_HISTORY_ADAPTER
 from fourth_official_contracts.provenance import SIGNED_PROVENANCE_ADAPTER
@@ -84,6 +85,11 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             OVERLAY_SPEC_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "overlay-spec.schema.json",
             "OverlaySpec",
+        ),
+        "operations-report.schema.json": _with_header(
+            OPERATIONS_REPORT_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "operations-report.schema.json",
+            "OperationsReport",
         ),
         "policy-history.schema.json": _with_header(
             POLICY_HISTORY_ADAPTER.json_schema(by_alias=True, mode="validation"),

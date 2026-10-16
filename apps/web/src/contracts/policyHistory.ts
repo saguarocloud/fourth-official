@@ -64,7 +64,7 @@ export type Preferterms = string[];
  */
 export type Templates = [
   "lower_third" | "stat_card" | "correction_strap" | "score_bug",
-  ...("lower_third" | "stat_card" | "correction_strap" | "score_bug")[],
+  ...("lower_third" | "stat_card" | "correction_strap" | "score_bug")[]
 ];
 export type Tenantid2 = "northlight-sport" | "tribuna-austral" | "rheinblick-sport";
 /**

@@ -359,6 +359,7 @@ async def replay(
                 gap = (event.wall_clock - previous.wall_clock).total_seconds() / config.speed
                 await sleep(min(max(gap, 0.0), config.max_pause))
             previous = event
+            log.played(event.seq)
             last = index == len(events) - 1
             found: tuple[Moment, ...] = ()
             if last or (index + 1) % config.detect_every == 0 or isinstance(event, GoalEvent):
