@@ -24,6 +24,7 @@ from fourth_official_contracts.provenance import SIGNED_PROVENANCE_ADAPTER
 from fourth_official_contracts.scorecard import GATE_VERDICT_ADAPTER, SCORECARD_ADAPTER
 from fourth_official_contracts.tenants import TENANT_POLICY_ADAPTER
 from fourth_official_contracts.verdicts import VERDICT_ADAPTER
+from fourth_official_contracts.wall import MATCHDAY_WALL_ADAPTER
 
 SCHEMA_DIR = Path(__file__).resolve().parents[2] / "schemas"
 SCHEMA_ID_BASE = "https://github.com/saguarocloud/fourth-official/schemas/"
@@ -85,6 +86,11 @@ def export_schemas() -> dict[str, dict[str, Any]]:
             OVERLAY_SPEC_ADAPTER.json_schema(by_alias=True, mode="validation"),
             "overlay-spec.schema.json",
             "OverlaySpec",
+        ),
+        "matchday-wall.schema.json": _with_header(
+            MATCHDAY_WALL_ADAPTER.json_schema(by_alias=True, mode="validation"),
+            "matchday-wall.schema.json",
+            "MatchdayWall",
         ),
         "operations-report.schema.json": _with_header(
             OPERATIONS_REPORT_ADAPTER.json_schema(by_alias=True, mode="validation"),

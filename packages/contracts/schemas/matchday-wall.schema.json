@@ -1,0 +1,347 @@
+{
+  "$defs": {
+    "MatchClock": {
+      "additionalProperties": false,
+      "description": "Elapsed match time within a period, as shown on a broadcast clock (`67:12`).",
+      "properties": {
+        "minute": {
+          "maximum": 104,
+          "minimum": 0,
+          "title": "Minute",
+          "type": "integer"
+        },
+        "period": {
+          "enum": [
+            1,
+            2
+          ],
+          "title": "Period",
+          "type": "integer"
+        },
+        "second": {
+          "maximum": 59,
+          "minimum": 0,
+          "title": "Second",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "period",
+        "minute",
+        "second"
+      ],
+      "title": "MatchClock",
+      "type": "object"
+    },
+    "Score": {
+      "additionalProperties": false,
+      "properties": {
+        "away": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Away",
+          "type": "integer"
+        },
+        "home": {
+          "maximum": 99,
+          "minimum": 0,
+          "title": "Home",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "home",
+        "away"
+      ],
+      "title": "Score",
+      "type": "object"
+    },
+    "WallActivity": {
+      "additionalProperties": false,
+      "description": "A partner item as it was published, newest first on the wall.",
+      "properties": {
+        "aiWritten": {
+          "title": "Aiwritten",
+          "type": "boolean"
+        },
+        "clock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "entrySeq": {
+          "maximum": 1000000,
+          "minimum": 1,
+          "title": "Entryseq",
+          "type": "integer"
+        },
+        "headline": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Headline",
+          "type": "string"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "state": {
+          "enum": [
+            "on_air",
+            "pending_approval",
+            "rejected",
+            "retracted",
+            "amended"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        }
+      },
+      "required": [
+        "entrySeq",
+        "matchId",
+        "tenantId",
+        "state",
+        "headline",
+        "clock",
+        "aiWritten"
+      ],
+      "title": "WallActivity",
+      "type": "object"
+    },
+    "WallCorrection": {
+      "additionalProperties": false,
+      "description": "The latest correction and what the corrections desk did about it.",
+      "properties": {
+        "correctionId": {
+          "pattern": "^c-m[0-9]{1,12}-[0-9]{2,4}$",
+          "title": "Correctionid",
+          "type": "string"
+        },
+        "elapsedMs": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Elapsedms"
+        },
+        "eventClock": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MatchClock"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "inText": {
+          "maxLength": 12,
+          "minLength": 1,
+          "title": "Intext",
+          "type": "string"
+        },
+        "itemsCorrected": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Itemscorrected",
+          "type": "integer"
+        },
+        "languages": {
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Languages",
+          "type": "integer"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "outText": {
+          "maxLength": 12,
+          "minLength": 1,
+          "title": "Outtext",
+          "type": "string"
+        },
+        "partners": {
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Partners",
+          "type": "integer"
+        },
+        "receivedClock": {
+          "$ref": "#/$defs/MatchClock"
+        },
+        "summary": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchId",
+        "correctionId",
+        "summary",
+        "outText",
+        "inText",
+        "eventClock",
+        "receivedClock",
+        "itemsCorrected",
+        "partners",
+        "languages",
+        "elapsedMs"
+      ],
+      "title": "WallCorrection",
+      "type": "object"
+    },
+    "WallMatch": {
+      "additionalProperties": false,
+      "description": "One match: its score and clock as last published, and its partners' items.",
+      "properties": {
+        "away": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Away",
+          "type": "string"
+        },
+        "clock": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MatchClock"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "corrections": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Corrections",
+          "type": "integer"
+        },
+        "home": {
+          "pattern": "^[A-Z]{3}$",
+          "title": "Home",
+          "type": "string"
+        },
+        "items": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Items",
+          "type": "integer"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "onAir": {
+          "items": {
+            "enum": [
+              "northlight-sport",
+              "tribuna-austral",
+              "rheinblick-sport"
+            ],
+            "type": "string"
+          },
+          "maxItems": 8,
+          "title": "Onair",
+          "type": "array"
+        },
+        "pendingApprovals": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Pendingapprovals",
+          "type": "integer"
+        },
+        "score": {
+          "$ref": "#/$defs/Score"
+        },
+        "state": {
+          "enum": [
+            "idle",
+            "running",
+            "finished",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        }
+      },
+      "required": [
+        "matchId",
+        "home",
+        "away",
+        "state",
+        "score",
+        "clock",
+        "items",
+        "pendingApprovals",
+        "corrections",
+        "onAir"
+      ],
+      "title": "WallMatch",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/matchday-wall.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "activity": {
+      "items": {
+        "$ref": "#/$defs/WallActivity"
+      },
+      "maxItems": 50,
+      "title": "Activity",
+      "type": "array"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "latestCorrection": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WallCorrection"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "matches": {
+      "items": {
+        "$ref": "#/$defs/WallMatch"
+      },
+      "maxItems": 100,
+      "title": "Matches",
+      "type": "array"
+    }
+  },
+  "required": [
+    "generatedAt",
+    "matches",
+    "activity",
+    "latestCorrection"
+  ],
+  "title": "MatchdayWall",
+  "type": "object"
+}
