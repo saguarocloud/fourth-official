@@ -183,6 +183,9 @@ def create_app(
 def app_from_env() -> FastAPI:
     """Entry point for uvicorn: `uvicorn --factory fourth_official_api.main:app_from_env`."""
     settings = Settings.from_env()
-    # Before the app is built, so its requests and every model call are traced.
-    telemetry.start(settings.telemetry)
-    return create_app(settings)
+    # Before the app is built, so every model call is traced; then its requests.
+    traced = telemetry.start(settings.telemetry)
+    app = create_app(settings)
+    if traced:
+        telemetry.instrument(app)
+    return app

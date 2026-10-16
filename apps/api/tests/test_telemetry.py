@@ -1,13 +1,19 @@
 """Telemetry: traces and metrics go to Application Insights with the app's own identity, only
 when the deployment names where to send them, and never with prompts or answers in them."""
 
-import os
 from typing import Any
 
 import pytest
 from azure.identity import ManagedIdentityCredential
+from fastapi.testclient import TestClient
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import SimpleSpanProcessor
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from opentelemetry.util.http import parse_excluded_urls
 
 from fourth_official_api import main, telemetry
+from fourth_official_api.main import create_app
 from fourth_official_api.settings import Settings, TelemetrySettings
 
 CONNECTION = "InstrumentationKey=00000000-0000-0000-0000-000000000000;IngestionEndpoint=https://example.in.applicationinsights.azure.com/"
@@ -33,8 +39,6 @@ def test_nothing_is_sent_without_a_destination() -> None:
 def test_telemetry_signs_in_as_the_app_and_never_records_what_the_models_read_or_wrote(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("OTEL_PYTHON_FASTAPI_EXCLUDED_URLS", raising=False)
-    monkeypatch.delenv("OTEL_PYTHON_FASTAPI_EXCLUDE_SPANS", raising=False)
     configured: dict[str, Any] = {}
     instrumented: dict[str, Any] = {}
     monkeypatch.setattr(telemetry, "configure_azure_monitor", lambda **kw: configured.update(kw))
@@ -53,10 +57,8 @@ def test_telemetry_signs_in_as_the_app_and_never_records_what_the_models_read_or
     # Logs stay in the console (Log Analytics): an exception's text can quote a model's output.
     assert configured["disable_logging"] is True
     assert configured["enable_live_metrics"] is False
-    # Probes and the matchday streams (a span the length of a connection) are not traced, nor is
-    # every chunk a stream sends.
-    assert os.environ["OTEL_PYTHON_FASTAPI_EXCLUDED_URLS"] == "healthz,stream"
-    assert os.environ["OTEL_PYTHON_FASTAPI_EXCLUDE_SPANS"] == "send,receive"
+    # The app is instrumented by name, with its exclusions, not by the distro's import-time read.
+    assert configured["instrumentation_options"] == {"fastapi": {"enabled": False}}
 
 
 def test_a_destination_that_cannot_be_configured_leaves_the_api_running_without_telemetry(
@@ -72,11 +74,76 @@ def test_a_destination_that_cannot_be_configured_leaves_the_api_running_without_
     assert "secretish" not in caplog.text
 
 
-def test_the_api_starts_telemetry_before_it_is_built(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_the_api_starts_telemetry_then_traces_its_requests_but_not_probes_or_streams(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     started: list[object] = []
-    monkeypatch.setattr(telemetry, "start", started.append)
+    instrumented: list[dict[str, Any]] = []
+
+    def start(settings: object) -> bool:
+        started.append(settings)
+        return True
+
+    monkeypatch.setattr(telemetry, "start", start)
+    monkeypatch.setattr(
+        FastAPIInstrumentor,
+        "instrument_app",
+        lambda app, **kw: instrumented.append({"app": app, **kw}),
+    )
     monkeypatch.setenv("APPLICATIONINSIGHTS_CONNECTION_STRING", CONNECTION)
+
+    app = main.app_from_env()
+
+    assert started == [Settings.from_env().telemetry]
+    (call,) = instrumented
+    assert call["app"] is app
+    # Probes say nothing; a matchday stream is a span as long as its connection; and no span for
+    # every chunk a response sends.
+    assert call["excluded_urls"] == telemetry.EXCLUDED_URLS
+    assert call["exclude_spans"] == ["send", "receive"]
+
+
+def test_without_telemetry_the_app_is_not_instrumented(monkeypatch: pytest.MonkeyPatch) -> None:
+    instrumented: list[object] = []
+    monkeypatch.setattr(
+        FastAPIInstrumentor, "instrument_app", lambda app, **kw: instrumented.append(app)
+    )
+    monkeypatch.delenv("APPLICATIONINSIGHTS_CONNECTION_STRING", raising=False)
 
     main.app_from_env()
 
-    assert started == [Settings.from_env().telemetry]
+    assert instrumented == []
+
+
+def test_probes_and_streams_get_no_span_while_the_api_s_reads_do() -> None:
+    exporter = InMemorySpanExporter()
+    provider = TracerProvider()
+    provider.add_span_processor(SimpleSpanProcessor(exporter))
+    app = create_app(Settings(version="test"))
+    telemetry.instrument(app, tracer_provider=provider)
+
+    with TestClient(app) as client:
+        client.get("/healthz")
+        client.get("/api/matches")
+        client.get("/api/matches?view=stream")
+
+    names = [s.name for s in exporter.get_finished_spans()]
+    assert "GET /healthz" not in names
+    assert names.count("GET /api/matches") == 2
+    assert not [n for n in names if n.endswith((" http send", " http receive"))]
+
+
+@pytest.mark.parametrize(
+    ("url", "traced"),
+    [
+        ("http://api/healthz", False),
+        ("http://api/healthz?probe=1", False),
+        ("http://api/api/matches/m42/stream", False),
+        ("http://api/api/tenants/northlight-sport/matches/m42/stream?after=3", False),
+        ("http://api/api/matches", True),
+        ("http://api/api/matches?view=stream", True),
+        ("http://streaming.example/api/operations", True),
+    ],
+)
+def test_only_probes_and_the_matchday_streams_are_left_untraced(url: str, traced: bool) -> None:
+    assert parse_excluded_urls(telemetry.EXCLUDED_URLS).url_disabled(url) is not traced

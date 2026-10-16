@@ -253,17 +253,26 @@ def test_a_partner_s_item_airs_when_it_is_ready_not_when_the_slowest_partner_s_i
         lambda: replay(demo_store().record("m42"), log, template_only, sleep=no_wait, partners=slow)
     )
 
-    entries, timing = log.snapshot()
-    stamp = dict(zip((e.entry_seq for e in entries), timing.published, strict=True))
+    entries = log.entries
     first = next(e for e in entries if isinstance(e, InsightEntry)).insight.insight_id
-    items = {
-        e.tenant_id: stamp[e.entry_seq]
+    seq = {
+        e.tenant_id: e.entry_seq
         for e in entries
         if isinstance(e, TenantItemEntry)
         and e.localized is not None
         and e.localized.insight_id == first
     }
-    assert items["tribuna-austral"] - items["northlight-sport"] >= 0.5
+    # Northlight's item went out at once; the match carried on (other entries were published)
+    # while the Spanish version was still being written. Waiting for the slowest partner would
+    # have published all three back to back.
+    assert seq["northlight-sport"] < seq["tribuna-austral"]
+    others = sum(
+        1
+        for e in entries
+        if seq["northlight-sport"] < e.entry_seq < seq["tribuna-austral"]
+        and not isinstance(e, TenantItemEntry)
+    )
+    assert others >= 1
 
 
 def test_when_publishing_one_partner_s_item_fails_the_others_still_in_work_are_stopped() -> None:

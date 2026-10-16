@@ -8,33 +8,39 @@ text can quote a model's output); they stay in the console, which Log Analytics 
 """
 
 import logging
-import os
+from typing import Literal
 
 from agent_framework.observability import enable_instrumentation
 from azure.identity import ManagedIdentityCredential
 from azure.monitor.opentelemetry import configure_azure_monitor
+from fastapi import FastAPI
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.trace import TracerProvider
 
 from fourth_official_api.settings import TelemetrySettings
 
 logger = logging.getLogger(__name__)
 # Health probes would be most of the requests traced, and say nothing; a matchday stream is a
 # span as long as the connection. Neither is traced, nor each chunk a response sends.
-EXCLUDED_URLS = "healthz,stream"
-EXCLUDED_SPANS = "send,receive"
+# Patterns searched in the full URL: anchored to the path's end, so a query string or a host that
+# merely contains the word is still traced.
+EXCLUDED_URLS = r"/healthz(\?|$),/stream(\?|$)"
+EXCLUDED_SPANS: list[Literal["send", "receive"]] = ["send", "receive"]
 
 
 def start(settings: TelemetrySettings | None) -> bool:
     """Configure the exporters once, at process start; whether telemetry is on."""
     if settings is None:
         return False
-    os.environ.setdefault("OTEL_PYTHON_FASTAPI_EXCLUDED_URLS", EXCLUDED_URLS)
-    os.environ.setdefault("OTEL_PYTHON_FASTAPI_EXCLUDE_SPANS", EXCLUDED_SPANS)
     try:
         configure_azure_monitor(
             connection_string=settings.connection_string,
             credential=ManagedIdentityCredential(client_id=settings.client_id or None),
             disable_logging=True,
             enable_live_metrics=False,
+            # The app is instrumented by `instrument`, with its exclusions as arguments: the
+            # distro's own instrumentation reads them from the environment at import, too early.
+            instrumentation_options={"fastapi": {"enabled": False}},
         )
     except Exception as error:
         # Telemetry must never stop the API.
@@ -46,3 +52,14 @@ def start(settings: TelemetrySettings | None) -> bool:
     enable_instrumentation(enable_sensitive_data=False)
     logger.info("telemetry is sent to Application Insights")
     return True
+
+
+def instrument(app: FastAPI, *, tracer_provider: TracerProvider | None = None) -> None:
+    """Trace the app's requests, but not probes, the matchday streams or every chunk sent (to
+    the global provider unless one is given)."""
+    FastAPIInstrumentor.instrument_app(
+        app,
+        excluded_urls=EXCLUDED_URLS,
+        exclude_spans=EXCLUDED_SPANS,
+        tracer_provider=tracer_provider,
+    )
