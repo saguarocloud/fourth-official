@@ -16,6 +16,7 @@ MANAGED_IDENTITY_OPERATOR = "f1a07417-d97a-45cb-824c-7a7467783830"
 AZURE_AI_USER = "53ca6127-db72-4b80-b1b0-d745d6d5456d"
 STORAGE_BLOB_DATA_CONTRIBUTOR = "ba92f5b4-2d11-453d-a403-e96b0029c9fe"
 KEY_VAULT_CRYPTO_USER = "12338af0-0e69-4776-bea7-57ae8d297424"
+MONITORING_METRICS_PUBLISHER = "3913510d-42f4-4e42-8a64-420c390055eb"
 GUID = re.compile(r"[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}")
 
 
@@ -268,6 +269,8 @@ EXPECTED_ROLE_SCOPES: dict[str, tuple[str, ...] | None] = {
     STORAGE_BLOB_DATA_CONTRIBUTOR: ("Microsoft.Storage/storageAccounts/blobServices/containers'",),
     # On the one signing key, never the vault.
     KEY_VAULT_CRYPTO_USER: ("Microsoft.KeyVault/vaults/keys'",),
+    # On Application Insights, never the workspace or the group.
+    MONITORING_METRICS_PUBLISHER: ("Microsoft.Insights/components'",),
     READER: None,
 }
 
@@ -410,6 +413,7 @@ def test_the_api_runs_the_analyst_with_a_durable_ledger_and_a_small_daily_allowa
         "PROVENANCE_CONTAINER_URL",
         "PROVENANCE_CLIENT_ID",
         "POLICY_BOOK_URL",
+        "APPLICATIONINSIGHTS_CONNECTION_STRING",
     }
     assert env["MATCHDAY_RUNS_PER_DAY"] == "6"
     assert "outputs.policyBookUrl" in env["POLICY_BOOK_URL"]
@@ -491,3 +495,24 @@ def test_only_the_api_identity_uses_the_key_and_only_that_key(compiled: Compiled
     env = _env(compiled, "api")
     assert "signerClientId" in env["PROVENANCE_CLIENT_ID"]
     assert "keyUriWithVersion" in env["PROVENANCE_KEY_ID"]
+
+
+def test_the_api_sends_telemetry_to_application_insights_with_entra_id_only(
+    compiled: CompiledTemplate,
+) -> None:
+    (grant,) = [
+        a
+        for a in compiled.of_type("Microsoft.Authorization/roleAssignments")
+        if MONITORING_METRICS_PUBLISHER in str(a.properties["roleDefinitionId"])
+    ]
+    (insights,) = compiled.of_type("Microsoft.Insights/components")
+
+    # The identity the API signs in with (AZURE_CLIENT_ID), and only it, may publish.
+    assert "components" in str(grant.body.get("scope", ""))
+    assert "publisherPrincipalId" in str(grant.properties["principalId"])
+    (monitoring,) = [m for m in compiled.modules if m.name == "monitoring"]
+    assert "agentsIdentityPrincipalId" in str(monitoring.parameters["publisherPrincipalId"])
+    assert insights.properties["DisableLocalAuth"] is True
+    env = _env(compiled, "api")
+    assert "connectionString" in env["APPLICATIONINSIGHTS_CONNECTION_STRING"]
+    assert "agentsIdentityClientId" in env["AZURE_CLIENT_ID"]

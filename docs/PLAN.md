@@ -14,7 +14,8 @@ Running checklist. Update daily. Times are Mexico City.
 - [ ] Infrastructure pull request (Bicep, azd, deploy identity, deploy workflow) (#3)
 - [ ] Design system pull request: LED-board control room, `DESIGN.md`, Control Room screen on replay data
 - [ ] Security headers on web and api (CSP, HSTS, frame-ancestors, referrer and permissions policy)
-- [ ] Observability: wire Application Insights into both apps with OpenTelemetry and Entra ID auth (local auth is disabled)
+- [x] Observability, API: Application Insights through OpenTelemetry with Entra ID auth, model and tool calls traced, no prompts or answers (ADR-017)
+- [ ] Observability, web: the Next.js app's server traces
 - [ ] API: explicit CORS allow-list when the web app starts calling it; decide whether public `/docs` stays on for judges
 - [ ] Supply chain: SBOM and image signing in the deploy workflow
 - [ ] Rate limiting on public endpoints (API throttling; consider Front Door/WAF for the demo week)

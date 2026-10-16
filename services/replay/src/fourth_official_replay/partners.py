@@ -15,6 +15,7 @@ from datetime import datetime
 from functools import partial
 from typing import Literal
 
+from opentelemetry import trace
 from pydantic import ValidationError
 
 from fourth_official_broadcast import (
@@ -53,6 +54,7 @@ from fourth_official_replay.errors import DecisionError, NoRoomOnAirError, NotAw
 from fourth_official_verifier import BlockedTopics, MatchFacts, render_insight
 
 logger = logging.getLogger(__name__)
+tracer = trace.get_tracer("fourth_official.replay")
 Decision = Literal["approved", "rejected"]
 # Localisations in flight at once, across the match's partners and moments.
 DEFAULT_CONCURRENCY = 3
@@ -188,6 +190,27 @@ class Partners:
             await asyncio.gather(*tasks, return_exceptions=True)
 
     async def _insight(
+        self,
+        partner: Partner,
+        insight: Insight,
+        *,
+        moment: Moment,
+        facts: MatchFacts,
+        at: MatchClock,
+    ) -> EntryBuilder | None:
+        """One partner's version of an insight, traced as a span inside its moment's."""
+        policy = partner.policy
+        attributes = {
+            "fourth_official.tenant_id": policy.tenant_id,
+            "fourth_official.locale": policy.locale,
+            "fourth_official.localizer": needs_localizer(policy),
+        }
+        with tracer.start_as_current_span("localize", attributes=attributes) as span:
+            built = await self._localized(partner, insight, moment=moment, facts=facts, at=at)
+            span.set_attribute("fourth_official.published", built is not None)
+            return built
+
+    async def _localized(
         self,
         partner: Partner,
         insight: Insight,

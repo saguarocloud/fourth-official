@@ -66,6 +66,15 @@ class ProvenanceSettings:
 
 
 @dataclass(frozen=True, slots=True)
+class TelemetrySettings:
+    """Where to send traces and metrics (Application Insights), and as whom."""
+
+    connection_string: str
+    # The client ID of the app's managed identity (empty: the system-assigned one).
+    client_id: str
+
+
+@dataclass(frozen=True, slots=True)
 class Settings:
     """Immutable runtime configuration for the API."""
 
@@ -84,6 +93,8 @@ class Settings:
     policy_book: PolicyBookSettings | None = None
     # The Proving Ground's recorded runs, served read-only (relative to the working directory).
     proving_results: Path = Path("eval/results")
+    # None: no telemetry leaves the process.
+    telemetry: TelemetrySettings | None = None
 
     @classmethod
     def from_env(cls) -> "Settings":
@@ -98,6 +109,7 @@ class Settings:
             runs_per_day=_runs_from_env(),
             provenance=_provenance_from_env(),
             policy_book=_policy_book_from_env(),
+            telemetry=_telemetry_from_env(),
             proving_results=Path(
                 os.environ.get("PROVING_RESULTS_DIR", "").strip() or "eval/results"
             ),
@@ -187,3 +199,12 @@ def _runs_from_env() -> int:
             f"MATCHDAY_RUNS_PER_DAY must be a whole number from 1 to {DEFAULT_RUNS_PER_DAY}"
         )
     return int(raw)
+
+
+def _telemetry_from_env() -> TelemetrySettings | None:
+    connection = os.environ.get("APPLICATIONINSIGHTS_CONNECTION_STRING", "").strip()
+    if not connection:
+        return None
+    return TelemetrySettings(
+        connection_string=connection, client_id=os.environ.get("AZURE_CLIENT_ID", "").strip()
+    )

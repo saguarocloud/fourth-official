@@ -60,6 +60,7 @@ module monitoring 'modules/monitoring.bicep' = {
   params: {
     logAnalyticsName: 'log-${token}'
     applicationInsightsName: 'appi-${token}'
+    publisherPrincipalId: foundry.outputs.agentsIdentityPrincipalId
     location: location
     tags: tags
   }
@@ -168,6 +169,7 @@ module api 'modules/container-app.bicep' = {
       { name: 'FOUNDRY_PROJECT_ENDPOINT', value: foundry.outputs.projectEndpoint }
       { name: 'MATCH_DATA_URL', value: 'https://${matchDataHost}/mcp' }
       { name: 'AZURE_CLIENT_ID', value: foundry.outputs.agentsIdentityClientId }
+      { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: monitoring.outputs.connectionString }
       { name: 'START_LEDGER_URL', value: storage.outputs.startLedgerUrl }
       { name: 'POLICY_BOOK_URL', value: storage.outputs.policyBookUrl }
       // At most 6 runs a day keeps the worst case of model spend well inside the budget.

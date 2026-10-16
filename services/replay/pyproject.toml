@@ -12,6 +12,7 @@ dependencies = [
   "fourth-official-policy",
   "fourth-official-stats",
   "fourth-official-verifier",
+  "opentelemetry-api>=1.30,<2",
 ]
 
 [tool.uv.sources]

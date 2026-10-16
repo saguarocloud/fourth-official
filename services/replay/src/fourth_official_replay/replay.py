@@ -16,6 +16,9 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from functools import partial
 
+from opentelemetry import trace
+from opentelemetry.trace import Span
+
 from fourth_official_contracts import (
     AttemptRecord,
     ClockEntry,
@@ -42,6 +45,7 @@ from fourth_official_stats.prepare import prepare
 from fourth_official_verifier import MatchFacts, render_insight
 
 Explainer = Callable[[Moment, MatchFacts], Awaitable[Explanation]]
+tracer = trace.get_tracer("fourth_official.replay")
 Sleep = Callable[[float], Awaitable[None]]
 logger = logging.getLogger(__name__)
 
@@ -276,11 +280,34 @@ class _Replay:
             )
 
     async def explain(self, moment: Moment) -> None:
-        """Explain one moment and publish its insight. Whatever goes wrong is logged and stays
-        with this moment: the match and the other moments carry on."""
+        """Explain one moment and publish its insight, traced as one span with each partner's
+        localisation inside it. Whatever goes wrong is logged and stays with this moment: the
+        match and the other moments carry on."""
+        attributes = {
+            "fourth_official.match_id": self.log.match_id,
+            "fourth_official.moment_id": moment.moment_id,
+        }
+        with tracer.start_as_current_span("explain moment", attributes=attributes) as span:
+            await self._explain(moment, span)
+
+    async def _explain(self, moment: Moment, span: Span) -> None:
         try:
             async with self.slots:
                 explanation = await self.explainer(moment, self.facts)
+            last = explanation.attempts[-1] if explanation.attempts else None
+            # The model alias that wrote the insight, or the template.
+            written_by = (
+                "nobody" if last is None else last.agent if last.agent == "template" else last.model
+            )
+            span.set_attributes(
+                {
+                    "fourth_official.attempts": len(explanation.attempts),
+                    "fourth_official.written_by": written_by,
+                    "fourth_official.model_errors": sum(
+                        a.outcome == "error" for a in explanation.attempts
+                    ),
+                }
+            )
             if explanation.insight is None:
                 logger.warning("no verified insight for %s", moment.moment_id)
                 return

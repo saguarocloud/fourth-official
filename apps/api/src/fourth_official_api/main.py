@@ -8,6 +8,7 @@ from typing import Literal
 from fastapi import FastAPI, Response
 from pydantic import BaseModel, ConfigDict
 
+from fourth_official_api import telemetry
 from fourth_official_api.decision_routes import decision_router
 from fourth_official_api.explainers import (
     foundry_explainer,
@@ -181,4 +182,7 @@ def create_app(
 
 def app_from_env() -> FastAPI:
     """Entry point for uvicorn: `uvicorn --factory fourth_official_api.main:app_from_env`."""
-    return create_app(Settings.from_env())
+    settings = Settings.from_env()
+    # Before the app is built, so its requests and every model call are traced.
+    telemetry.start(settings.telemetry)
+    return create_app(settings)
