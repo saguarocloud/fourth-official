@@ -97,4 +97,34 @@ describe("useOperations", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
     hidden.mockRestore();
   });
+
+  it("gives up on a reading that hangs, says so, and reads again", async () => {
+    const hanging = (_url: string, init?: RequestInit) =>
+      new Promise<Response>((_, reject) =>
+        init?.signal?.addEventListener("abort", () => reject(new DOMException("aborted"))),
+      );
+    const fetch = vi.fn().mockResolvedValueOnce(Response.json(fixture)).mockImplementation(hanging);
+    vi.stubGlobal("fetch", fetch);
+    const { result } = renderHook(() => useOperations());
+    await waitFor(() => expect(result.current.status).toBe("ready"));
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(POLL_MS * 4);
+    });
+
+    expect(result.current).toMatchObject({ status: "ready", stale: true });
+    expect(fetch.mock.calls.length).toBeGreaterThan(2);
+  });
+
+  it("reads at once when the page comes back into view", async () => {
+    const fetch = serve(Response.json(fixture), Response.json(fixture));
+    renderHook(() => useOperations());
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+
+    await act(async () => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
 });

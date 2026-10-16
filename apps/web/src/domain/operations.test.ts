@@ -6,6 +6,7 @@ import {
   budgetUse,
   budgetWords,
   dollars,
+  timesOver,
   objectiveMet,
   parseOperations,
   ranFor,
@@ -150,6 +151,17 @@ describe("figures", () => {
 });
 
 describe("the error budget in words", () => {
+  it("says a budget only just overspent is over, not spent in full", () => {
+    const just = budgetUse({ withinPercent: 95, targetMs: 8000, late: 1001, of: 20_000 })!;
+    expect(just).toMatchObject({ spentPercent: 100, over: true });
+    expect(budgetWords(just)).toBe("1001 of 20000 items late, just over the error budget");
+  });
+
+  it("writes a whole number of times over without a decimal", () => {
+    const five = budgetUse({ withinPercent: 95, targetMs: 8000, late: 248, of: 1000 })!;
+    expect(timesOver(five)).toBe("5");
+  });
+
   it("says how far over a spent budget went", () => {
     const over = budgetUse({ withinPercent: 95, targetMs: 8000, late: 8, of: 34 })!;
     expect(budgetWords(over)).toBe("8 of 34 items late, the error budget spent 4.7 times over");

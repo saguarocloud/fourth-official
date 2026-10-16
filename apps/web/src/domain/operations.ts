@@ -166,13 +166,14 @@ export function budgetWords(use: BudgetUse): string {
   if (use.spentPercent === null) share = "with no late item allowed";
   else if (use.spentPercent > PERCENT)
     share = `the error budget spent ${timesOver(use)} times over`;
+  else if (use.over) share = "just over the error budget";
   return `${use.late} of ${use.of} items late, ${share}`;
 }
 
 /** How many times over a spent budget went, to the tenth (4.7), or whole (20). */
 export function timesOver(use: BudgetUse): string {
-  const times = (use.spentPercent ?? 0) / PERCENT;
-  return Number.isInteger(times) ? String(times) : times.toFixed(1);
+  const tenths = Math.round(((use.spentPercent ?? 0) / PERCENT) * 10) / 10;
+  return Number.isInteger(tenths) ? String(tenths) : tenths.toFixed(1);
 }
 
 /** Whether an objective was met; null before anything was measured against it. */

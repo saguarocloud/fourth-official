@@ -119,6 +119,8 @@ function BudgetMeter({ report }: { readonly report: OperationsReport }) {
     headline = valueText = "Error budget spent: no late item was allowed";
   } else if (use !== null && use.spentPercent !== null && use.spentPercent > 100) {
     headline = valueText = `Error budget spent ${timesOver(use)} times over`;
+  } else if (use?.over) {
+    headline = valueText = "Error budget just overspent";
   } else if (use !== null) {
     headline = valueText = `${use.spentPercent}% of the error budget spent`;
   }
