@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-10-11T18:00:00+00:00",
+  "generatedAt": "2026-10-16T12:00:00+00:00",
   "title": "Design System: Fourth Official",
   "extensions": {
     "colorMeta": {
@@ -399,6 +399,18 @@
       {
         "name": "policy-phone",
         "value": "720px"
+      },
+      {
+        "name": "operations-top-beside",
+        "value": "1280px"
+      },
+      {
+        "name": "operations-pair",
+        "value": "1600px"
+      },
+      {
+        "name": "operations-phone",
+        "value": "720px"
       }
     ],
     "partnerThemes": [
@@ -566,6 +578,27 @@
         "phone": "At 720px and below the partner keys become a three-up grid of code-only keys (names visually hidden, kept for screen readers) with Reset wrapping beneath; the version's Edit key sits under its title."
       },
       {
+        "name": "Operations",
+        "path": "/operations",
+        "rail": "none; main takes the rail's column from 1024px (data-rail=\"none\")",
+        "firstViewport": "Title and a verdict naming each service level missed and by how much, the error budget in words and the cost; the statement's top, minmax(0, 1fr) | minmax(20rem, 26rem) from 1280px (aligned to the top): Service levels (objectives table with Standing lamps, the error budget meter beneath) left, the Amount lit white on the LED board right; 'Itemised by match' full width beneath with a totals row matching the board; By partner beside Rates (3fr | 2fr from 1600px); 'How the words were written'; synthetic-data footnote at 75ch (measured by the platform, restarts with it as it scales to zero; model cost is a floor; method docs/cost-model.md). Each section a panel-1 panel padded 24px. Read from /api/operations on arrival and every 5 s, never while hidden. The top bar carries no readouts here. A statement of service, never a tile wall of gauges and sparklines.",
+        "verdict": {
+          "missed": "The last matchday missed the on-air 95th percentile (14.0 s against 8.0 s). 8 of 34 items late, the error budget spent 4.7 times over. It cost $0.0442. (red; several misses listed 'a, b and c'; while running 'The matchday is missing …' and 'It has cost $X so far.')",
+          "held": "The last matchday held its service levels: on air within X s for 95% of items, against 8.0 s. N of M items late, P% of the error budget spent. It cost $X. (green; while running 'The matchday is holding its service levels')",
+          "budgetWords": "'N of M items late, P% of the error budget spent'; past 100% 'the error budget spent N times over' (to the tenth, or whole); none allowed 'with no late item allowed'.",
+          "idle": "Nothing measured yet: no matchday has run since the platform last started. Start one from Match Live and this statement fills in as it plays. (neutral)",
+          "runningEmpty": "The matchday is running; no item has gone on air without an editor yet. It has cost $X so far. (neutral)",
+          "loading": "Reading what the platform measured. (neutral)",
+          "unavailable": "The operations service did not answer. This page reads it again every few seconds. (neutral, never red: an unreachable service is not an objective missed; no Try again key)",
+          "stale": "A failed read keeps the last statement on show, the lamp drops to neutral, and a 13px ink-2 line says 'The last reading failed: these are the figures as read at hh:mm:ss UTC.'",
+          "live": "aria-live=off while a match runs, since the cost changes at every reading."
+        },
+        "amounts": "Dollars to the hundredth of a cent ($0.0442); in text an amount above nothing but under that reads '< $0.0001' (the LED board lights digits only, so it shows $0.0000). Durations to the tenth of a second, ms under a second; tokens grouped en-GB; no measure yet is an en dash.",
+        "colour": "Only an objective met or missed takes colour (the Signal Light Rule): the verdict lamp, the Standing lamps (green met, red missed, unlit not yet measured) and the budget meter (green within, red once over, red ×N tag). A missed figure is 600 ink-1, not red. The amount is lit white; every table is ink only.",
+        "tables": "Itemised by match, By partner and How the words were written scroll inside their panel on narrow screens: role=region labelled '…, scrolls sideways', tabindex=0, overflow-x auto, overscroll-behavior-x contain. Headers, the first column and every figure are nowrap: a figure never wraps.",
+        "phone": "At 720px and below panels pad 16px and the scrolled tables hold a 44rem minimum width; Service levels and Rates fit the width, objective names wrapping and figures not."
+      },
+      {
         "name": "Verify",
         "path": "/verify/[itemId]",
         "rail": "standalone: no shell, no nav; Paper theme",
@@ -662,7 +695,7 @@
       "name": "Nav Item",
       "kind": "nav",
       "refersTo": "nav-item",
-      "description": "Screen rail key; the current screen is lit with a green lamp.",
+      "description": "Screen rail key; the current screen is lit with a green lamp. The rail links all nine screens (Control Room, Match Live, Broadcast Preview, Approvals, Corrections, Provenance, Policy Studio, Proving Ground, Operations); there is no 'not yet available' state.",
       "html": "<nav class=\"ds-nav\"><a class=\"ds-nav__item\" aria-current=\"page\" href=\"#\">Control Room</a><a class=\"ds-nav__item\" href=\"#\">Approvals</a><a class=\"ds-nav__item\" href=\"#\">Corrections</a></nav>",
       "css": ".ds-nav { display:flex; flex-direction:column; gap:2px; width:208px; padding:12px; background:#0d1013; } .ds-nav__item { font-family: var(--font-ui, Geist, system-ui, sans-serif); display:flex; align-items:center; height:36px; padding:0 12px; border-radius:2px; color:#a1abb4; font-size:13px; text-decoration:none; transition:background 160ms cubic-bezier(0.16,1,0.3,1), color 160ms cubic-bezier(0.16,1,0.3,1); } .ds-nav__item:hover { background:#151a1e; color:#e9edf0; } .ds-nav__item:focus-visible { outline:none; box-shadow:0 0 0 2px #07090b, 0 0 0 4px #f2f5f7; } .ds-nav__item[aria-current=page] { background:#1c2227; color:#e9edf0; font-weight:500; } .ds-nav__item[aria-current=page]::after { content:''; margin-left:auto; width:6px; height:6px; border-radius:999px; background:#3ee07f; }"
     },
@@ -879,6 +912,44 @@
       "kind": "custom",
       "refersTo": "policy-input",
       "description": "Policy Studio: four fieldsets under silk-screen legends (11px uppercase ink-3, a hairline above all but the first, 32px apart), fields in auto-fit minmax(18rem, 1fr): On air (Name on air, Tone, Preferred terms, Avoided terms; comma-separated), Content (Blocked topics, Held for the duty editor, Graphics allowed as checkboxes; Correction strap '(always)', disabled), Disclosure and corrections (radio groups named in words), Limits (Latency budget in seconds 1 to 30 in half seconds, Items a minute 1 to 30; tabular, max 10rem). Labels 13px 600 ink-1 over 11px ink-3 hints; inputs on panel-0 with a strong hairline edge; accent-color led-white, never a state colour."
+    },
+    {
+      "name": "Data Table",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "13px, left-aligned ink-2 500 headers over a strong hairline, 8px 12px cells on hairline rows, panel-2 row hover, right-aligned tabular numerics; caption as an uppercase label or, with hideCaption, for screen readers only; empty, one full-width cell saying what will appear. Optional totals row (totals, by column key): a tfoot whose first cell is a row header ('Total', th scope=row), numeric cells right-aligned. On Operations it sits above a strong hairline, 12px top padding, 600 ink-1, and matches the Amount on the board."
+    },
+    {
+      "name": "Service Levels",
+      "kind": "custom",
+      "refersTo": "statement-panel",
+      "description": "Operations: a data table Objective | Target | Measured | Standing (Event to on air, median; Event to on air, 95th percentile; Corrections desk, 95th percentile). Target '≤ 8.0 s'; Measured the figure or an en dash, a missed one 600 ink-1, never red. Standing: an 8px round lamp and the word in 13px ink-2: 'Met' green, 'Missed' red with the word ink-1, 'Not yet measured' unlit (led-off). The error budget sits beneath, above a hairline."
+    },
+    {
+      "name": "Error Budget Meter",
+      "kind": "custom",
+      "refersTo": "budget-meter",
+      "description": "Operations: 'Error budget' (11px uppercase ink-3 h3), the objective in 13px ink-2 ('95% of items on air within 8.0 s'), a 16px 600 ink-1 headline ('P% of the error budget spent', 'Error budget spent 4.7 times over', 'Error budget spent: no late item was allowed', 'Not yet measured'), the meter (row max 44rem), and a 13px ink-2 reading ('8 of 34 items later than 8.0 s; 5% of 34 allows 1.7 late.'). Twenty 14px segments, 2px radius, 3px gaps, in a panel-0 field padded 8px; each 5% of the budget, lit rounded up and capped at 20; green within budget, all red once over. role=meter labelled 'Error budget spent', value text the headline. Past 100% a '×4.7' tag in Geist Mono 16px 600 led-red, aria-hidden.",
+      "html": "<div class=\"ds-budget\"><div class=\"ds-budget__meter\" data-over><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span><span data-lit></span></div><span class=\"ds-budget__over\">×4.7</span></div>",
+      "css": ".ds-budget { display:flex; align-items:center; gap:12px; max-width:44rem; } .ds-budget__meter { flex:1; display:grid; grid-template-columns:repeat(20, minmax(0,1fr)); gap:3px; padding:8px; border-radius:2px; background:#07090b; } .ds-budget__meter span { height:14px; border-radius:2px; background:rgb(255 255 255 / 0.07); } .ds-budget__meter span[data-lit] { background:#3ee07f; } .ds-budget__meter[data-over] span[data-lit] { background:#ff4a3d; } .ds-budget__over { font-family: var(--font-data, 'Geist Mono', ui-monospace, monospace); font-size:16px; font-weight:600; color:#ff4a3d; }"
+    },
+    {
+      "name": "Amount Board",
+      "kind": "custom",
+      "refersTo": "statement-panel",
+      "description": "Operations: 'Amount', the run's cost lit white on the LED board at 5px dots, full panel width on a panel-0 field padded 16px, always to the hundredth of a cent (role=img, 'Cost: $0.0442' or 'Cost so far: …'); a 13px ink-2 note ('This run' / 'So far, while the matchday runs'); above a hairline, a dl: Models, Infrastructure, Tokens in · out, 13px ink-2 terms left, ink-1 tabular values right; sub-hundredth amounts read '< $0.0001' in text."
+    },
+    {
+      "name": "Itemised Statement",
+      "kind": "custom",
+      "refersTo": "statement-panel",
+      "description": "Operations: 'Itemised by match' in a scroll region, matches that ran only: Match ('Home v Away' over its state in 11px ink-3) | Ran | Items a minute | On air, median · 95th | Corrections, count · 95th | Tokens | Models | Infrastructure | Total (600); closed by the Data Table totals row matching the Amount. Empty: 'No match has run since the platform last started.'"
+    },
+    {
+      "name": "Partner Statement",
+      "kind": "custom",
+      "refersTo": "statement-panel",
+      "description": "Operations: 'By partner', grouped from the report across matches: Partner | Items | Held for an editor | Own latency budget | On air within it | Localizer tokens | Localizer cost. The own latency budget shows only when every match agreed on it (en dash otherwise); a partner with every item held reads 'All held'. Beside it from 1600px, 'Rates': Model (data font) | Input, a million tokens | Output, a million tokens, to the cent, with the infrastructure note ('$N an hour, the platform's standing charge, shared by the matches of a run…'). 'How the words were written' follows: Insights, Explained in, First draft passed, Drafts the Verifier passed, Model errors, Written by the template. Ink only."
     }
   ],
   "narrative": {
@@ -957,7 +1028,8 @@
       "**Do** keep an editor's keys waiting until the item on the desk has been seen: never let a decision land on an item the editor has not had time to read.",
       "**Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.",
       "**Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much.",
-      "**Do** keep a governed setting as a change ledger: every version with who, when and why, what it changed read before and after, a required reason for the next one, and a reset as a new version rather than an erasure."
+      "**Do** keep a governed setting as a change ledger: every version with who, when and why, what it changed read before and after, a required reason for the next one, and a reset as a new version rather than an erasure.",
+      "**Do** state a run's service as a statement: each objective met or missed and by how much, the error budget in words, and the cost to the hundredth of a cent, itemised so the totals row matches the amount on the board."
     ],
     "donts": [
       "**Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).",
@@ -971,7 +1043,8 @@
       "**Don't** repeat a correction's state with a lamp when its strap already names it.",
       "**Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is \"Signed and unchanged\".",
       "**Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state.",
-      "**Don't** colour a policy change: struck values are ink-3, added items ink-1, and no version, action or field takes a state colour."
+      "**Don't** colour a policy change: struck values are ink-3, added items ink-1, and no version, action or field takes a state colour.",
+      "**Don't** light an unreachable service red, or show a cost as nothing: a service that did not answer is neutral, not an objective missed, and an amount under a hundredth of a cent reads \"< $0.0001\"."
     ]
   }
 }

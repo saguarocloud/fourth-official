@@ -267,6 +267,7 @@ def measure(  # noqa: PLR0913 - the match and its record, then how to judge and 
         events_played=len(played),
         moments=sum(isinstance(e, MomentEntry) for e in entries),
         explain=spread(_explaining(entries, stamp)),
+        on_air=spread(on_air),
         first_pass=first,
         fallbacks=fallbacks,
         model_drafts=judged,

@@ -13,24 +13,19 @@ describe("NavRail", () => {
     );
   });
 
-  it("lists screens that are not built yet without linking to them", () => {
-    render(<NavRail current="/" />);
+  it("links every screen, Operations included", () => {
+    render(<NavRail current="/operations" />);
 
-    expect(screen.queryByRole("link", { name: /Operations/ })).toBeNull();
-    expect(screen.getByText("Operations")).toBeInTheDocument();
+    expect(screen.getAllByRole("link")).toHaveLength(9);
+    expect(screen.getByRole("link", { name: "Operations" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("is a labelled primary navigation landmark", () => {
     render(<NavRail current="/" />);
 
     expect(screen.getByRole("navigation", { name: "Primary" })).toBeInTheDocument();
-  });
-});
-
-describe("NavRail unavailable screens", () => {
-  it("tells every user a screen is not available yet", () => {
-    render(<NavRail current="/" />);
-
-    expect(screen.getAllByText("(not yet available)").length).toBeGreaterThan(0);
   });
 });

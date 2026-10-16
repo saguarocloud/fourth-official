@@ -214,11 +214,6 @@ a.nav-rail__item:hover {
   background: var(--led-green);
 }
 
-.nav-rail__item[data-unavailable] {
-  color: var(--ink-3);
-  cursor: default;
-}
-
 /* Responsive: control rooms run at 1440–1920; laptops collapse the rail; small screens stack. */
 @media (max-width: 1439px) {
   .app-shell {

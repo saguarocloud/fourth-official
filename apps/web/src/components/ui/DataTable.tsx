@@ -17,6 +17,8 @@ interface DataTableProps<Row> {
   readonly empty?: ReactNode;
   /** Keep the caption for assistive technology only. */
   readonly hideCaption?: boolean;
+  /** A closing row, by column key; the first column's cell heads the row. */
+  readonly totals?: Readonly<Record<string, ReactNode>>;
 }
 
 export function DataTable<Row>({
@@ -26,6 +28,7 @@ export function DataTable<Row>({
   rowKey,
   empty,
   hideCaption = false,
+  totals,
 }: DataTableProps<Row>) {
   return (
     <table className="data-table">
@@ -58,6 +61,23 @@ export function DataTable<Row>({
           ))
         )}
       </tbody>
+      {totals && (
+        <tfoot>
+          <tr>
+            {columns.map((column, i) =>
+              i === 0 ? (
+                <th key={column.key} scope="row">
+                  {totals[column.key]}
+                </th>
+              ) : (
+                <td key={column.key} data-numeric={column.numeric || undefined}>
+                  {totals[column.key]}
+                </td>
+              ),
+            )}
+          </tr>
+        </tfoot>
+      )}
     </table>
   );
 }

@@ -1,0 +1,396 @@
+{
+  "budget": {
+    "late": 8,
+    "of": 34,
+    "targetMs": 8000,
+    "withinPercent": 95
+  },
+  "generatedAt": "2026-10-11T15:00:00.000Z",
+  "matches": [
+    {
+      "correctedItems": 6,
+      "corrections": {
+        "count": 4,
+        "p50Ms": 3,
+        "p95Ms": 4
+      },
+      "eventsPlayed": 2108,
+      "explain": {
+        "count": 7,
+        "p50Ms": 2610,
+        "p95Ms": 8874
+      },
+      "fallbacks": {
+        "hit": 2,
+        "of": 7
+      },
+      "firstPass": {
+        "hit": 5,
+        "of": 7
+      },
+      "infraCostMicrousd": 9,
+      "matchId": "m42",
+      "modelCostMicrousd": 17966,
+      "modelDrafts": {
+        "hit": 5,
+        "of": 7
+      },
+      "modelErrors": 2,
+      "moments": 7,
+      "onAir": {
+        "count": 14,
+        "p50Ms": 2796,
+        "p95Ms": 11616
+      },
+      "partners": [
+        {
+          "costMicrousd": 0,
+          "held": 0,
+          "items": 7,
+          "latencyBudgetMs": 8000,
+          "onAir": {
+            "count": 7,
+            "p50Ms": 2796,
+            "p95Ms": 11610
+          },
+          "tenantId": "northlight-sport",
+          "tokens": {
+            "input": 0,
+            "output": 0
+          },
+          "withinBudget": {
+            "hit": 6,
+            "of": 7
+          },
+          "withinTarget": {
+            "hit": 6,
+            "of": 7
+          }
+        },
+        {
+          "costMicrousd": 3535,
+          "held": 0,
+          "items": 7,
+          "latencyBudgetMs": 8000,
+          "onAir": {
+            "count": 7,
+            "p50Ms": 2802,
+            "p95Ms": 11616
+          },
+          "tenantId": "rheinblick-sport",
+          "tokens": {
+            "input": 6300,
+            "output": 980
+          },
+          "withinBudget": {
+            "hit": 6,
+            "of": 7
+          },
+          "withinTarget": {
+            "hit": 6,
+            "of": 7
+          }
+        },
+        {
+          "costMicrousd": 3535,
+          "held": 7,
+          "items": 7,
+          "latencyBudgetMs": 10000,
+          "onAir": {
+            "count": 0,
+            "p50Ms": null,
+            "p95Ms": null
+          },
+          "tenantId": "tribuna-austral",
+          "tokens": {
+            "input": 6300,
+            "output": 980
+          },
+          "withinBudget": {
+            "hit": 0,
+            "of": 0
+          },
+          "withinTarget": {
+            "hit": 0,
+            "of": 0
+          }
+        }
+      ],
+      "runMs": 13650,
+      "state": "finished",
+      "tokens": {
+        "input": 38407,
+        "output": 3880
+      }
+    },
+    {
+      "correctedItems": 0,
+      "corrections": {
+        "count": 0,
+        "p50Ms": null,
+        "p95Ms": null
+      },
+      "eventsPlayed": 2037,
+      "explain": {
+        "count": 6,
+        "p50Ms": 5358,
+        "p95Ms": 8820
+      },
+      "fallbacks": {
+        "hit": 2,
+        "of": 6
+      },
+      "firstPass": {
+        "hit": 4,
+        "of": 6
+      },
+      "infraCostMicrousd": 8,
+      "matchId": "m43",
+      "modelCostMicrousd": 16048,
+      "modelDrafts": {
+        "hit": 4,
+        "of": 6
+      },
+      "modelErrors": 2,
+      "moments": 6,
+      "onAir": {
+        "count": 12,
+        "p50Ms": 5466,
+        "p95Ms": 8904
+      },
+      "partners": [
+        {
+          "costMicrousd": 0,
+          "held": 0,
+          "items": 6,
+          "latencyBudgetMs": 8000,
+          "onAir": {
+            "count": 6,
+            "p50Ms": 5460,
+            "p95Ms": 8898
+          },
+          "tenantId": "northlight-sport",
+          "tokens": {
+            "input": 0,
+            "output": 0
+          },
+          "withinBudget": {
+            "hit": 5,
+            "of": 6
+          },
+          "withinTarget": {
+            "hit": 5,
+            "of": 6
+          }
+        },
+        {
+          "costMicrousd": 3030,
+          "held": 0,
+          "items": 6,
+          "latencyBudgetMs": 8000,
+          "onAir": {
+            "count": 6,
+            "p50Ms": 5466,
+            "p95Ms": 8904
+          },
+          "tenantId": "rheinblick-sport",
+          "tokens": {
+            "input": 5400,
+            "output": 840
+          },
+          "withinBudget": {
+            "hit": 5,
+            "of": 6
+          },
+          "withinTarget": {
+            "hit": 5,
+            "of": 6
+          }
+        },
+        {
+          "costMicrousd": 3030,
+          "held": 6,
+          "items": 6,
+          "latencyBudgetMs": 10000,
+          "onAir": {
+            "count": 0,
+            "p50Ms": null,
+            "p95Ms": null
+          },
+          "tenantId": "tribuna-austral",
+          "tokens": {
+            "input": 5400,
+            "output": 840
+          },
+          "withinBudget": {
+            "hit": 0,
+            "of": 0
+          },
+          "withinTarget": {
+            "hit": 0,
+            "of": 0
+          }
+        }
+      ],
+      "runMs": 13056,
+      "state": "finished",
+      "tokens": {
+        "input": 34569,
+        "output": 3340
+      }
+    },
+    {
+      "correctedItems": 0,
+      "corrections": {
+        "count": 0,
+        "p50Ms": null,
+        "p95Ms": null
+      },
+      "eventsPlayed": 2758,
+      "explain": {
+        "count": 4,
+        "p50Ms": 3240,
+        "p95Ms": 13908
+      },
+      "fallbacks": {
+        "hit": 1,
+        "of": 4
+      },
+      "firstPass": {
+        "hit": 3,
+        "of": 4
+      },
+      "infraCostMicrousd": 11,
+      "matchId": "m44",
+      "modelCostMicrousd": 10158,
+      "modelDrafts": {
+        "hit": 3,
+        "of": 4
+      },
+      "modelErrors": 1,
+      "moments": 4,
+      "onAir": {
+        "count": 8,
+        "p50Ms": 3306,
+        "p95Ms": 13974
+      },
+      "partners": [
+        {
+          "costMicrousd": 0,
+          "held": 0,
+          "items": 4,
+          "latencyBudgetMs": 8000,
+          "onAir": {
+            "count": 4,
+            "p50Ms": 3300,
+            "p95Ms": 13968
+          },
+          "tenantId": "northlight-sport",
+          "tokens": {
+            "input": 0,
+            "output": 0
+          },
+          "withinBudget": {
+            "hit": 2,
+            "of": 4
+          },
+          "withinTarget": {
+            "hit": 2,
+            "of": 4
+          }
+        },
+        {
+          "costMicrousd": 2020,
+          "held": 0,
+          "items": 4,
+          "latencyBudgetMs": 8000,
+          "onAir": {
+            "count": 4,
+            "p50Ms": 3306,
+            "p95Ms": 13974
+          },
+          "tenantId": "rheinblick-sport",
+          "tokens": {
+            "input": 3600,
+            "output": 560
+          },
+          "withinBudget": {
+            "hit": 2,
+            "of": 4
+          },
+          "withinTarget": {
+            "hit": 2,
+            "of": 4
+          }
+        },
+        {
+          "costMicrousd": 2020,
+          "held": 4,
+          "items": 4,
+          "latencyBudgetMs": 10000,
+          "onAir": {
+            "count": 0,
+            "p50Ms": null,
+            "p95Ms": null
+          },
+          "tenantId": "tribuna-austral",
+          "tokens": {
+            "input": 3600,
+            "output": 560
+          },
+          "withinBudget": {
+            "hit": 0,
+            "of": 0
+          },
+          "withinTarget": {
+            "hit": 0,
+            "of": 0
+          }
+        }
+      ],
+      "runMs": 17256,
+      "state": "finished",
+      "tokens": {
+        "input": 21740,
+        "output": 2210
+      }
+    }
+  ],
+  "objectives": [
+    {
+      "key": "on_air_p50",
+      "measuredMs": 3300,
+      "targetMs": 4000
+    },
+    {
+      "key": "on_air_p95",
+      "measuredMs": 13968,
+      "targetMs": 8000
+    },
+    {
+      "key": "correction_p95",
+      "measuredMs": 4,
+      "targetMs": 10000
+    }
+  ],
+  "onAir": {
+    "count": 34,
+    "p50Ms": 3300,
+    "p95Ms": 13968
+  },
+  "pricing": {
+    "infraMicrousdPerHour": 6942,
+    "models": [
+      {
+        "inputMicrousdPerMillion": 400000,
+        "model": "fallback",
+        "outputMicrousdPerMillion": 1600000
+      },
+      {
+        "inputMicrousdPerMillion": 250000,
+        "model": "fast",
+        "outputMicrousdPerMillion": 2000000
+      }
+    ]
+  }
+}
