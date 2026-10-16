@@ -205,6 +205,17 @@ components:
     textColor: "{colors.ink-1}"
     rounded: "{rounded.key}"
     padding: "8px 12px"
+  statement-panel:
+    backgroundColor: "{colors.panel-1}"
+    rounded: "{rounded.key}"
+    padding: "24px"
+  budget-meter:
+    backgroundColor: "{colors.panel-0}"
+    rounded: "{rounded.key}"
+    padding: "8px"
+  standing-lamp:
+    rounded: "{rounded.lamp}"
+    size: "8px"
 ---
 
 # Design System: Fourth Official
@@ -234,8 +245,8 @@ A neutral black chrome with six signal lights; the lights are the only chroma on
 - **Board white** (led-white): lit LED dots for scorelines and clocks, the primary key's face, and the focus ring. Clocks and scorelines are always white, never a state colour.
 
 ### Secondary (signal lights; each state owns one)
-- **Verified green** (led-green): published, IN panel, within SLO, the lit lamp on the current nav item.
-- **On-air red** (led-red): on air (tally and state), retracted, OUT panel, SLO breach, danger key.
+- **Verified green** (led-green): published, IN panel, within SLO (an objective met, an error budget within bounds), the lit lamp on the current nav item.
+- **On-air red** (led-red): on air (tally and state), retracted, OUT panel, SLO breach (an objective missed, an error budget spent over), danger key.
 - **Pending amber** (led-amber): pending approval, non-zero pending or correction counts, an amber verdict.
 - **Amended violet** (led-violet): amended items only.
 
@@ -358,6 +369,14 @@ The main wall leads with the page header and verdict, then the match wall: a two
 - **The Signal Light Rule here:** a policy change is not an item state, so it uses no state colour. Versions, actions, before and after values are ink-1, ink-2 and ink-3 only; what was replaced is struck in ink-3, never red or violet. The only colour on the screen is the verdict lamp, the danger edge of the Reset keys and the refusal's red-tinted edge.
 - **Phones (720 and below):** the partner keys become a three-up grid of code-only keys (the partner name stays for screen readers, visually hidden); the nav takes the full row and Reset wraps beneath it; in the version view the Edit key sits under the title rather than at its right.
 
+**Operations** (`/operations`) has no live rail, so main takes the full width. The matchday run as a statement of service: did it hold its service levels, what it spent of its error budget, and what it cost, itemised to the hundredth of a cent; never a tile wall of gauges and sparklines. It reads the platform's own measurements (`/api/operations`) on arrival and every 5 seconds after, never while the page is hidden and never overtaking a read still in flight. The top bar carries no readouts here: the statement is the readout. The first viewport runs: page header (title, verdict line); the top of the statement (`.statement__top`, `minmax(0, 1fr) | minmax(20rem, 26rem)` from 1280, aligned to the top, stacked below, 32px above the rest): Service levels with the error budget beneath it at the left, the Amount on the LED board at the right; then "Itemised by match" at full width; By partner and Rates (`3fr | 2fr` from 1600, aligned to the top, stacked below); "How the words were written"; the synthetic-data footnote at 75ch, which says every figure is measured by the platform as the matchday runs and restarts with it (the platform scales to zero), that model cost is a floor (a call that fails before reporting its tokens is not counted), and names the method (docs/cost-model.md). Every section is a panel-1 panel padded 24px with a hairline edge and an `h2` panel heading, 24px apart.
+- **Verdict** (the service levels first, each one missed and by how much, then the budget in words, then the cost): red "The last matchday missed the on-air 95th percentile (14.0 s against 8.0 s). 8 of 34 items late, the error budget spent 4.7 times over. It cost $0.0442." (several misses listed "a, b and c"; the objectives named "the on-air median", "the on-air 95th percentile", "the corrections desk's 95th percentile"); green "The last matchday held its service levels: on air within X s for 95% of items, against 8.0 s. N of M items late, P% of the error budget spent. It cost $X." While a match runs the subject is present tense ("The matchday is holding its service levels", "The matchday is missing …") and the cost is "It has cost $0.0310 so far." The budget words read "N of M items late, P% of the error budget spent", "the error budget spent N times over" past 100% (to the tenth, or whole: 4.7, 20), or "with no late item allowed" when the objective allowed none. Neutral states: "Reading what the platform measured."; idle, "Nothing measured yet: no matchday has run since the platform last started. Start one from Match Live and this statement fills in as it plays."; running before any item has been timed, "The matchday is running; no item has gone on air without an editor yet. It has cost $X so far." While a match runs the verdict is not announced at every reading (`aria-live="off"`), since the cost changes each time.
+- **An unreachable service never lights red:** a service that did not answer is not an objective missed. Unavailable, the verdict is neutral ("The operations service did not answer. This page reads it again every few seconds.") with no statement and no Try again key (it reads again on its own). When a later read fails, the last statement stays on show, the verdict lamp drops to neutral, and a 13px ink-2 line beneath it (75ch) says "The last reading failed: these are the figures as read at hh:mm:ss UTC."
+- **Amounts:** dollars to the hundredth of a cent (`$0.0442`); in text, an amount above nothing but under a hundredth of a cent reads "< $0.0001", never "$0.0000". Durations in seconds to the tenth, milliseconds under a second ("4 ms"); a match's run in minutes and seconds ("13.7 s", "2 min 4 s"); tokens grouped (`en-GB`, "94,716"); a figure with no measure yet is an en dash.
+- **The Signal Light Rule here:** an objective met or missed is a system state, so it alone takes green and red: the verdict lamp, the Standing lamps, and the error-budget meter (green while within budget, red once over, with the red ×N tag). A missed figure is not lit red: it goes to weight 600 ink-1, the same weight as the amount. The amount is lit white on the board (a cost is a figure, not a state), and every table is ink only: no cost, token count or partner row takes a colour.
+- **Wide tables:** "Itemised by match", "By partner" and "How the words were written" each sit in a scroll region inside their panel (`role="region"`, labelled "…, scrolls sideways", `tabindex="0"`, `overflow-x: auto`, `overscroll-behavior-x: contain`), so on a phone the table scrolls and the page never does. Headers, the first column and every figure are `white-space: nowrap`: a figure never wraps.
+- **Phones (720 and below):** panels pad 16px; the scrolled tables hold a 44rem minimum width; the Service levels table and Rates fit the width, the objective names wrapping and the figures not.
+
 Spacing runs on a 4px base (4, 8, 12, 16, 24, 32). Main padding is 24px by 32px; boards pad 24px (featured 32px); rail sections are separated by 32px.
 
 Breakpoints:
@@ -372,6 +391,7 @@ Breakpoints:
 - **Provenance only:** 1024 and up puts the sticky picker beside the record; 768 and up sets each claim's margin note beside it; 1280 and up puts the life beside the facts; 720 and below caps the picker at 15rem and pads the record 16px.
 - **Proving Ground only:** 1280 and up puts The call beside The poll; 1024 and up puts Unsupported claims beside the benchmark (when there are any); 720 and below folds each station to one line.
 - **Policy Studio only:** 1024 and up puts the sticky ledger beside the version (`22rem | 1fr`); 720 and below turns the partner keys into a three-up row of codes and puts the version's Edit key under its title.
+- **Operations only:** 1280 and up puts the Amount beside Service levels (`1fr | minmax(20rem, 26rem)`); 1600 and up pairs By partner with Rates (`3fr | 2fr`); 720 and below pads panels 16px and gives the scrolled tables a 44rem minimum.
 
 No layout shift as live data arrives: fixed-width LED glyphs and tabular figures hold every width.
 
@@ -388,7 +408,7 @@ Flat. There are no drop shadows and no glow. Depth comes from tonal layering of 
 
 ## Shapes
 
-Two shapes only. Hardware is square-cut with a 2px radius: keys, boards, LED fields, nav items, AI tag, key caps. Lights are perfect circles (999px): tally lamps (10px), verdict lamp (12px), current-nav lamp (6px), and every LED dot. Borders are 1px hairlines. Never an outlined square for a lamp, which reads as a checkbox.
+Two shapes only. Hardware is square-cut with a 2px radius: keys, boards, LED fields, nav items, AI tag, key caps. Lights are perfect circles (999px): tally lamps (10px), verdict lamp (12px), standing lamp (8px), current-nav lamp (6px), and every LED dot. The error-budget meter's segments are hardware, not lamps: 2px-radius bars. Borders are 1px hairlines. Never an outlined square for a lamp, which reads as a checkbox.
 
 ## Components
 
@@ -414,7 +434,7 @@ A square-cut hardware key, as on a vision mixer; the primary key is the lit one.
 - **Contents, in order:** LED scoreline (club code, score, club code on one line), club names, LED match clock with broadcast minute (`61'`, `90+3'`), partner tallies, and a stats strip (items per minute, pending approvals, corrections, p95 against SLO) divided by hairlines. Non-zero pending and corrections go amber; p95 outside SLO goes red with the label "p95, outside SLO".
 
 ### Navigation (nav rail)
-- 36px items, 13px ink-2, 18px icons, 2px radius. Hover: panel-2, ink-1. Current: panel-3, ink-1, weight 500, plus a 6px green lamp at the right edge, like a lit switcher key. Unavailable screens sit in ink-3. Collapses to icons below 1280 and to a horizontal strip below 1024.
+- 36px items, 13px ink-2, 18px icons, 2px radius. Hover: panel-2, ink-1. Current: panel-3, ink-1, weight 500, plus a 6px green lamp at the right edge, like a lit switcher key. The rail links all nine screens (Control Room, Match Live, Broadcast Preview, Approvals, Corrections, Provenance, Policy Studio, Proving Ground, Operations); there is no "not yet available" state. Collapses to icons below 1280 and to a horizontal strip below 1024.
 
 ### Status lamp
 The state vocabulary in one component: 16px Lucide icon in the state colour plus the label (or the label for screen readers only in compact use). In the activity log the label is also tinted and set as an 11px uppercase label with a 14px icon.
@@ -426,7 +446,7 @@ Broadcast tally per partner: a 10px round lamp plus "On air" (red, lit) or "Off"
 The fourth official's dot matrix, drawn as SVG: all unlit dots in one path and all lit dots in another (two nodes per readout, whatever its length).
 - **Glyphs:** 5x7, digits, A to Z and match marks (`: . , + - ' % / $`); unknown characters fall back to `?`.
 - **Spacing:** 1-dot gap between dots and one blank column between characters; every character has the same width, so a ticking clock never changes size.
-- **Dot size:** whole CSS pixels only (2 to 6) so dots stay on the pixel grid. Clocks use 3px; the OUT/IN board 4px; scorelines 6px.
+- **Dot size:** whole CSS pixels only (2 to 6) so dots stay on the pixel grid. Clocks use 3px; the OUT/IN board 4px; the Operations amount 5px; scorelines 6px.
 - **Unlit dots:** always drawn faintly (led-off), so the readout keeps its shape when values change.
 - **Scorelines scale fluidly:** the scoreline fills its field width (max 26rem on standard boards, 60rem on the featured board), so the featured match reads largest on the wall. On Match Live it is capped at `--scoreline-max` (44rem).
 - **Tones:** white by default; green, red, amber, violet, blue available, used by the state rules above. Lit dots fade between values over 220ms.
@@ -440,7 +460,7 @@ The fourth official's board, repurposed: what went out (red) and what replaced i
 The two panels shrink to fit a narrow rail (`repeat(2, minmax(0, 1fr))`, `min-width: 0`, and the readout SVG at `max-width: 100%; height: auto`), so a long OUT or IN text scales down rather than overflowing. On Match Live the rail ("Corrections") lists every correction, newest first (empty, a 13px ink-2 sentence says what will appear there); each caption gives the summary (14px ink-1), "N published items corrected." (or "No published item rested on it.") in ink-2, and "Issued hh:mm:ss UTC" in tabular figures. When a corrected item is on the page the summary is a link to it (underline in hairline-strong, `currentColor` on hover), and the item it reaches is outlined (see Wire item, `:target`). In brief form (`brief`, for a page that states the summary and times itself, as the Corrections incident does) the caption keeps only the impact line.
 
 ### Verdict line
-One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute; on Corrections, how many corrections and what they reached; on Policy Studio, which version the partner is on, who made it and when (see Layout).
+One sentence under the screen title, at 16px weight 500, led by a 12px round lamp in green, amber or red ("All 3 matches under control. 3 items await approval."). It is a `role="status"` region. The lamp sits on the first line however many lines the verdict takes (`align-items: flex-start`, the lamp offset by `calc((1lh - 12px) / 2)`), on every screen. Every screen leads with one. On Match Live it reads the run: amber "No replay is running. Start the matchday to watch it unfold." before a start; green "Live. N verified insights so far, M being verified." while running; green "Full time. …" with how many corrections reached their items; red when the replay stopped or the match service is unavailable. On Approvals it names how many items wait and since which match minute; on Corrections, how many corrections and what they reached; on Policy Studio, which version the partner is on, who made it and when; on Operations, each service level missed and by how much, the error budget in words and the cost (see Layout).
 
 ### Match keys (Match Live)
 One square-cut key per match in a `nav` labelled "Matches": 36px tall, 12px side padding, panel-2 face with strong hairline edge and the key bevel, 13px weight 500 ink-2, club codes ("ARD v KES") in tabular figures with full names for screen readers. Hover and current (`aria-current="page"`) go panel-3 and ink-1; current drops the bevel, like a pressed key. A running match adds a 6px red lamp and "LIVE" as an 11px uppercase label in ink-1; a finished one a quiet "FT" in ink-3; otherwise nothing.
@@ -485,7 +505,8 @@ What changed, on the item it changed: under the headline, a recessed panel-0 str
 A 22x34 board held up: a 3x5 dot grid in a 2px-radius frame, top row red (out), bottom row green (in), the rest unlit.
 
 ### Data table
-13px, left-aligned headers in ink-2 weight 500 over a strong hairline, 8px by 12px cells on hairline rows, panel-2 row hover, right-aligned tabular numerics, uppercase label caption.
+13px, left-aligned headers in ink-2 weight 500 over a strong hairline, 8px by 12px cells on hairline rows, panel-2 row hover, right-aligned tabular numerics, uppercase label caption (or `hideCaption`, kept for screen readers, when a panel heading names the table). Empty, one full-width cell says what will appear and when.
+- **Totals row** (`totals`, by column key): an optional closing row in a `tfoot`, its first cell a row header (`th scope="row"`, "Total"), numeric cells right-aligned like the body; columns with nothing to add stay empty. On Operations it sits above a strong hairline, padded 12px on top, in 600 ink-1, and it must match the Amount on the board to the hundredth of a cent.
 
 ### Partner keys (Broadcast Preview)
 A vision mixer's bus: one key per partner in a group labelled "Partner on the monitor", numbered 1 to 3. 40px tall (44px on phones), panel-2 face, strong hairline edge, key bevel, 13px weight 500 ink-2. Contents, in order: a 24px cap (panel-0, Geist Mono, ink-3), the partner name, its language as an 11px uppercase label in ink-3, and an 8px tally lamp, lit red when that partner has a graphic on air (announced ", on air"), unlit (led-off) otherwise. The current key is `aria-pressed`: panel-3, ink-3 edge, ink-1, no bevel, and its cap lights white with panel-0 text. Policy Studio reuses them as links (see Layout): the cap carries the partner code and widens to fit, there is no language or tally, and the current key is `aria-current="page"` with the same pressed look.
@@ -611,6 +632,30 @@ Every control the studio may change, in four fieldsets, each under a silk-screen
 - **Limits:** Latency budget in seconds, 1 to 30 in half seconds (stored as milliseconds), and Items a minute, 1 to 30; tabular number inputs at most 10rem wide; a cleared field stays blank rather than becoming 0.
 - **Fields:** 13px 600 ink-1 labels over an 11px ink-3 hint, inputs on panel-0 with a strong hairline edge and the key radius, the focus ring on `:focus-visible`; checkboxes and radios take `accent-color: led-white`, never a state colour.
 
+### Service levels (Operations)
+"Service levels": a panel-1 panel padded 24px, the objectives table above the error budget, 24px apart. The data table, Objective | Target | Measured | Standing, one row per objective in the report's order: Event to on air, median; Event to on air, 95th percentile; Corrections desk, 95th percentile. Target reads "≤ 8.0 s"; Measured is the figure, or an en dash before anything was measured; a missed figure is set 600 ink-1, never red.
+- **Standing:** an 8px round lamp and the word, 13px ink-2, never colour alone: "Met" (green lamp), "Missed" (red lamp, the word in ink-1), "Not yet measured" (unlit, led-off).
+
+### Error budget (Operations)
+Beneath the objectives, above a hairline: "Error budget" as an 11px uppercase ink-3 label (an `h3`); the objective in 13px ink-2 ("95% of items on air within 8.0 s"); the headline in 16px 600 ink-1: "P% of the error budget spent", "Error budget spent 4.7 times over", "Error budget spent: no late item was allowed", or "Not yet measured"; the meter row (up to 44rem); the reading in 13px ink-2 ("8 of 34 items later than 8.0 s; 5% of 34 allows 1.7 late.", or "No item has gone on air without an editor yet.").
+- **Meter:** twenty LED segments, each five percent of the budget, in a recessed panel-0 field padded 8px with the key radius (`repeat(20, minmax(0, 1fr))`, 3px gaps); each segment 14px tall, 2px radius, unlit at led-off. Lit segments are the share spent, rounded up and capped at twenty: green while within budget, all red once over (any late item when none was allowed lights all twenty red). `role="meter"` labelled "Error budget spent", 0 to 100, its value text the headline.
+- **×N tag:** past 100%, "×4.7" beside the meter in Geist Mono, 16px 600 led-red, hidden from screen readers (the headline says it).
+
+### Amount (Operations)
+"Amount": a panel-1 panel padded 24px. The run's cost lit on the LED board in white at 5px dots, filling the panel's width on a panel-0 field padded 16px, always to the hundredth of a cent (the board lights digits only, so it shows "$0.0000" where the text would say "< $0.0001"); `role="img"`, "Cost: $0.0442" ("Cost so far: …" while running). Beneath, a 13px ink-2 note: "This run", or "So far, while the matchday runs". Then, above a hairline, a `dl` of three lines, 13px ink-2 terms left and ink-1 tabular values right: Models, Infrastructure, Tokens in · out ("94,716 · 9,430").
+
+### Itemised by match (Operations)
+The statement's body, in a scroll region: one row per match that has run (an idle match is left out), Match | Ran | Items a minute | On air, median · 95th | Corrections, count · 95th | Tokens | Models | Infrastructure | Total. The match cell is "Home v Away" over its state in 11px ink-3 (Running, Finished, Failed); medians and 95ths read "2.8 s · 11.6 s"; corrections "4 · 4 ms", or an en dash with none; Total in 600. The totals row ("Total": tokens, models, infrastructure, total) closes it and matches the Amount on the board. None ran: "No match has run since the platform last started."
+
+### By partner (Operations)
+Each partner across the run's matches, grouped from the report in its order, everything that adds up added up: Partner | Items | Held for an editor | Own latency budget | On air within it | Localizer tokens | Localizer cost. The partner's own latency budget is shown only when every match judged it against the same one (an en dash otherwise), and "On air within it" counts "13 of 17" against it; a partner whose every item was held for an editor reads "All held". The cost is the partner's own Localizer cost; the Analyst and the infrastructure are shared, so the column does not add up to the Amount. None: "No partner has published an item yet."
+
+### Rates (Operations)
+The prices the run was costed at: Model (in the data font) | Input, a million tokens | Output, a million tokens, in dollars to the cent ("$0.40"). Beneath, a 13px ink-2 note at 75ch: "Infrastructure: $0.0069 an hour, the platform's standing charge, shared by the matches of a run for as long as they run. A partner's Localizer cost is its own; the Analyst and the infrastructure are shared by every partner of a match."
+
+### How the words were written (Operations)
+How each match's insights were drafted, in a scroll region: Match | Insights | Explained in, median · 95th | First draft passed | Drafts the Verifier passed | Model errors | Written by the template, counts read "5 of 7". Ink only: a model error or a template fallback is a count, not a state.
+
 ## Do's and Don'ts
 
 ### Do:
@@ -633,6 +678,7 @@ Every control the studio may change, in four fieldsets, each under a silk-screen
 - **Do** show a correction's reach as substitutions: every partner item it reached OUT and IN, with a text equivalent beside any picture of it.
 - **Do** give each measure one name across the poll, the table and the benchmark, and say in the verdict which rules said no and by how much.
 - **Do** keep a governed setting as a change ledger: every version with who, when and why, what it changed read before and after, a required reason for the next one, and a reset as a new version rather than an erasure.
+- **Do** state a run's service as a statement: each objective met or missed and by how much, the error budget in words, and the cost to the hundredth of a cent, itemised so the totals row matches the amount on the board.
 
 ### Don't:
 - **Don't** add glow, bloom or drop shadows, and don't use gradients (the tally lamp highlight is the only exception).
@@ -647,6 +693,7 @@ Every control the studio may change, in four fieldsets, each under a silk-screen
 - **Don't** set Paper in the control room, and don't give the development key's seal green: only ES256 is "Signed and unchanged".
 - **Don't** light a passing gate figure green or colour the side-by-side table; only a breached figure and the lamps carry state.
 - **Don't** colour a policy change: struck values are ink-3, added items ink-1, and no version, action or field takes a state colour.
+- **Don't** light an unreachable service red, or show a cost as nothing: a service that did not answer is neutral, not an objective missed, and an amount under a hundredth of a cent reads "< $0.0001".
 
 ### Open items
 - Nothing on air links to Verify yet: no QR code or short link on the partner graphics or in the Broadcast Preview monitor, so a viewer can only reach `/verify/[itemId]` from a shared URL.
