@@ -195,3 +195,9 @@ def test_an_event_keeps_the_time_it_was_first_played() -> None:
     log.played(7)
 
     assert log.timing.played == {7: 0.5}
+
+
+def test_the_log_reads_its_own_clock_for_whoever_measures_its_run() -> None:
+    log = FeedLog("m42", clock=ticking())
+
+    assert log.now() == 0.5

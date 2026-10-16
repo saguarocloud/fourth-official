@@ -65,6 +65,10 @@ class FeedLog:
             self._started, tuple(self._published), MappingProxyType(dict(self._played))
         )
 
+    def now(self) -> float:
+        """A reading of the clock the log times its run with."""
+        return self._clock()
+
     def played(self, seq: int) -> None:
         """Note that the replay has just played event `seq` (the first time only)."""
         if seq not in self._played:
