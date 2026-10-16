@@ -1,6 +1,6 @@
 """The production configuration: one definition the API runs and the Proving Ground gates."""
 
-from fourth_official_explain.analyst import TokenCount
+from fourth_official_explain.metering import TokenCount
 from fourth_official_explain.production import ANALYST, LOCALIZER, MODELS, analyst_drafters
 from test_analyst import NoNetworkCredential
 

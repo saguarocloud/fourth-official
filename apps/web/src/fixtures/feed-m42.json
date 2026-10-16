@@ -1603,9 +1603,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 104,
@@ -1665,9 +1667,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 105,
@@ -1715,9 +1719,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 106,
@@ -1777,9 +1783,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 107,
@@ -1827,9 +1835,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 108,
@@ -1880,9 +1890,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 109,
@@ -1942,9 +1954,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 110,

@@ -9,7 +9,8 @@ import pytest
 from explain_fixtures import featured, moment
 from fourth_official_contracts import GoalEvent, Moment, Provenance
 from fourth_official_explain.drafts import ClaimDraft, InsightDraft
-from fourth_official_explain.pipeline import DraftRequest, Explanation, explain
+from fourth_official_explain.metering import TokenCount, collecting, spend
+from fourth_official_explain.pipeline import Drafter, DraftRequest, Explanation, explain
 
 FAST = Provenance(agent="analyst", prompt_version="v1.0", model="fast", produced_by="model")
 QUALITY = Provenance(agent="analyst", prompt_version="v1.0", model="quality", produced_by="model")
@@ -54,7 +55,7 @@ class Scripted:
         return answer
 
 
-def run(subject: Moment, *drafters: Scripted, timeout: float = 20.0) -> Explanation:
+def run(subject: Moment, *drafters: Drafter, timeout: float = 20.0) -> Explanation:
     facts, _ = featured()
     return anyio.run(lambda: explain(subject, facts, drafters, timeout=timeout))
 
@@ -213,3 +214,48 @@ def test_more_attempts_than_insight_ids_can_number_are_refused() -> None:
 
     with pytest.raises(ValueError, match="model attempts"):
         anyio.run(lambda: explain(goal, facts, many))
+
+
+@dataclass
+class Spending:
+    """A drafter that reports the tokens each call spends, then answers or fails."""
+
+    provenance: Provenance
+    answers: list[InsightDraft | Exception]
+    tokens: tuple[int, int] = (1200, 300)
+
+    async def draft(self, request: DraftRequest) -> InsightDraft:
+        spend(TokenCount(model=self.provenance.model, input=self.tokens[0], output=self.tokens[1]))
+        answer = self.answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+
+def test_each_attempt_records_the_tokens_its_call_spent() -> None:
+    subject = moment("goal")
+    failing = Spending(FAST, [TimeoutError()], tokens=(500, 0))
+    passing = Spending(QUALITY, [good_draft(subject)], tokens=(1200, 300))
+
+    explanation = run(subject, failing, passing)
+
+    assert [(a.model, a.input_tokens, a.output_tokens) for a in explanation.attempts] == [
+        ("fast", 500, 0),
+        ("quality", 1200, 300),
+    ]
+
+
+def test_the_template_spends_no_tokens() -> None:
+    explanation = run(moment("goal"))
+
+    assert (explanation.attempts[-1].input_tokens, explanation.attempts[-1].output_tokens) == (0, 0)
+
+
+def test_tokens_spent_outside_an_attempt_are_not_counted_anywhere() -> None:
+    spend(TokenCount(model="fast", input=10, output=10))  # no attempt is collecting: ignored
+
+    with collecting() as spent:
+        spend(TokenCount(model="fast", input=7, output=3))
+        spend(TokenCount(model="fast", input=1, output=1))
+
+    assert spent == [TokenCount("fast", 7, 3), TokenCount("fast", 1, 1)]

@@ -7,7 +7,7 @@ import httpx
 import pytest
 from azure.core.credentials import AccessToken
 
-from fourth_official_explain.analyst import TokenCount
+from fourth_official_explain.metering import TokenCount
 from fourth_official_match_data import store_of
 from fourth_official_proving.configurations import CONFIGURATIONS
 from fourth_official_proving.models import (

@@ -316,6 +316,8 @@ class _Replay:
                         outcome=a.outcome,
                         findings=a.findings,  # type: ignore[arg-type]
                         error=a.error,
+                        input_tokens=a.input_tokens,
+                        output_tokens=a.output_tokens,
                     )
                     for a in explanation.attempts
                 ),

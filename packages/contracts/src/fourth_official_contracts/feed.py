@@ -40,6 +40,7 @@ EntrySeq = Annotated[int, Field(ge=1, le=1_000_000)]
 # Text for the fourth official's LED board: characters the board can light, kept short.
 BoardText = Annotated[str, StringConstraints(pattern=r"^[A-Z0-9 :.,+'%/$-]{1,12}$")]
 MAX_ATTEMPTS = 99
+Tokens = Annotated[int, Field(ge=0, le=10_000_000)]
 
 
 class AttemptRecord(WireModel):
@@ -52,6 +53,10 @@ class AttemptRecord(WireModel):
     findings: Annotated[tuple[FindingCode, ...], Field(max_length=64, strict=False)]
     # The kind of failure (an exception class name) when the model itself failed.
     error: Annotated[str, StringConstraints(pattern=r"^[A-Za-z][A-Za-z0-9]{0,63}$")] | None
+    # Tokens the attempt's model calls spent, as the service reported them: none for a template,
+    # and none recorded before the platform metered them.
+    input_tokens: Tokens = 0
+    output_tokens: Tokens = 0
 
 
 class RenderedInsight(WireModel):

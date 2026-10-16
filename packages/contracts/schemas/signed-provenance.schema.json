@@ -45,92 +45,6 @@
       "title": "Approval",
       "type": "object"
     },
-    "AttemptRecord": {
-      "additionalProperties": false,
-      "description": "One try at explaining a moment: who drafted, and how it ended.",
-      "properties": {
-        "agent": {
-          "pattern": "^[a-z][a-z-]{1,31}$",
-          "title": "Agent",
-          "type": "string"
-        },
-        "error": {
-          "anyOf": [
-            {
-              "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
-              "type": "string"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "title": "Error"
-        },
-        "findings": {
-          "items": {
-            "enum": [
-              "MOMENT_MISMATCH",
-              "MALFORMED_INSIGHT",
-              "UNSUPPORTED_CHARACTER",
-              "BARE_NUMBER",
-              "RAW_NAME",
-              "UNVERIFIED_NAME",
-              "UNKNOWN_WORD",
-              "FUTURE_WORDING",
-              "UNKNOWN_PLAYER",
-              "UNKNOWN_CLUB",
-              "PLAYER_NOT_IN_EVIDENCE",
-              "MINUTE_NOT_IN_EVIDENCE",
-              "SNAPSHOT_NOT_FOUND",
-              "UNDEFINED_VALUE",
-              "EVIDENCE_NOT_FOUND",
-              "FUTURE_EVIDENCE",
-              "FUTURE_MINUTE",
-              "VOIDED_EVIDENCE",
-              "SUPERSEDED_EVIDENCE",
-              "CLAIMS_CHANGED",
-              "REFERENCES_CHANGED",
-              "BLOCKED_TOPIC",
-              "TOO_LONG"
-            ],
-            "type": "string"
-          },
-          "maxItems": 64,
-          "title": "Findings",
-          "type": "array"
-        },
-        "model": {
-          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
-          "title": "Model",
-          "type": "string"
-        },
-        "number": {
-          "maximum": 99,
-          "minimum": 1,
-          "title": "Number",
-          "type": "integer"
-        },
-        "outcome": {
-          "enum": [
-            "passed",
-            "failed",
-            "error"
-          ],
-          "title": "Outcome",
-          "type": "string"
-        }
-      },
-      "required": [
-        "number",
-        "agent",
-        "model",
-        "outcome",
-        "findings",
-        "error"
-      ],
-      "title": "AttemptRecord",
-      "type": "object"
-    },
     "Disclosure": {
       "additionalProperties": false,
       "description": "How AI involvement is shown on an item: the label (rendered by code, never by a model).",
@@ -278,7 +192,7 @@
         },
         "attempts": {
           "items": {
-            "$ref": "#/$defs/AttemptRecord"
+            "$ref": "#/$defs/SignedAttempt"
           },
           "maxItems": 99,
           "title": "Attempts",
@@ -436,6 +350,92 @@
         "corrections"
       ],
       "title": "ProvenanceRecord",
+      "type": "object"
+    },
+    "SignedAttempt": {
+      "additionalProperties": false,
+      "description": "An attempt as a record signs it: who drafted and how it ended. What the attempt cost is\noperations, not provenance, and stays out, so a record's signed bytes never change shape.",
+      "properties": {
+        "agent": {
+          "pattern": "^[a-z][a-z-]{1,31}$",
+          "title": "Agent",
+          "type": "string"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Za-z][A-Za-z0-9]{0,63}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error"
+        },
+        "findings": {
+          "items": {
+            "enum": [
+              "MOMENT_MISMATCH",
+              "MALFORMED_INSIGHT",
+              "UNSUPPORTED_CHARACTER",
+              "BARE_NUMBER",
+              "RAW_NAME",
+              "UNVERIFIED_NAME",
+              "UNKNOWN_WORD",
+              "FUTURE_WORDING",
+              "UNKNOWN_PLAYER",
+              "UNKNOWN_CLUB",
+              "PLAYER_NOT_IN_EVIDENCE",
+              "MINUTE_NOT_IN_EVIDENCE",
+              "SNAPSHOT_NOT_FOUND",
+              "UNDEFINED_VALUE",
+              "EVIDENCE_NOT_FOUND",
+              "FUTURE_EVIDENCE",
+              "FUTURE_MINUTE",
+              "VOIDED_EVIDENCE",
+              "SUPERSEDED_EVIDENCE",
+              "CLAIMS_CHANGED",
+              "REFERENCES_CHANGED",
+              "BLOCKED_TOPIC",
+              "TOO_LONG"
+            ],
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Findings",
+          "type": "array"
+        },
+        "model": {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+          "title": "Model",
+          "type": "string"
+        },
+        "number": {
+          "maximum": 99,
+          "minimum": 1,
+          "title": "Number",
+          "type": "integer"
+        },
+        "outcome": {
+          "enum": [
+            "passed",
+            "failed",
+            "error"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number",
+        "agent",
+        "model",
+        "outcome",
+        "findings",
+        "error"
+      ],
+      "title": "SignedAttempt",
       "type": "object"
     }
   },

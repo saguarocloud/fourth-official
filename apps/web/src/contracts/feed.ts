@@ -95,9 +95,11 @@ export type Findings = (
   | "BLOCKED_TOPIC"
   | "TOO_LONG"
 )[];
+export type Inputtokens = number;
 export type Model = string;
 export type Number = number;
 export type Outcome = "passed" | "failed" | "error";
+export type Outputtokens = number;
 export type Entryseq2 = number;
 export type Asofseq2 = number;
 /**
@@ -345,9 +347,11 @@ export interface AttemptRecord {
   agent: Agent;
   error: Error;
   findings: Findings;
+  inputTokens?: Inputtokens;
   model: Model;
   number: Number;
   outcome: Outcome;
+  outputTokens?: Outputtokens;
 }
 export interface Insight {
   asOfSeq: Asofseq2;

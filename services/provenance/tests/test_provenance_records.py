@@ -125,3 +125,24 @@ def test_the_store_keeps_the_latest_record_per_item() -> None:
 def test_a_local_key_must_be_long_enough() -> None:
     with pytest.raises(ValueError, match="32 bytes"):
         LocalSigner(b"short")
+
+
+def test_a_record_signs_every_attempt_but_never_what_it_cost() -> None:
+    item = first_narrative("tribuna-austral")
+    metered = item.model_copy(
+        update={
+            "attempts": tuple(
+                a.model_copy(update={"input_tokens": 900, "output_tokens": 80})
+                for a in item.attempts
+            )
+        }
+    )
+
+    record = record_for(metered, canonical_of(item), issued_at=NOW, corrections=())
+    unmetered = record_for(item, canonical_of(item), issued_at=NOW, corrections=())
+
+    assert record is not None
+    assert unmetered is not None
+    assert [a.outcome for a in record.attempts] == [a.outcome for a in item.attempts]
+    assert canonical_bytes(record) == canonical_bytes(unmetered)
+    assert b"Tokens" not in canonical_bytes(record)

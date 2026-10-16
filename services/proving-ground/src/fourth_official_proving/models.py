@@ -21,7 +21,7 @@ from urllib.parse import urlsplit
 import httpx
 import uvicorn
 
-from fourth_official_explain.analyst import TokenCount
+from fourth_official_explain.metering import TokenCount
 from fourth_official_match_data import MatchStore, create_server
 
 LOOPBACK = "127.0.0.1"

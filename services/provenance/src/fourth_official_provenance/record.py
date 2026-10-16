@@ -7,6 +7,7 @@ from fourth_official_contracts import (
     InsightEntry,
     ProvenanceClaim,
     ProvenanceRecord,
+    SignedAttempt,
     TenantItemEntry,
 )
 
@@ -43,7 +44,7 @@ def record_for(
         ),
         canonical=canonical.insight.provenance if canonical else None,
         localized=localized.provenance,
-        attempts=item.attempts,
+        attempts=tuple(SignedAttempt.of(a) for a in item.attempts),
         disclosure=item.overlay.disclosure,
         approval=item.approval,
         supersedes=item.overlay.supersedes,

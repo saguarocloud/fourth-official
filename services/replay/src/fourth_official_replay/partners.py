@@ -75,6 +75,8 @@ def _records(attempts: Sequence[Attempt]) -> tuple[AttemptRecord, ...]:
             outcome=a.outcome,
             findings=a.findings,  # type: ignore[arg-type]
             error=a.error,
+            input_tokens=a.input_tokens,
+            output_tokens=a.output_tokens,
         )
         for a in attempts
     )

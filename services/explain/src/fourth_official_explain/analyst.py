@@ -14,6 +14,7 @@ from azure.core.credentials_async import AsyncTokenCredential
 from fourth_official_contracts import Provenance
 from fourth_official_explain.bounds import MomentBound
 from fourth_official_explain.drafts import InsightDraft
+from fourth_official_explain.metering import TokenCount, spend, usage_of
 from fourth_official_explain.pipeline import DraftRequest
 from fourth_official_explain.prompts import Prompt
 
@@ -31,27 +32,8 @@ class DraftError(RuntimeError):
     """The model answered without a usable structured draft."""
 
 
-@dataclass(frozen=True, slots=True)
-class TokenCount:
-    """Tokens one model call spent, under the model's configured alias."""
-
-    model: str
-    input: int
-    output: int
-
-
 # Told of every call's tokens, so a caller can put a price on a run.
 Meter = Callable[[TokenCount], None]
-
-
-def _spent(response: object, model: str) -> TokenCount | None:
-    usage = getattr(response, "usage_details", None)
-    if not isinstance(usage, Mapping):
-        return None
-    tokens_in, tokens_out = usage.get("input_token_count"), usage.get("output_token_count")
-    if not isinstance(tokens_in, int) or not isinstance(tokens_out, int):
-        return None
-    return TokenCount(model=model, input=tokens_in, output=tokens_out)
 
 
 # Runs the agent on one message, with options, bounded to a moment; returns the agent's response.
@@ -120,9 +102,11 @@ class AgentDrafter:
     async def draft(self, request: DraftRequest) -> InsightDraft:
         options = cast("ChatOptions[Any]", {**self.options, "response_format": InsightDraft})
         response = await self.run(request_message(request), options, request.moment.as_of_seq)
-        spent = _spent(response, self.provenance.model)
-        if self.meter is not None and spent is not None:
-            self.meter(spent)
+        spent = usage_of(response, self.provenance.model)
+        if spent is not None:
+            spend(spent)
+            if self.meter is not None:
+                self.meter(spent)
         value = getattr(response, "value", None)
         if not isinstance(value, InsightDraft):
             raise DraftError("the model returned no structured draft")

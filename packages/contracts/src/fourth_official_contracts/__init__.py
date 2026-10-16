@@ -153,6 +153,7 @@ from fourth_official_contracts.primitives import (
 from fourth_official_contracts.provenance import (
     ProvenanceClaim,
     ProvenanceRecord,
+    SignedAttempt,
     SignedProvenance,
     canonical_bytes,
     parse_signed_provenance,
@@ -305,6 +306,7 @@ __all__ = [
     "Scorecard",
     "SetPieceEvent",
     "ShotEvent",
+    "SignedAttempt",
     "SignedProvenance",
     "SnapshotIdParts",
     "Spread",

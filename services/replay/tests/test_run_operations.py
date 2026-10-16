@@ -1,4 +1,4 @@
-"""Operations measures a run from its feed and the log's timing: latency, fallbacks, corrections."""
+"""A run's operations, from its feed and its log's timing: latency, fallbacks, corrections."""
 
 import dataclasses
 from functools import cache

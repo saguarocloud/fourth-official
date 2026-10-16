@@ -1,6 +1,7 @@
 """Replaying a match publishes its clock, moments, verified insights and corrections, in order."""
 
 import asyncio
+import dataclasses
 import importlib
 import json
 from functools import cache
@@ -23,6 +24,7 @@ from fourth_official_contracts import (
     parse_feed_entry,
 )
 from fourth_official_explain import Explanation, explain
+from fourth_official_explain.pipeline import Attempt
 from fourth_official_match_data import demo_store
 from fourth_official_replay import FeedLog, ReplayConfig, fixed_clocks, replay
 from fourth_official_replay.replay import correction_board, correction_summary
@@ -362,3 +364,24 @@ def test_the_log_notes_when_each_event_was_played_and_before_anything_it_led_to(
     for entry in log.entries:
         if isinstance(entry, ClockEntry):
             assert timing.played[entry.as_of_seq] < published[entry.entry_seq]
+
+
+def test_an_insight_carries_the_tokens_each_attempt_spent() -> None:
+    record = demo_store().record("m42")
+    log = FeedLog("m42")
+
+    async def metered(moment: Moment, facts: MatchFacts) -> Explanation:
+        explanation = await explain(moment, facts, [])
+        template = explanation.attempts[-1]
+        tried = Attempt(1, "analyst", "fast", "failed", ("BARE_NUMBER",), None, 1500, 220)
+        return dataclasses.replace(
+            explanation, attempts=(tried, dataclasses.replace(template, number=2))
+        )
+
+    async def run() -> None:
+        await replay(record, log, metered, sleep=no_wait)
+
+    anyio.run(run)
+
+    insight = next(e for e in log.entries if isinstance(e, InsightEntry))
+    assert [(a.input_tokens, a.output_tokens) for a in insight.attempts] == [(1500, 220), (0, 0)]
