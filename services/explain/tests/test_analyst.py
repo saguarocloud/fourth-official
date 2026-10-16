@@ -13,12 +13,12 @@ from fourth_official_contracts import Finding, Provenance
 from fourth_official_explain.analyst import (
     AgentDrafter,
     DraftError,
-    TokenCount,
     foundry_analyst,
     request_message,
 )
 from fourth_official_explain.bounds import MomentBound
 from fourth_official_explain.drafts import ClaimDraft, InsightDraft
+from fourth_official_explain.metering import TokenCount
 from fourth_official_explain.pipeline import LEAD_UP_EVENTS, DraftRequest, brief
 from fourth_official_explain.prompts import load_prompt, parse_prompt
 

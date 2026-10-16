@@ -10,18 +10,18 @@ import asyncio
 import os
 import re
 import socket
-from collections.abc import AsyncIterator, Mapping
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from http import HTTPStatus
-from types import MappingProxyType
 from typing import Protocol
 from urllib.parse import urlsplit
 
 import httpx
 import uvicorn
 
-from fourth_official_explain.analyst import TokenCount
+from fourth_official_explain.metering import TokenCount
+from fourth_official_explain.production import PRICES, micro_dollars
 from fourth_official_match_data import MatchStore, create_server
 
 LOOPBACK = "127.0.0.1"
@@ -32,40 +32,26 @@ _PER_MILLION = 1_000_000
 FOUNDRY_HOST_SUFFIX = ".services.ai.azure.com"
 
 
-@dataclass(frozen=True, slots=True)
-class Price:
-    """US dollars per million tokens."""
-
-    input: float
-    output: float
-
-
-# List prices of the models behind each alias (infra/main.bicep: fast is gpt-5-mini, fallback is
-# gpt-4.1-mini; Global Standard, pay as you go). Change these with the deployments.
-PRICES_PER_MILLION: Mapping[str, Price] = MappingProxyType(
-    {
-        "fast": Price(input=0.25, output=2.00),
-        "fallback": Price(input=0.40, output=1.60),
-    }
-)
-
-
 @dataclass(slots=True)
 class CostMeter:
-    """Adds up what a run's model calls cost. An alias without a price is an error, never a
-    guess: a scorecard's cost is either known or the run fails."""
+    """Adds up what a run's model calls cost, at the production prices (one definition with the
+    API's Operations). An alias without a price is an error, never a guess: a scorecard's cost is
+    either known or the run fails."""
 
-    calls: int = 0
-    _usd: float = field(default=0.0, init=False, repr=False)
+    spent: list[TokenCount] = field(default_factory=list)
+
+    @property
+    def calls(self) -> int:
+        return len(self.spent)
 
     def __call__(self, spent: TokenCount) -> None:
-        price = PRICES_PER_MILLION[spent.model]
-        self._usd += (spent.input * price.input + spent.output * price.output) / _PER_MILLION
-        self.calls += 1
+        if spent.model not in PRICES:
+            raise KeyError(spent.model)
+        self.spent.append(spent)
 
     def cost_usd(self) -> float | None:
         """The run's cost, or None if no call reported what it spent (unknown, not free)."""
-        return round(self._usd, 4) if self.calls else None
+        return round(micro_dollars(self.spent) / _PER_MILLION, 4) if self.spent else None
 
 
 class FoundryUnavailableError(RuntimeError):

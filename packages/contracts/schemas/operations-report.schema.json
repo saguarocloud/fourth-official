@@ -1,0 +1,458 @@
+{
+  "$defs": {
+    "ErrorBudget": {
+      "additionalProperties": false,
+      "description": "The on-air objective as a share of items: `within_percent` of items aired without an\neditor go on air within `target_ms`. Items later than that spend the budget.",
+      "properties": {
+        "late": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Late",
+          "type": "integer"
+        },
+        "of": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Of",
+          "type": "integer"
+        },
+        "targetMs": {
+          "maximum": 3600000,
+          "minimum": 0,
+          "title": "Targetms",
+          "type": "integer"
+        },
+        "withinPercent": {
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Withinpercent",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "withinPercent",
+        "targetMs",
+        "late",
+        "of"
+      ],
+      "title": "ErrorBudget",
+      "type": "object"
+    },
+    "MatchOperations": {
+      "additionalProperties": false,
+      "description": "One match of the current matchday run.",
+      "properties": {
+        "correctedItems": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Correcteditems",
+          "type": "integer"
+        },
+        "corrections": {
+          "$ref": "#/$defs/Spread"
+        },
+        "eventsPlayed": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Eventsplayed",
+          "type": "integer"
+        },
+        "explain": {
+          "$ref": "#/$defs/Spread"
+        },
+        "fallbacks": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "firstPass": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "infraCostMicrousd": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Infracostmicrousd",
+          "type": "integer"
+        },
+        "matchId": {
+          "pattern": "^m[0-9]{1,12}$",
+          "title": "Matchid",
+          "type": "string"
+        },
+        "modelCostMicrousd": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Modelcostmicrousd",
+          "type": "integer"
+        },
+        "modelDrafts": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "modelErrors": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Modelerrors",
+          "type": "integer"
+        },
+        "moments": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Moments",
+          "type": "integer"
+        },
+        "partners": {
+          "items": {
+            "$ref": "#/$defs/PartnerOperations"
+          },
+          "maxItems": 8,
+          "title": "Partners",
+          "type": "array"
+        },
+        "runMs": {
+          "maximum": 3600000,
+          "minimum": 0,
+          "title": "Runms",
+          "type": "integer"
+        },
+        "state": {
+          "enum": [
+            "idle",
+            "running",
+            "finished",
+            "failed"
+          ],
+          "title": "State",
+          "type": "string"
+        },
+        "tokens": {
+          "$ref": "#/$defs/TokenUse"
+        }
+      },
+      "required": [
+        "matchId",
+        "state",
+        "runMs",
+        "eventsPlayed",
+        "moments",
+        "explain",
+        "firstPass",
+        "fallbacks",
+        "modelDrafts",
+        "modelErrors",
+        "corrections",
+        "correctedItems",
+        "tokens",
+        "modelCostMicrousd",
+        "infraCostMicrousd",
+        "partners"
+      ],
+      "title": "MatchOperations",
+      "type": "object"
+    },
+    "ModelPrice": {
+      "additionalProperties": false,
+      "description": "What a model deployment's tokens cost, in micro-dollars per million tokens.",
+      "properties": {
+        "inputMicrousdPerMillion": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Inputmicrousdpermillion",
+          "type": "integer"
+        },
+        "model": {
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+          "title": "Model",
+          "type": "string"
+        },
+        "outputMicrousdPerMillion": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Outputmicrousdpermillion",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "model",
+        "inputMicrousdPerMillion",
+        "outputMicrousdPerMillion"
+      ],
+      "title": "ModelPrice",
+      "type": "object"
+    },
+    "Objective": {
+      "additionalProperties": false,
+      "description": "A service level objective: its target and what was measured against it.",
+      "properties": {
+        "key": {
+          "enum": [
+            "on_air_p50",
+            "on_air_p95",
+            "correction_p95"
+          ],
+          "title": "Key",
+          "type": "string"
+        },
+        "measuredMs": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measuredms"
+        },
+        "targetMs": {
+          "maximum": 3600000,
+          "minimum": 0,
+          "title": "Targetms",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "key",
+        "targetMs",
+        "measuredMs"
+      ],
+      "title": "Objective",
+      "type": "object"
+    },
+    "PartnerOperations": {
+      "additionalProperties": false,
+      "description": "One partner's items in one match: how many it published, how many it held for its editor,\nand, for the ones it aired without one, how long from the event to air.",
+      "properties": {
+        "costMicrousd": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Costmicrousd",
+          "type": "integer"
+        },
+        "held": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Held",
+          "type": "integer"
+        },
+        "items": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Items",
+          "type": "integer"
+        },
+        "latencyBudgetMs": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Latencybudgetms"
+        },
+        "onAir": {
+          "$ref": "#/$defs/Spread"
+        },
+        "tenantId": {
+          "enum": [
+            "northlight-sport",
+            "tribuna-austral",
+            "rheinblick-sport"
+          ],
+          "title": "Tenantid",
+          "type": "string"
+        },
+        "tokens": {
+          "$ref": "#/$defs/TokenUse"
+        },
+        "withinBudget": {
+          "$ref": "#/$defs/Ratio"
+        },
+        "withinTarget": {
+          "$ref": "#/$defs/Ratio"
+        }
+      },
+      "required": [
+        "tenantId",
+        "items",
+        "held",
+        "onAir",
+        "withinTarget",
+        "tokens",
+        "costMicrousd",
+        "latencyBudgetMs",
+        "withinBudget"
+      ],
+      "title": "PartnerOperations",
+      "type": "object"
+    },
+    "Pricing": {
+      "additionalProperties": false,
+      "description": "The prices the report's costs were computed with.",
+      "properties": {
+        "infraMicrousdPerHour": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Inframicrousdperhour",
+          "type": "integer"
+        },
+        "models": {
+          "items": {
+            "$ref": "#/$defs/ModelPrice"
+          },
+          "maxItems": 8,
+          "title": "Models",
+          "type": "array"
+        }
+      },
+      "required": [
+        "models",
+        "infraMicrousdPerHour"
+      ],
+      "title": "Pricing",
+      "type": "object"
+    },
+    "Ratio": {
+      "additionalProperties": false,
+      "description": "`hit` of `of` cases, for example 45 of 50 planted storylines surfaced.",
+      "properties": {
+        "hit": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Hit",
+          "type": "integer"
+        },
+        "of": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Of",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "hit",
+        "of"
+      ],
+      "title": "Ratio",
+      "type": "object"
+    },
+    "Spread": {
+      "additionalProperties": false,
+      "description": "How many durations were measured, and their median and 95th percentile.",
+      "properties": {
+        "count": {
+          "maximum": 1000000,
+          "minimum": 0,
+          "title": "Count",
+          "type": "integer"
+        },
+        "p50Ms": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P50Ms"
+        },
+        "p95Ms": {
+          "anyOf": [
+            {
+              "maximum": 3600000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "P95Ms"
+        }
+      },
+      "required": [
+        "count",
+        "p50Ms",
+        "p95Ms"
+      ],
+      "title": "Spread",
+      "type": "object"
+    },
+    "TokenUse": {
+      "additionalProperties": false,
+      "description": "Tokens model calls spent, as the service reported them.",
+      "properties": {
+        "input": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Input",
+          "type": "integer"
+        },
+        "output": {
+          "maximum": 1000000000,
+          "minimum": 0,
+          "title": "Output",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "input",
+        "output"
+      ],
+      "title": "TokenUse",
+      "type": "object"
+    }
+  },
+  "$id": "https://github.com/saguarocloud/fourth-official/schemas/operations-report.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "The matchday's operations: objectives, the error budget, and each match.",
+  "properties": {
+    "budget": {
+      "$ref": "#/$defs/ErrorBudget"
+    },
+    "generatedAt": {
+      "format": "date-time",
+      "title": "Generatedat",
+      "type": "string"
+    },
+    "matches": {
+      "items": {
+        "$ref": "#/$defs/MatchOperations"
+      },
+      "maxItems": 100,
+      "title": "Matches",
+      "type": "array"
+    },
+    "objectives": {
+      "items": {
+        "$ref": "#/$defs/Objective"
+      },
+      "maxItems": 8,
+      "title": "Objectives",
+      "type": "array"
+    },
+    "onAir": {
+      "$ref": "#/$defs/Spread"
+    },
+    "pricing": {
+      "$ref": "#/$defs/Pricing"
+    }
+  },
+  "required": [
+    "generatedAt",
+    "objectives",
+    "budget",
+    "onAir",
+    "matches",
+    "pricing"
+  ],
+  "title": "OperationsReport",
+  "type": "object"
+}

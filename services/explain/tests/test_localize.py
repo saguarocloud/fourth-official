@@ -22,6 +22,7 @@ from fourth_official_explain.localize import (
     localize,
     to_localized,
 )
+from fourth_official_explain.metering import TokenCount, spend
 from verifier_fixtures import FACTS, GOAL_MOMENT, POSSESSION, insight_wire
 
 CANONICAL: Insight = parse_insight(insight_wire())
@@ -88,6 +89,7 @@ class Scripted:
 
     async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
         self.requests.append(request)
+        spend(TokenCount(model=self.provenance.model, input=100 * request.attempt, output=10))
         answer = self.answers.pop(0)
         if isinstance(answer, Exception):
             raise answer
@@ -264,3 +266,11 @@ def test_a_first_version_is_numbered_one() -> None:
 
     assert localized.version == 1
     assert localized.item_id.endswith("-v1")
+
+
+def test_each_localizer_attempt_records_the_tokens_its_call_spent() -> None:
+    result = run(TRIBUNA, Scripted([TimeoutError("slow")]))
+
+    tried, template = result.attempts[0], result.attempts[-1]
+    assert (tried.input_tokens, tried.output_tokens) == (100, 10)
+    assert (template.input_tokens, template.output_tokens) == (0, 0)

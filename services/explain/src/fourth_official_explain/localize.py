@@ -28,6 +28,7 @@ from fourth_official_contracts import (
     Verdict,
     item_id_for,
 )
+from fourth_official_explain.metering import TokenCount, collecting, totals
 from fourth_official_explain.pipeline import PROGRAMMING_ERRORS, Attempt, Outcome
 from fourth_official_verifier import (
     BlockedTopics,
@@ -203,9 +204,11 @@ async def _drafts(
     for _ in range(1 + retries):
         number = len(attempts) + 1
         request = LocalizationRequest(job.canonical, job.policy, number, feedback, previous)
+        spent: list[TokenCount] = []
         try:
-            async with asyncio.timeout(timeout):
-                draft = await localizer.draft(request)
+            with collecting() as spent:
+                async with asyncio.timeout(timeout):
+                    draft = await localizer.draft(request)
         except PROGRAMMING_ERRORS:
             raise
         except Exception as failure:
@@ -216,17 +219,36 @@ async def _drafts(
                 job.policy.tenant_id,
                 exc_info=failure,
             )
-            error = type(failure).__name__
+            tokens_in, tokens_out = totals(spent)
             attempts.append(
-                Attempt(number, provenance.agent, provenance.model, "error", error=error)
+                Attempt(
+                    number,
+                    provenance.agent,
+                    provenance.model,
+                    "error",
+                    error=type(failure).__name__,
+                    input_tokens=tokens_in,
+                    output_tokens=tokens_out,
+                )
             )
             return None
+        tokens_in, tokens_out = totals(spent)
         localized, verdict = _check(job, draft, provenance)
-        if localized is not None and verdict.passed:
-            attempts.append(Attempt(number, provenance.agent, provenance.model, "passed"))
+        passed = localized is not None and verdict.passed
+        codes = () if passed else tuple(f.code for f in verdict.findings)
+        attempts.append(
+            Attempt(
+                number,
+                provenance.agent,
+                provenance.model,
+                "passed" if passed else "failed",
+                codes,
+                input_tokens=tokens_in,
+                output_tokens=tokens_out,
+            )
+        )
+        if passed and localized is not None:
             return Localization(localized, verdict, tuple(attempts))
-        codes = tuple(f.code for f in verdict.findings)
-        attempts.append(Attempt(number, provenance.agent, provenance.model, "failed", codes))
         feedback, previous = verdict.findings, draft
     return None
 

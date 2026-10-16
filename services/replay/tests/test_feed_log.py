@@ -1,5 +1,7 @@
 """The feed log: append-only within a run, numbered, reset per run, something clients wait on."""
 
+from collections.abc import Callable
+
 import anyio
 import pytest
 
@@ -145,3 +147,72 @@ def test_a_guarded_entry_is_appended_only_if_the_log_still_allows_it() -> None:
     assert log.entries == ()
     anyio.run(lambda: log.publish(clock, guard=lambda entries: None))
     assert len(log.entries) == 1
+
+
+def ticking() -> Callable[[], float]:
+    """A clock that reads 0.0, 0.5, 1.0, … seconds, one step per reading."""
+    readings = iter(n * 0.5 for n in range(1000))
+    return lambda: next(readings)
+
+
+def test_the_log_times_each_entry_and_each_event_played_in_the_run() -> None:
+    log = FeedLog("m42", clock=ticking())
+
+    async def run() -> None:  # the log was made at 0.0
+        await log.reset()  # the run starts at 0.5
+        log.played(7)  # 1.0
+        await log.publish(clock)  # 1.5
+        log.played(8)  # 2.0
+        await log.publish(clock)  # 2.5
+
+    anyio.run(run)
+
+    timing = log.timing
+    assert timing.started == 0.5
+    assert timing.published == (1.5, 2.5)
+    assert timing.played == {7: 1.0, 8: 2.0}
+
+
+def test_a_new_run_starts_its_timing_afresh() -> None:
+    log = FeedLog("m42", clock=ticking())
+
+    async def two_runs() -> None:
+        await log.reset()
+        log.played(7)
+        await log.publish(clock)
+        await log.reset()
+
+    anyio.run(two_runs)
+
+    assert log.timing.published == ()
+    assert log.timing.played == {}
+    assert log.timing.started == 2.0
+
+
+def test_an_event_keeps_the_time_it_was_first_played() -> None:
+    log = FeedLog("m42", clock=ticking())
+    log.played(7)
+    log.played(7)
+
+    assert log.timing.played == {7: 0.5}
+
+
+def test_the_log_reads_its_own_clock_for_whoever_measures_its_run() -> None:
+    log = FeedLog("m42", clock=ticking())
+
+    assert log.now() == 0.5
+
+
+def test_a_snapshot_pairs_every_entry_with_the_time_it_was_published() -> None:
+    log = FeedLog("m42", clock=ticking())
+
+    async def run() -> None:
+        await log.reset()
+        await log.publish(clock)
+        await log.publish(clock)
+
+    anyio.run(run)
+
+    entries, timing = log.snapshot()
+    assert [e.entry_seq for e in entries] == [1, 2]
+    assert len(timing.published) == len(entries)

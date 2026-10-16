@@ -43,7 +43,7 @@ export type Outcome = "passed" | "failed" | "error";
 /**
  * @maxItems 99
  */
-export type Attempts = AttemptRecord[];
+export type Attempts = SignedAttempt[];
 export type Agent1 = string;
 export type Model1 = string;
 export type Producedby = "model" | "template";
@@ -124,9 +124,10 @@ export interface Approval {
   reason?: Reason;
 }
 /**
- * One try at explaining a moment: who drafted, and how it ended.
+ * An attempt as a record signs it: who drafted and how it ended. What the attempt cost is
+ * operations, not provenance, and stays out, so a record's signed bytes never change shape.
  */
-export interface AttemptRecord {
+export interface SignedAttempt {
   agent: Agent;
   error: Error;
   findings: Findings;

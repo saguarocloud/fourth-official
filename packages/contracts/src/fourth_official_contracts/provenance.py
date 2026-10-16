@@ -25,6 +25,7 @@ from fourth_official_contracts.tenants import (
     Locale,
     TenantId,
 )
+from fourth_official_contracts.verdicts import FindingCode
 
 Line = Annotated[str, StringConstraints(min_length=1, max_length=300)]
 
@@ -34,6 +35,29 @@ class ProvenanceClaim(WireModel):
 
     text: Line
     evidence: Evidence
+
+
+class SignedAttempt(WireModel):
+    """An attempt as a record signs it: who drafted and how it ended. What the attempt cost is
+    operations, not provenance, and stays out, so a record's signed bytes never change shape."""
+
+    number: Annotated[int, Field(ge=1, le=MAX_ATTEMPTS)]
+    agent: Annotated[str, StringConstraints(pattern=r"^[a-z][a-z-]{1,31}$")]
+    model: Annotated[str, StringConstraints(pattern=r"^[a-z0-9][a-z0-9.-]{0,63}$")]
+    outcome: Literal["passed", "failed", "error"]
+    findings: Annotated[tuple[FindingCode, ...], Field(max_length=64, strict=False)]
+    error: Annotated[str, StringConstraints(pattern=r"^[A-Za-z][A-Za-z0-9]{0,63}$")] | None
+
+    @classmethod
+    def of(cls, attempt: AttemptRecord) -> "SignedAttempt":
+        return cls(
+            number=attempt.number,
+            agent=attempt.agent,
+            model=attempt.model,
+            outcome=attempt.outcome,
+            findings=attempt.findings,
+            error=attempt.error,
+        )
 
 
 class ProvenanceRecord(WireModel):
@@ -53,7 +77,7 @@ class ProvenanceRecord(WireModel):
     # Who wrote the canonical insight, and who wrote the partner's version of it.
     canonical: Provenance | None
     localized: Provenance
-    attempts: Annotated[tuple[AttemptRecord, ...], Field(max_length=MAX_ATTEMPTS, strict=False)]
+    attempts: Annotated[tuple[SignedAttempt, ...], Field(max_length=MAX_ATTEMPTS, strict=False)]
     disclosure: Disclosure | None
     approval: Approval | None
     supersedes: ItemId | None

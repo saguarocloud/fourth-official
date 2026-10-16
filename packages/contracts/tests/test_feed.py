@@ -5,7 +5,7 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from fourth_official_contracts import InsightEntry, parse_feed_entry
+from fourth_official_contracts import AttemptRecord, InsightEntry, parse_feed_entry
 from test_insights import INSIGHT
 from test_moments import GOAL
 
@@ -18,6 +18,8 @@ ATTEMPTS = [
         "outcome": "failed",
         "findings": ["BARE_NUMBER"],
         "error": None,
+        "inputTokens": 1400,
+        "outputTokens": 260,
     },
     {
         "number": 2,
@@ -26,6 +28,8 @@ ATTEMPTS = [
         "outcome": "passed",
         "findings": [],
         "error": None,
+        "inputTokens": 1650,
+        "outputTokens": 240,
     },
 ]
 INSIGHT_ENTRY: dict[str, Any] = {
@@ -109,3 +113,35 @@ def test_an_insight_entry_is_typed() -> None:
 def test_incoherent_entries_are_refused(wire: dict[str, Any], message: str) -> None:
     with pytest.raises(ValidationError, match=message):
         parse_feed_entry(wire)
+
+
+def test_an_attempt_records_the_tokens_its_model_spent_and_none_by_default() -> None:
+    spent = AttemptRecord.model_validate(
+        {
+            "number": 1,
+            "agent": "analyst",
+            "model": "fast",
+            "outcome": "passed",
+            "findings": [],
+            "error": None,
+            "inputTokens": 1200,
+            "outputTokens": 300,
+        }
+    )
+    assert (spent.input_tokens, spent.output_tokens) == (1200, 300)
+    assert spent.to_wire()["inputTokens"] == 1200
+
+    recorded_before = AttemptRecord.model_validate(
+        {
+            "number": 1,
+            "agent": "template",
+            "model": "none",
+            "outcome": "passed",
+            "findings": [],
+            "error": None,
+        }
+    )
+    assert (recorded_before.input_tokens, recorded_before.output_tokens) == (0, 0)
+
+    with pytest.raises(ValidationError):
+        AttemptRecord.model_validate({**spent.to_wire(), "inputTokens": -1})

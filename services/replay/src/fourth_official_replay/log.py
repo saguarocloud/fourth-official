@@ -7,8 +7,10 @@ always follows the current one.
 """
 
 import asyncio
-from collections.abc import Callable
+import time
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
+from types import MappingProxyType
 
 from fourth_official_contracts import FeedEntry
 
@@ -30,17 +32,52 @@ class FeedView:
     finished: bool
 
 
+@dataclass(frozen=True, slots=True)
+class RunTiming:
+    """When this run started, when each entry was published (in entry order) and when each event
+    was played, as readings of the log's clock in seconds. Operations measures latency from these;
+    they are not part of the feed, so they never change what a client receives."""
+
+    started: float
+    published: tuple[float, ...]
+    played: Mapping[int, float]
+
+
 class FeedLog:
-    def __init__(self, match_id: str) -> None:
+    def __init__(self, match_id: str, *, clock: Callable[[], float] = time.monotonic) -> None:
         self.match_id = match_id
         self._entries: list[FeedEntry] = []
         self._changed = asyncio.Condition()
         self._finished = False
         self._generation = 0
+        self._clock = clock
+        self._started = clock()
+        self._published: list[float] = []
+        self._played: dict[int, float] = {}
 
     @property
     def entries(self) -> tuple[FeedEntry, ...]:
         return tuple(self._entries)
+
+    @property
+    def timing(self) -> RunTiming:
+        return RunTiming(
+            self._started, tuple(self._published), MappingProxyType(dict(self._played))
+        )
+
+    def snapshot(self) -> tuple[tuple[FeedEntry, ...], RunTiming]:
+        """The entries and the run's timing read together, so every entry has its time. Read it
+        on the event loop: the log is not shared with other threads."""
+        return self.entries, self.timing
+
+    def now(self) -> float:
+        """A reading of the clock the log times its run with."""
+        return self._clock()
+
+    def played(self, seq: int) -> None:
+        """Note that the replay has just played event `seq` (the first time only)."""
+        if seq not in self._played:
+            self._played[seq] = self._clock()
 
     @property
     def finished(self) -> bool:
@@ -63,6 +100,9 @@ class FeedLog:
             self._generation += 1
             self._entries = []
             self._finished = False
+            self._started = self._clock()
+            self._published = []
+            self._played = {}
             self._changed.notify_all()
 
     async def publish(
@@ -90,6 +130,7 @@ class FeedLog:
             if entry.entry_seq != number:
                 raise ValueError(f"entries are numbered in order: expected {number}")
             self._entries.append(entry)
+            self._published.append(self._clock())
             self._changed.notify_all()
         return entry
 

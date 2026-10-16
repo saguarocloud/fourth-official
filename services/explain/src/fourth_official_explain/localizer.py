@@ -14,6 +14,7 @@ from azure.core.credentials_async import AsyncTokenCredential
 from fourth_official_contracts import Provenance
 from fourth_official_explain.analyst import DraftError
 from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
+from fourth_official_explain.metering import spend, usage_of
 from fourth_official_explain.prompts import Prompt
 
 # Runs the agent on one message with options; returns the agent's response.
@@ -61,6 +62,9 @@ class AgentLocalizer:
     async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
         options = cast("ChatOptions[Any]", {**self.options, "response_format": LocalizedDraft})
         response = await self.run(localization_message(request), options)
+        spent = usage_of(response, self.provenance.model)
+        if spent is not None:
+            spend(spent)
         value = getattr(response, "value", None)
         if not isinstance(value, LocalizedDraft):
             raise DraftError("the model returned no structured draft")

@@ -1462,9 +1462,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 82,
@@ -1524,9 +1526,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 83,
@@ -1574,9 +1578,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 84,
@@ -2621,9 +2627,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 129,
@@ -2715,9 +2723,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 130,
@@ -2809,9 +2819,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 131,
@@ -2903,9 +2915,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 132,
@@ -2985,9 +2999,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 133,
@@ -3069,9 +3085,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 134,
@@ -3151,9 +3169,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 135,
@@ -3245,9 +3265,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 136,
@@ -3339,9 +3361,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 137,
@@ -3433,9 +3457,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 138,
@@ -3527,9 +3553,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 139,
@@ -3621,9 +3649,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 140,
@@ -3752,9 +3782,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 142,
@@ -3802,9 +3834,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 143,
@@ -3855,9 +3889,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 144,
@@ -3917,9 +3953,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 145,
@@ -4103,9 +4141,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 150,
@@ -4185,9 +4225,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 151,
@@ -4269,9 +4311,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 152,
@@ -4351,9 +4395,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 153,
@@ -4436,9 +4482,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 154,
@@ -4523,9 +4571,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 155,
@@ -4608,9 +4658,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 156,
@@ -4702,9 +4754,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 157,
@@ -4796,9 +4850,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 158,
@@ -4890,9 +4946,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 159,
@@ -4984,9 +5042,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 160,
@@ -5078,9 +5138,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 161,
@@ -5172,9 +5234,11 @@
         "agent": "localizer",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 162,
@@ -5266,9 +5330,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 163,
@@ -5360,9 +5426,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 164,
@@ -5454,9 +5522,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 165,
@@ -5548,9 +5618,11 @@
         "agent": "template",
         "error": null,
         "findings": [],
+        "inputTokens": 0,
         "model": "none",
         "number": 1,
-        "outcome": "passed"
+        "outcome": "passed",
+        "outputTokens": 0
       }
     ],
     "entrySeq": 166,

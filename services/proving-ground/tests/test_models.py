@@ -7,11 +7,10 @@ import httpx
 import pytest
 from azure.core.credentials import AccessToken
 
-from fourth_official_explain.analyst import TokenCount
+from fourth_official_explain.metering import TokenCount
 from fourth_official_match_data import store_of
 from fourth_official_proving.configurations import CONFIGURATIONS
 from fourth_official_proving.models import (
-    PRICES_PER_MILLION,
     CostMeter,
     FoundryUnavailableError,
     match_data_server,
@@ -52,9 +51,8 @@ def test_tokens_are_priced_by_the_model_behind_each_alias() -> None:
     meter(TokenCount(model="fast", input=1_000_000, output=100_000))
     meter(TokenCount(model="fallback", input=500_000, output=0))
 
-    fast, fallback = PRICES_PER_MILLION["fast"], PRICES_PER_MILLION["fallback"]
-    expected = fast.input + fast.output / 10 + fallback.input / 2
-    assert meter.cost_usd() == pytest.approx(expected)
+    # fast: 1M input and 100k output; fallback: 500k input (production prices).
+    assert meter.cost_usd() == pytest.approx(0.25 + 0.2 + 0.2)
     assert meter.calls == 2
 
 

@@ -106,6 +106,8 @@ TENANT_ITEM: dict[str, Any] = {
             "outcome": "passed",
             "findings": [],
             "error": None,
+            "inputTokens": 820,
+            "outputTokens": 140,
         }
     ],
     "approval": None,

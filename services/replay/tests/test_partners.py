@@ -8,6 +8,7 @@ import anyio
 from fourth_official_contracts import Moment, Provenance, TenantItemEntry
 from fourth_official_explain import Explanation, explain
 from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
+from fourth_official_explain.metering import TokenCount, spend
 from fourth_official_match_data import demo_store
 from fourth_official_policy import blocked_topics_in, bundled_store
 from fourth_official_replay import FeedLog, ReplayConfig, replay
@@ -192,3 +193,36 @@ def test_localisations_in_flight_are_limited() -> None:
     )
 
     assert 0 < peak <= 2
+
+
+def test_a_partner_item_carries_the_tokens_its_localizer_spent() -> None:
+    class Failing:
+        provenance = Provenance(
+            agent="localizer", prompt_version="v1.0", model="fast", produced_by="model"
+        )
+
+        async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
+            spend(TokenCount(model="fast", input=700, output=90))
+            raise RuntimeError("no model in tests")
+
+    metered = Partners(
+        [
+            Partner(policy=p.policy, blocked=partial(blocked_topics_in, policy=p.policy))
+            for p in bundled_store().all()
+        ],
+        localizer=Failing(),
+    )
+    log = FeedLog("m42")
+    anyio.run(
+        lambda: replay(
+            demo_store().record("m42"), log, template_only, sleep=no_wait, partners=metered
+        )
+    )
+
+    tribuna = next(
+        e
+        for e in log.entries
+        if isinstance(e, TenantItemEntry) and e.tenant_id == "tribuna-austral" and e.attempts
+    )
+    assert (tribuna.attempts[0].input_tokens, tribuna.attempts[0].output_tokens) == (700, 90)
+    assert (tribuna.attempts[-1].input_tokens, tribuna.attempts[-1].output_tokens) == (0, 0)

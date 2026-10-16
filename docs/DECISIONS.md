@@ -344,3 +344,19 @@ One entry per decision: context, options, choice, consequences. Newest last.
 - Policy changes are auditable and reversible, and the demo shows a real effect on the next item.
 - Anyone using the public demo can change what judges see until someone resets. Reset is one click away on the screen.
 - The book has one writer (one API replica). More replicas would need conditional writes.
+
+## ADR-016: Operations measures the run from the feed and the log's clock
+
+**Date:** 2026-10-16 · **Status:** Accepted
+
+**Context.** Plan §8.11 asks for an Operations screen whose every number is computed from telemetry or stored metrics, never hard-coded: event-to-on-air latency against the §9 objectives (p50 ≤ 4 s, p95 ≤ 8 s), correction time (p95 < 10 s), throughput, fallbacks, tokens and cost per match and per partner. The feed recorded none of the times or tokens this needs. Feed entries are a public wire format with recorded fixtures, and partner items are signed into provenance records whose bytes must never change shape.
+
+**Choice.**
+- **Times live beside the feed, not in it.** Each match's log reads one monotonic clock: when the run started, when each entry was published, when the replay played each event. Latency is measured on the platform's own clock and never reaches a client's feed.
+- **Tokens live on the attempt.** Each model attempt records the tokens its calls reported, collected per attempt through a context variable, so concurrent moments never mix. They travel on the feed's attempt records: a wire addition (`inputTokens`, `outputTokens` on every attempt), absent in older records, which read as none. Signed provenance keeps its own attempt shape without them: cost is operations, not provenance, so already issued records still verify.
+- **Code computes everything.** Percentiles are nearest rank; rates stay counts (`hit` of `of`), as in the scorecard; money is whole micro-dollars at prices defined once and shared with the Proving Ground (`fourth_official_explain.production.PRICES`). `GET /api/operations` computes the report on request. The method is in `docs/cost-model.md`.
+
+**Consequences.**
+- The Operations screen and the Control Room read measured values, and a reader can recompute any of them from the counts.
+- Measures live as long as the process: a restart, or the API scaling to zero, starts them afresh with the next run, as the feeds do. Durable history arrives with App Insights (OpenTelemetry).
+- Calls that fail before the service reports usage (a timeout, say) cost tokens that are not counted, so model cost is a floor, not an estimate.

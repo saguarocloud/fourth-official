@@ -20,6 +20,7 @@ from fourth_official_contracts import (
     insight_id_for,
 )
 from fourth_official_explain.drafts import InsightDraft, to_insight
+from fourth_official_explain.metering import TokenCount, collecting, totals
 from fourth_official_verifier import MatchFacts, template_insight, verify
 
 RETRIES = 2
@@ -85,6 +86,9 @@ class Attempt:
     findings: tuple[str, ...] = ()
     # The kind of failure when the model itself failed (a timeout, a service error).
     error: str | None = None
+    # Tokens the attempt's model calls spent, as the service reported them (none for a template).
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 @dataclass(frozen=True, slots=True)
@@ -147,10 +151,12 @@ async def explain(
                 briefing=briefing,
                 previous=previous,
             )
+            spent: list[TokenCount] = []
             try:
                 # A timeout in the same task: MCP sessions must close in the task that opened them.
-                async with asyncio.timeout(timeout):
-                    draft = await drafter.draft(request)
+                with collecting() as spent:
+                    async with asyncio.timeout(timeout):
+                        draft = await drafter.draft(request)
             except PROGRAMMING_ERRORS:
                 raise  # a bug is not a model failure: never hide it behind a fallback
             except Exception as failure:
@@ -161,6 +167,7 @@ async def explain(
                     moment.moment_id,
                     exc_info=failure,
                 )
+                tokens_in, tokens_out = totals(spent)
                 attempts.append(
                     Attempt(
                         number,
@@ -168,15 +175,28 @@ async def explain(
                         provenance.model,
                         "error",
                         error=type(failure).__name__,
+                        input_tokens=tokens_in,
+                        output_tokens=tokens_out,
                     )
                 )
                 break
+            tokens_in, tokens_out = totals(spent)
             insight, verdict = _check(draft, moment, facts, attempt=number, provenance=provenance)
             codes = tuple(f.code for f in verdict.findings)
-            if insight is not None and verdict.passed:
-                attempts.append(Attempt(number, provenance.agent, provenance.model, "passed"))
+            outcome: Outcome = "passed" if insight is not None and verdict.passed else "failed"
+            attempts.append(
+                Attempt(
+                    number,
+                    provenance.agent,
+                    provenance.model,
+                    outcome,
+                    () if outcome == "passed" else codes,
+                    input_tokens=tokens_in,
+                    output_tokens=tokens_out,
+                )
+            )
+            if insight is not None and outcome == "passed":
                 return Explanation(moment, insight, verdict, tuple(attempts))
-            attempts.append(Attempt(number, provenance.agent, provenance.model, "failed", codes))
             feedback, previous = verdict.findings, draft
     return _template(moment, facts, attempts)
 

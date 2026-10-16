@@ -16,6 +16,7 @@ from fourth_official_api.explainers import (
     template_explainer,
 )
 from fourth_official_api.matchday_routes import matchday_router
+from fourth_official_api.operations_routes import operations_router
 from fourth_official_api.policy_routes import policy_router
 from fourth_official_api.policy_store import azure_policy_book
 from fourth_official_api.provenance import Issuer, provenance_router
@@ -169,6 +170,7 @@ def create_app(
 
     app.include_router(matchday_router(_summaries(store)))
     app.include_router(decision_router())
+    app.include_router(operations_router())
     app.include_router(policy_router())
     app.include_router(provenance_router())
     app.include_router(proving_router(settings.proving_results))
