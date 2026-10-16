@@ -120,7 +120,7 @@ def test_the_latest_correction_carries_what_the_desk_did() -> None:
 
 
 def test_a_partner_is_on_air_while_one_of_its_graphics_covers_the_clock() -> None:
-    match = wall([m42()], generated_at=fixed_clocks().wall()).matches[0]
+    match = wall([m42("running")], generated_at=fixed_clocks().wall()).matches[0]
 
     assert match.clock is not None
     clock = match.clock
@@ -175,3 +175,8 @@ def test_mid_match_the_partners_with_a_lower_third_up_are_lit_and_a_score_bug_al
     match = wall([so_far], generated_at=fixed_clocks().wall()).matches[0]
 
     assert item.tenant_id in match.on_air
+
+
+def test_nothing_is_on_air_once_a_match_is_over() -> None:
+    assert wall([m42("finished")], generated_at=fixed_clocks().wall()).matches[0].on_air == ()
+    assert wall([m42("failed")], generated_at=fixed_clocks().wall()).matches[0].on_air == ()

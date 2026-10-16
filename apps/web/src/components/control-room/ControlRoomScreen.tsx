@@ -26,9 +26,12 @@ export function ControlRoomScreen() {
     wall.status === "ready"
       ? controlRoom(wall.report, operations.status === "ready" ? operations.report : null)
       : null;
+  const stale = wall.status === "ready" && wall.stale;
   let verdict = READING;
   if (wall.status === "unavailable") verdict = UNANSWERED;
-  else if (room) verdict = matchdayVerdict(room.summary);
+  // A frozen wall claims nothing: its lamp goes out until a reading succeeds again.
+  else if (room)
+    verdict = { ...matchdayVerdict(room.summary), ...(stale ? { tone: "neutral" } : {}) };
   const sloMs = room?.summary.sloMs ?? null;
 
   return (
@@ -67,6 +70,12 @@ export function ControlRoomScreen() {
           <span aria-hidden="true" className="verdict__lamp" />
           {verdict.text}
         </p>
+        {wall.status === "ready" && wall.stale && (
+          <p className="statement__stale">
+            The last reading failed: this is the matchday as read at{" "}
+            {wall.report.generatedAt.slice(11, 19)} UTC.
+          </p>
+        )}
       </header>
       {room && (
         <section aria-label="Match wall" className="match-wall">

@@ -191,7 +191,7 @@
       "home": "HCY",
       "items": 21,
       "matchId": "m42",
-      "onAir": ["northlight-sport", "rheinblick-sport", "tribuna-austral"],
+      "onAir": [],
       "pendingApprovals": 5,
       "score": {
         "away": 1,
@@ -210,7 +210,7 @@
       "home": "KBA",
       "items": 18,
       "matchId": "m43",
-      "onAir": ["northlight-sport", "rheinblick-sport"],
+      "onAir": [],
       "pendingApprovals": 6,
       "score": {
         "away": 1,
@@ -229,7 +229,7 @@
       "home": "CAL",
       "items": 12,
       "matchId": "m44",
-      "onAir": ["northlight-sport", "rheinblick-sport"],
+      "onAir": [],
       "pendingApprovals": 4,
       "score": {
         "away": 0,

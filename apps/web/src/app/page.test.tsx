@@ -86,6 +86,35 @@ describe("Control Room", () => {
     expect(verdict).toHaveAttribute("data-tone", "neutral");
   });
 
+  it("says when the wall on show is no longer current, and from when it is", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetch = vi.fn((url: string) =>
+      Promise.resolve(
+        url.startsWith("/api/wall") ? Response.json(WALL) : Response.json(OPERATIONS),
+      ),
+    );
+    vi.stubGlobal("fetch", fetch);
+    await opened();
+    fetch.mockImplementation((url: string) =>
+      url.startsWith("/api/wall")
+        ? Promise.reject(new TypeError("offline"))
+        : Promise.resolve(Response.json(OPERATIONS)),
+    );
+
+    await vi.advanceTimersByTimeAsync(5000);
+
+    expect(
+      await screen.findByText(
+        `The last reading failed: this is the matchday as read at ${WALL.generatedAt.slice(11, 19)} UTC.`,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Matchday verdict" })).toHaveAttribute(
+      "data-tone",
+      "neutral",
+    );
+    vi.useRealTimers();
+  });
+
   it("states that all data is synthetic and the league is fictional", async () => {
     serve();
     await opened();

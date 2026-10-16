@@ -81,7 +81,9 @@ def _match(played: Played) -> WallMatch:
     latest = _latest_items(played.entries)
     narrative = [e for e in latest.values() if e.localized is not None]
     on_air: list[TenantId] = []
-    if last is not None:
+    # Only while the match plays: at full time the last clock stands still, and a graphic timed
+    # past it would light its partner's tally for good.
+    if last is not None and played.state == "running":
         for item in latest.values():
             covering = item.state == "on_air" and item.item_kind != "score"
             if covering and _covers(item, last.clock) and item.tenant_id not in on_air:

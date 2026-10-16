@@ -16,6 +16,13 @@ describe("parseWall", () => {
     expect(parseWall(WALL)).toEqual(WALL);
   });
 
+  it("refuses a match or an item in a state it does not know", () => {
+    expect(parseWall({ ...WALL, matches: [{ ...WALL.matches[0], state: "paused" }] })).toBeNull();
+    expect(
+      parseWall({ ...WALL, activity: [{ ...WALL.activity[0], state: "broadcasting" }] }),
+    ).toBeNull();
+  });
+
   it("refuses anything else", () => {
     expect(parseWall(null)).toBeNull();
     expect(parseWall({ ...WALL, matches: "m42" })).toBeNull();
@@ -43,7 +50,8 @@ describe("controlRoom", () => {
     const measured = OPERATIONS.matches.find((m) => m.matchId === "m42")!;
 
     expect(m42.p95LatencyMs).toBe(measured.onAir.p95Ms);
-    const items = WALL.matches.find((m) => m.matchId === "m42")!.items;
+    // Both from the one report, so the rate never mixes two readings taken apart.
+    const items = measured.partners.reduce((n, p) => n + p.items, 0);
     expect(m42.itemsPerMinute).toBeCloseTo((items * 60_000) / measured.runMs);
   });
 
@@ -97,6 +105,20 @@ describe("controlRoom", () => {
       true,
     );
     expect(room.summary.p95LatencyMs).toBeNull();
-    expect(room.summary.costMicrousd).toBe(0);
+    // Unknown, not free: operations could not be read.
+    expect(room.summary.costMicrousd).toBeNull();
+  });
+
+  it("leaves out a partner the studio does not know, rather than mislabel it", () => {
+    const stranger: MatchdayWall = {
+      ...WALL,
+      matches: WALL.matches.map((m) => ({ ...m, state: "running", onAir: ["harbour-tv"] })),
+      activity: [{ ...WALL.activity[0]!, tenantId: "harbour-tv" }, ...WALL.activity.slice(1)],
+    } as unknown as MatchdayWall;
+
+    const room = controlRoom(stranger, OPERATIONS);
+
+    expect(room.matches.every((m) => m.onAir.length === 0)).toBe(true);
+    expect(room.activity).toHaveLength(WALL.activity.length - 1);
   });
 });

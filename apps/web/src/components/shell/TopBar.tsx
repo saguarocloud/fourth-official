@@ -63,7 +63,7 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
           </div>
           <div>
             <dt>Cost so far</dt>
-            <dd>{dollars(summary.costMicrousd)}</dd>
+            <dd>{summary.costMicrousd === null ? "–" : dollars(summary.costMicrousd)}</dd>
           </div>
         </dl>
       )}

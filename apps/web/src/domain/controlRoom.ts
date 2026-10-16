@@ -9,7 +9,7 @@ import type { ItemState } from "@/components/ui/StatusLamp";
 import type { MatchdayWall, WallActivity, WallCorrection, WallMatch } from "@/contracts/wall";
 import { formatMatchClock, footballMinute } from "@/lib/format";
 
-import type { PartnerId } from "./broadcast";
+import { PARTNERS, type PartnerId } from "./broadcast";
 import type { ActivityEntry, Correction, Match, MatchdaySummary, MatchStatus } from "./matchday";
 import { totals } from "./operations";
 
@@ -27,6 +27,9 @@ const isClock = (v: unknown): boolean =>
 const isList = (v: unknown, each: (item: unknown) => boolean): boolean =>
   Array.isArray(v) && v.every(each);
 const STATES = ["idle", "running", "finished", "failed"];
+const ITEM_STATES = ["on_air", "pending_approval", "rejected", "retracted", "amended"];
+const KNOWN: ReadonlySet<string> = new Set(PARTNERS.map((p) => p.id));
+const known = (tenantId: string): tenantId is PartnerId => KNOWN.has(tenantId);
 
 const isWallMatch = (v: unknown): boolean =>
   isObject(v) &&
@@ -42,7 +45,8 @@ const isWallMatch = (v: unknown): boolean =>
 const isActivity = (v: unknown): boolean =>
   isObject(v) &&
   isCount(v.entrySeq) &&
-  ["matchId", "tenantId", "state", "headline"].every((k) => isString(v[k])) &&
+  ["matchId", "tenantId", "headline"].every((k) => isString(v[k])) &&
+  ITEM_STATES.includes(v.state as string) &&
   isClock(v.clock) &&
   typeof v.aiWritten === "boolean";
 
@@ -83,6 +87,8 @@ const STATUS: Readonly<Record<WallMatch["state"], MatchStatus>> = {
 function match(wall: WallMatch, operations: OperationsReport | null): Match {
   const measured = operations?.matches.find((m) => m.matchId === wall.matchId);
   const runMs = measured?.runMs ?? 0;
+  // Items and run time from the one report, so a rate never mixes readings taken apart.
+  const items = measured?.partners.reduce((n, p) => n + p.items, 0) ?? 0;
   return {
     id: wall.matchId,
     home: wall.home,
@@ -92,11 +98,12 @@ function match(wall: WallMatch, operations: OperationsReport | null): Match {
     clock: wall.clock,
     status: STATUS[wall.state],
     featured: wall.matchId === FEATURED_MATCH,
-    itemsPerMinute: runMs > 0 ? (wall.items * MS_PER_MINUTE) / runMs : null,
+    itemsPerMinute: runMs > 0 ? (items * MS_PER_MINUTE) / runMs : null,
     pendingApprovals: wall.pendingApprovals,
     corrections: wall.corrections,
     p95LatencyMs: measured?.onAir.p95Ms ?? null,
-    onAir: wall.onAir as PartnerId[],
+    // A partner the studio does not know is left out rather than shown under another name.
+    onAir: wall.onAir.filter(known),
   };
 }
 
@@ -142,19 +149,21 @@ export function controlRoom(wall: MatchdayWall, operations: OperationsReport | n
       p95LatencyMs: measured,
       sloMs: p95?.targetMs ?? null,
       withinSlo: measured === null || p95 === undefined || measured <= p95.targetMs,
-      costMicrousd: operations ? totals(operations).totalMicrousd : 0,
+      costMicrousd: operations ? totals(operations).totalMicrousd : null,
     },
-    activity: wall.activity.map((a, i) => ({
-      id: `${a.matchId}-${a.entrySeq}`,
-      sequence: count - i,
-      matchId: a.matchId,
-      minute: footballMinute(a.clock.minute),
-      period: a.clock.period,
-      partnerId: a.tenantId as PartnerId,
-      state: LAMP[a.state],
-      text: a.headline,
-      aiGenerated: a.aiWritten,
-    })),
+    activity: wall.activity
+      .filter((a) => known(a.tenantId))
+      .map((a, i) => ({
+        id: `${a.matchId}-${a.entrySeq}`,
+        sequence: count - i,
+        matchId: a.matchId,
+        minute: footballMinute(a.clock.minute),
+        period: a.clock.period,
+        partnerId: a.tenantId as PartnerId,
+        state: LAMP[a.state],
+        text: a.headline,
+        aiGenerated: a.aiWritten,
+      })),
     latestCorrection: wall.latestCorrection ? correction(wall.latestCorrection) : null,
   };
 }

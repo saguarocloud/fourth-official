@@ -50,6 +50,8 @@ class WallMatch(WireModel):
             self.clock is not None or self.on_air or self.items or self.corrections
         ):
             raise ValueError("a match not started has no clock, items or corrections")
+        if self.state != "running" and self.on_air:
+            raise ValueError("only a match being played has graphics on air")
         if len(set(self.on_air)) != len(self.on_air):
             raise ValueError("a partner is on air once")
         if self.pending_approvals > self.items:

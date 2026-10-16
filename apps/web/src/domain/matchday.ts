@@ -94,7 +94,8 @@ export interface MatchdaySummary {
   /** The on-air objective; none when operations could not be read. */
   readonly sloMs: number | null;
   readonly withinSlo: boolean;
-  readonly costMicrousd: number;
+  /** What the run has cost; none when operations could not be read. */
+  readonly costMicrousd: number | null;
 }
 
 export function clubByCode(code: string): Club {
