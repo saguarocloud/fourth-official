@@ -27,16 +27,17 @@ async function read(signal: AbortSignal): Promise<OperationsReport> {
 }
 
 /** The matchday run as the API measured it, read on arrival and every few seconds after. A
- * failed read keeps the last report on show, marked stale; each read cancels the one before. */
+ * failed read keeps the last report on show, marked stale. A read still in flight is never
+ * overtaken by the next, and the page reads nothing while it is hidden. */
 export function useOperations(): Lookup {
   const [lookup, setLookup] = useState<Lookup>({ status: "loading" });
 
   useEffect(() => {
-    let current = new AbortController();
+    const controller = new AbortController();
+    let reading = false;
     async function load() {
-      current.abort();
-      const controller = new AbortController();
-      current = controller;
+      if (reading || document.hidden) return;
+      reading = true;
       try {
         const report = await read(controller.signal);
         if (!controller.signal.aborted) setLookup({ status: "ready", report, stale: false });
@@ -45,12 +46,14 @@ export function useOperations(): Lookup {
         setLookup((last) =>
           last.status === "ready" ? { ...last, stale: true } : { status: "unavailable" },
         );
+      } finally {
+        reading = false;
       }
     }
     void load();
     const timer = setInterval(() => void load(), POLL_MS);
     return () => {
-      current.abort();
+      controller.abort();
       clearInterval(timer);
     };
   }, []);

@@ -4,6 +4,7 @@ import type { MatchOperations, OperationsReport } from "@/contracts/operations";
 
 import {
   budgetUse,
+  budgetWords,
   dollars,
   objectiveMet,
   parseOperations,
@@ -104,6 +105,11 @@ describe("parseOperations", () => {
     ).toBeNull();
     expect(parseOperations({ ...report(), matches: "m42" })).toBeNull();
     expect(parseOperations({ ...report(), budget: { late: -1 } })).toBeNull();
+    for (const withinPercent of [0, 101]) {
+      expect(
+        parseOperations({ ...report(), budget: { ...report().budget, withinPercent } }),
+      ).toBeNull();
+    }
     expect(
       parseOperations({ ...report(), matches: [{ ...match("m42"), modelCostMicrousd: 1.5 }] }),
     ).toBeNull();
@@ -115,6 +121,7 @@ describe("figures", () => {
     expect(dollars(46_886)).toBe("$0.0469");
     expect(dollars(1_234_567)).toBe("$1.2346");
     expect(dollars(0)).toBe("$0.0000");
+    expect(dollars(58)).toBe("< $0.0001");
   });
 
   it("writes durations in seconds to the tenth, and under a second in milliseconds", () => {
@@ -142,6 +149,15 @@ describe("figures", () => {
   });
 });
 
+describe("the error budget in words", () => {
+  it("says how far over a spent budget went", () => {
+    const over = budgetUse({ withinPercent: 95, targetMs: 8000, late: 8, of: 34 })!;
+    expect(budgetWords(over)).toBe("8 of 34 items late, the error budget spent 4.7 times over");
+    const within = budgetUse({ withinPercent: 95, targetMs: 8000, late: 1, of: 40 })!;
+    expect(budgetWords(within)).toBe("1 of 40 items late, 50% of the error budget spent");
+  });
+});
+
 describe("the error budget", () => {
   it("allows the share of items the objective leaves, and counts what the late ones spent", () => {
     expect(budgetUse({ withinPercent: 95, targetMs: 8000, late: 1, of: 40 })).toEqual({
@@ -149,10 +165,39 @@ describe("the error budget", () => {
       of: 40,
       allowed: 2,
       spentPercent: 50,
+      over: false,
     });
     expect(budgetUse({ withinPercent: 95, targetMs: 8000, late: 6, of: 6 })?.spentPercent).toBe(
       2000,
     );
+  });
+
+  it("is over budget whenever more items were late than allowed, whatever the rounding", () => {
+    // 21 of 400 late against 20 allowed: 105%; 201 of 4000 against 200: 100.5%, shown as 101%.
+    expect(budgetUse({ withinPercent: 95, targetMs: 8000, late: 201, of: 4000 })).toMatchObject({
+      over: true,
+    });
+    expect(budgetUse({ withinPercent: 95, targetMs: 8000, late: 20, of: 400 })).toMatchObject({
+      spentPercent: 100,
+      over: false,
+    });
+  });
+
+  it("allows no late item when every item must be on time", () => {
+    expect(budgetUse({ withinPercent: 100, targetMs: 8000, late: 0, of: 10 })).toEqual({
+      late: 0,
+      of: 10,
+      allowed: 0,
+      spentPercent: 0,
+      over: false,
+    });
+    expect(budgetUse({ withinPercent: 100, targetMs: 8000, late: 1, of: 10 })).toEqual({
+      late: 1,
+      of: 10,
+      allowed: 0,
+      spentPercent: null,
+      over: true,
+    });
   });
 
   it("is not judged before any item was timed", () => {
@@ -179,7 +224,7 @@ describe("verdict", () => {
   it("leads with the service levels, the budget and the cost of a finished run", () => {
     expect(verdict(report())).toEqual({
       tone: "green",
-      text: "The last matchday ran inside its service levels: 95% of items on air within 6.0 s, against 8.0 s; 0 of 40 late, 0% of the error budget. It cost $0.0938.",
+      text: "The last matchday held its service levels: on air within 6.0 s for 95% of items, against 8.0 s. 0 of 40 items late, 0% of the error budget spent. It cost $0.0938.",
     });
   });
 
@@ -197,8 +242,14 @@ describe("verdict", () => {
 
     expect(verdict(missing)).toEqual({
       tone: "red",
-      text: "The matchday is running outside its service levels: 95% of items on air within 12.7 s, against 8.0 s; 6 of 6 late, 2000% of the error budget. It has cost $0.0469 so far.",
+      text: "The matchday is missing the on-air median (11.6 s against 4.0 s) and the on-air 95th percentile (12.7 s against 8.0 s). 6 of 6 items late, the error budget spent 20 times over. It has cost $0.0469 so far.",
     });
+  });
+
+  it("says when every item had to be on time and one was not", () => {
+    const strict = report({ budget: { withinPercent: 100, targetMs: 8000, late: 1, of: 40 } });
+
+    expect(verdict(strict).text).toContain("1 of 40 items late, with no late item allowed");
   });
 
   it("waits for the first item while a run has timed none", () => {

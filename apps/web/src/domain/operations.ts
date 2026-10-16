@@ -17,6 +17,7 @@ const isObject = (v: unknown): v is Fields =>
 const isCount = (v: unknown): v is number => Number.isSafeInteger(v) && (v as number) >= 0;
 const isMs = (v: unknown): boolean => v === null || isCount(v);
 const isString = (v: unknown): v is string => typeof v === "string";
+const isPercent = (v: unknown): boolean => isCount(v) && v >= 1 && v <= 100;
 const isList = (v: unknown, each: (item: unknown) => boolean): boolean =>
   Array.isArray(v) && v.every(each);
 const counts = (v: unknown, keys: readonly string[]): boolean =>
@@ -79,6 +80,7 @@ export function parseOperations(value: unknown): OperationsReport | null {
   const ok =
     isList(objectives, isObjective) &&
     counts(budget, ["withinPercent", "targetMs", "late", "of"]) &&
+    isPercent((budget as Fields).withinPercent) &&
     isSpread(onAir) &&
     isList(matches, isMatch) &&
     isObject(pricing) &&
@@ -90,8 +92,13 @@ export function parseOperations(value: unknown): OperationsReport | null {
 const MICRO = 1_000_000;
 const PERCENT = 100;
 
-/** Micro-dollars as dollars, to the hundredth of a cent: a match costs cents. */
-export const dollars = (micro: number): string => `$${(micro / MICRO).toFixed(4)}`;
+// The smallest amount shown: a hundredth of a cent.
+const SMALLEST = 100;
+
+/** Micro-dollars as dollars, to the hundredth of a cent (a match costs cents); an amount
+ * smaller than that is said to be so, never shown as nothing. */
+export const dollars = (micro: number): string =>
+  micro > 0 && micro < SMALLEST ? "< $0.0001" : `$${(micro / MICRO).toFixed(4)}`;
 
 const MS_PER_SECOND = 1000;
 const SECONDS_PER_MINUTE = 60;
@@ -136,15 +143,36 @@ export interface BudgetUse {
   readonly of: number;
   /** Late items the objective allows over the items timed so far. */
   readonly allowed: number;
-  readonly spentPercent: number;
+  /** The share of the budget spent; null when none was allowed and some was spent anyway. */
+  readonly spentPercent: number | null;
+  /** More items were late than the objective allows (never hidden by rounding). */
+  readonly over: boolean;
 }
 
 /** How much of the error budget the late items spent; null before any item was timed. */
 export function budgetUse(budget: ErrorBudget): BudgetUse | null {
   if (budget.of === 0) return null;
   const allowed = (budget.of * (PERCENT - budget.withinPercent)) / PERCENT;
-  const spentPercent = Math.round((budget.late / allowed) * PERCENT);
-  return { late: budget.late, of: budget.of, allowed, spentPercent };
+  const over = budget.late > allowed;
+  let spentPercent: number | null = 0;
+  if (allowed > 0) spentPercent = Math.round((budget.late / allowed) * PERCENT);
+  else if (over) spentPercent = null;
+  return { late: budget.late, of: budget.of, allowed, spentPercent, over };
+}
+
+/** The budget in words: how many items were late, and what share of the budget that spent. */
+export function budgetWords(use: BudgetUse): string {
+  let share = `${use.spentPercent}% of the error budget spent`;
+  if (use.spentPercent === null) share = "with no late item allowed";
+  else if (use.spentPercent > PERCENT)
+    share = `the error budget spent ${timesOver(use)} times over`;
+  return `${use.late} of ${use.of} items late, ${share}`;
+}
+
+/** How many times over a spent budget went, to the tenth (4.7), or whole (20). */
+export function timesOver(use: BudgetUse): string {
+  const times = (use.spentPercent ?? 0) / PERCENT;
+  return Number.isInteger(times) ? String(times) : times.toFixed(1);
 }
 
 /** Whether an objective was met; null before anything was measured against it. */
@@ -166,7 +194,17 @@ export interface Verdict {
   readonly text: string;
 }
 
-/** The statement's first line: service levels, the budget, and the cost, in that order. */
+const MISSED: Readonly<Record<Objective["key"], string>> = {
+  on_air_p50: "the on-air median",
+  on_air_p95: "the on-air 95th percentile",
+  correction_p95: "the corrections desk's 95th percentile",
+};
+
+const listed = (parts: readonly string[]): string =>
+  parts.length < 2 ? (parts[0] ?? "") : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+
+/** The statement's first line: the service levels (each one missed, by how much), the budget,
+ * and the cost, in that order. */
 export function verdict(report: OperationsReport): Verdict {
   const now = phase(report);
   if (now === "idle") {
@@ -186,10 +224,17 @@ export function verdict(report: OperationsReport): Verdict {
       text: `The matchday is running; no item has gone on air without an editor yet. ${spent}`,
     };
   }
-  const met = report.objectives.every((o) => objectiveMet(o) !== false);
-  const subject = running ? "The matchday is running" : "The last matchday ran";
-  const levels = `${subject} ${met ? "inside" : "outside"} its service levels`;
-  const onAir = `${report.budget.withinPercent}% of items on air within ${seconds(p95.measuredMs)}, against ${seconds(p95.targetMs)}`;
-  const budget = `${use.late} of ${use.of} late, ${use.spentPercent}% of the error budget`;
-  return { tone: met ? "green" : "red", text: `${levels}: ${onAir}; ${budget}. ${spent}` };
+  const budget = `${budgetWords(use)}.`;
+  const missed = report.objectives.filter((o) => objectiveMet(o) === false);
+  if (missed.length === 0) {
+    const subject = running ? "The matchday is holding" : "The last matchday held";
+    const onAir = `on air within ${seconds(p95.measuredMs)} for ${report.budget.withinPercent}% of items, against ${seconds(p95.targetMs)}`;
+    return { tone: "green", text: `${subject} its service levels: ${onAir}. ${budget} ${spent}` };
+  }
+  const subject = running ? "The matchday is missing" : "The last matchday missed";
+  const misses = missed.map(
+    (o) =>
+      `${MISSED[o.key] ?? o.key} (${seconds(o.measuredMs ?? 0)} against ${seconds(o.targetMs)})`,
+  );
+  return { tone: "red", text: `${subject} ${listed(misses)}. ${budget} ${spent}` };
 }

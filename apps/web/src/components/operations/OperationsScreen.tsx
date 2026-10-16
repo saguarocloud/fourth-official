@@ -21,6 +21,7 @@ import {
   phase,
   ranFor,
   seconds,
+  timesOver,
   totals,
   verdict,
 } from "@/domain/operations";
@@ -49,17 +50,27 @@ const spread = (p50: number | null, p95: number | null): string =>
   p50 === null || p95 === null ? "–" : `${seconds(p50)} · ${seconds(p95)}`;
 const perMillion = (micro: number): string => `$${(micro / 1_000_000).toFixed(2)}`;
 
+// An unreachable service is not an objective missed: the lamp stays unlit, never red.
 function Verdict({ lookup }: { readonly lookup: Lookup }) {
   let tone = "neutral";
   let text = "Reading what the platform measured.";
+  let running = false;
   if (lookup.status === "unavailable") {
-    tone = "red";
     text = "The operations service did not answer. This page reads it again every few seconds.";
   } else if (lookup.status === "ready") {
     ({ tone, text } = verdict(lookup.report));
+    running = phase(lookup.report) === "running";
+    if (lookup.stale) tone = "neutral";
   }
   return (
-    <p role="status" aria-label="Operations verdict" className="verdict" data-tone={tone}>
+    <p
+      role="status"
+      aria-label="Operations verdict"
+      // While a match runs the cost changes at every reading: not worth announcing each time.
+      aria-live={running ? "off" : undefined}
+      className="verdict"
+      data-tone={tone}
+    >
       <span aria-hidden="true" className="verdict__lamp" />
       {text}
     </p>
@@ -78,13 +89,20 @@ function Standing({ objective }: { readonly objective: Objective }) {
 }
 
 const OBJECTIVE_COLUMNS: readonly Column<Objective>[] = [
-  { key: "objective", header: "Objective", cell: (o) => OBJECTIVE_NAMES[o.key] },
+  { key: "objective", header: "Objective", cell: (o) => OBJECTIVE_NAMES[o.key] ?? o.key },
   { key: "target", header: "Target", numeric: true, cell: (o) => `≤ ${seconds(o.targetMs)}` },
   {
     key: "measured",
     header: "Measured",
     numeric: true,
-    cell: (o) => (o.measuredMs === null ? "–" : seconds(o.measuredMs)),
+    cell: (o) =>
+      o.measuredMs === null ? (
+        "–"
+      ) : (
+        <span className="measured" data-missed={objectiveMet(o) === false || undefined}>
+          {seconds(o.measuredMs)}
+        </span>
+      ),
   },
   { key: "standing", header: "Standing", cell: (o) => <Standing objective={o} /> },
 ];
@@ -92,31 +110,49 @@ const OBJECTIVE_COLUMNS: readonly Column<Objective>[] = [
 function BudgetMeter({ report }: { readonly report: OperationsReport }) {
   const { budget } = report;
   const use = budgetUse(budget);
-  const spent = use?.spentPercent ?? 0;
+  const spent = use?.spentPercent ?? (use?.over ? 100 : 0);
   const lit = Math.min(SEGMENTS, Math.ceil(spent / PER_SEGMENT));
-  const over = spent > 100;
-  const objective = `${budget.withinPercent}% of items on air within ${seconds(budget.targetMs)}`;
+  const over = use?.over ?? false;
+  let headline = "Not yet measured";
+  let valueText = "Not yet measured";
+  if (use !== null && use.spentPercent === null) {
+    headline = valueText = "Error budget spent: no late item was allowed";
+  } else if (use !== null && use.spentPercent !== null && use.spentPercent > 100) {
+    headline = valueText = `Error budget spent ${timesOver(use)} times over`;
+  } else if (use !== null) {
+    headline = valueText = `${use.spentPercent}% of the error budget spent`;
+  }
   const reading =
     use === null
-      ? "Not yet measured: no item has gone on air without an editor."
-      : `${use.late} of ${use.of} items later than ${seconds(budget.targetMs)}; the objective allows ${use.allowed.toFixed(1)}. ${spent}% of the budget spent.`;
+      ? "No item has gone on air without an editor yet."
+      : `${use.late} of ${use.of} items later than ${seconds(budget.targetMs)}; ${100 - budget.withinPercent}% of ${use.of} allows ${use.allowed.toFixed(1)} late.`;
   return (
     <div className="budget">
       <h3 className="budget__title">Error budget</h3>
-      <p className="budget__objective">{objective}</p>
-      <div
-        role="meter"
-        aria-label="Error budget spent"
-        aria-valuemin={0}
-        aria-valuemax={Math.max(100, spent)}
-        aria-valuenow={spent}
-        aria-valuetext={use === null ? "Not yet measured" : `${spent}% spent`}
-        className="budget__meter"
-        data-over={over || undefined}
-      >
-        {Array.from({ length: SEGMENTS }, (_, i) => (
-          <span key={i} className="budget__segment" data-lit={i < lit || undefined} />
-        ))}
+      <p className="budget__objective">
+        {budget.withinPercent}% of items on air within {seconds(budget.targetMs)}
+      </p>
+      <p className="budget__headline">{headline}</p>
+      <div className="budget__row">
+        <div
+          role="meter"
+          aria-label="Error budget spent"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.min(spent, 100)}
+          aria-valuetext={valueText}
+          className="budget__meter"
+          data-over={over || undefined}
+        >
+          {Array.from({ length: SEGMENTS }, (_, i) => (
+            <span key={i} className="budget__segment" data-lit={i < lit || undefined} />
+          ))}
+        </div>
+        {use !== null && use.spentPercent !== null && use.spentPercent > 100 && (
+          <span aria-hidden="true" className="budget__over">
+            ×{timesOver(use)}
+          </span>
+        )}
       </div>
       <p className="budget__reading">{reading}</p>
     </div>
@@ -127,13 +163,15 @@ function Amount({ report }: { readonly report: OperationsReport }) {
   const sum = totals(report);
   const sofar = phase(report) === "running";
   const total = dollars(sum.totalMicrousd);
+  // The board lights digits only: the amount to the hundredth of a cent, whatever it is.
+  const lit = `$${(sum.totalMicrousd / 1_000_000).toFixed(4)}`;
   return (
     <section aria-labelledby="amount-heading" className="amount">
       <h2 id="amount-heading" className="panel-heading">
         Amount
       </h2>
       <LedReadout
-        text={total}
+        text={lit}
         label={`Cost${sofar ? " so far" : ""}: ${total}`}
         dotSize={5}
         className="amount__readout"
@@ -157,6 +195,18 @@ function Amount({ report }: { readonly report: OperationsReport }) {
       </dl>
     </section>
   );
+}
+
+/** The itemised matches added up: the same amount the board shows. */
+function matchTotals(report: OperationsReport): Readonly<Record<string, ReactNode>> {
+  const sum = totals(report);
+  return {
+    match: "Total",
+    tokens: tokens(sum.tokensIn + sum.tokensOut),
+    models: dollars(sum.modelMicrousd),
+    infra: dollars(sum.infraMicrousd),
+    total: <strong>{dollars(sum.totalMicrousd)}</strong>,
+  };
 }
 
 function matchColumns(names: ReadonlyMap<string, string>): readonly Column<MatchOperations>[] {
@@ -189,7 +239,7 @@ function matchColumns(names: ReadonlyMap<string, string>): readonly Column<Match
     },
     {
       key: "corrections",
-      header: "Corrections, 95th",
+      header: "Corrections, count · 95th",
       numeric: true,
       cell: (m) =>
         m.corrections.p95Ms === null
@@ -223,32 +273,42 @@ interface PartnerTotal {
   readonly name: string;
   readonly items: number;
   readonly held: number;
+  /** The latency budget every match judged it against; null when they differ or none was known. */
   readonly budgetMs: number | null;
   readonly withinBudget: Ratio;
   readonly tokens: number;
   readonly costMicrousd: number;
 }
 
-/** Each partner across the run's matches: everything that adds up, added up. */
+const NAMES: ReadonlyMap<string, string> = new Map(PARTNERS.map((p) => [p.id, p.name]));
+
+/** Each partner across the run's matches, as the report lists them: everything that adds up,
+ * added up. Its latency budget is shown only where every match judged it against the same one. */
 function byPartner(report: OperationsReport): readonly PartnerTotal[] {
-  const all = report.matches.flatMap((m) => m.partners);
-  return PARTNERS.flatMap((partner) => {
-    const theirs: PartnerOperations[] = all.filter((p) => p.tenantId === partner.id);
-    if (theirs.length === 0) return [];
+  const grouped = new Map<string, PartnerOperations[]>();
+  for (const p of report.matches.flatMap((m) => m.partners)) {
+    grouped.set(p.tenantId, [...(grouped.get(p.tenantId) ?? []), p]);
+  }
+  return [...grouped].map(([tenantId, theirs]) => {
     const add = (of: (p: PartnerOperations) => number) => theirs.reduce((n, p) => n + of(p), 0);
-    return [
-      {
-        tenantId: partner.id,
-        name: partner.name,
-        items: add((p) => p.items),
-        held: add((p) => p.held),
-        budgetMs: theirs.at(-1)?.latencyBudgetMs ?? null,
-        withinBudget: { hit: add((p) => p.withinBudget.hit), of: add((p) => p.withinBudget.of) },
-        tokens: add((p) => p.tokens.input + p.tokens.output),
-        costMicrousd: add((p) => p.costMicrousd),
-      },
-    ];
+    const budgets = new Set(theirs.map((p) => p.latencyBudgetMs));
+    const budgetMs = budgets.size === 1 ? (theirs[0]?.latencyBudgetMs ?? null) : null;
+    return {
+      tenantId,
+      name: NAMES.get(tenantId) ?? tenantId,
+      items: add((p) => p.items),
+      held: add((p) => p.held),
+      budgetMs,
+      withinBudget: { hit: add((p) => p.withinBudget.hit), of: add((p) => p.withinBudget.of) },
+      tokens: add((p) => p.tokens.input + p.tokens.output),
+      costMicrousd: add((p) => p.costMicrousd),
+    };
   });
+}
+
+function withinItsBudget(p: PartnerTotal): string {
+  if (p.items > 0 && p.held === p.items) return "All held";
+  return p.budgetMs === null || p.withinBudget.of === 0 ? "–" : counted(p.withinBudget);
 }
 
 const PARTNER_COLUMNS: readonly Column<PartnerTotal>[] = [
@@ -261,14 +321,9 @@ const PARTNER_COLUMNS: readonly Column<PartnerTotal>[] = [
     numeric: true,
     cell: (p) => (p.budgetMs === null ? "–" : seconds(p.budgetMs)),
   },
-  {
-    key: "within",
-    header: "On air within it",
-    numeric: true,
-    cell: (p) => (p.budgetMs === null ? "–" : counted(p.withinBudget)),
-  },
+  { key: "within", header: "On air within it", numeric: true, cell: withinItsBudget },
   { key: "tokens", header: "Localizer tokens", numeric: true, cell: (p) => tokens(p.tokens) },
-  { key: "cost", header: "Cost", numeric: true, cell: (p) => dollars(p.costMicrousd) },
+  { key: "cost", header: "Localizer cost", numeric: true, cell: (p) => dollars(p.costMicrousd) },
 ];
 
 function draftingColumns(names: ReadonlyMap<string, string>): readonly Column<MatchOperations>[] {
@@ -373,6 +428,7 @@ function Statement({
             rows={ran}
             rowKey={(m) => m.matchId}
             empty={NOT_RUN}
+            totals={ran.length > 0 ? matchTotals(report) : undefined}
           />
         </Scroll>
       </section>
@@ -405,7 +461,8 @@ function Statement({
           />
           <p className="statement__note">
             Infrastructure: {infraHour} an hour, the platform&apos;s standing charge, shared by the
-            matches of a run for as long as they run.
+            matches of a run for as long as they run. A partner&apos;s Localizer cost is its own;
+            the Analyst and the infrastructure are shared by every partner of a match.
           </p>
         </section>
       </div>
@@ -442,7 +499,8 @@ export function OperationsScreen() {
         <Verdict lookup={lookup} />
         {lookup.status === "ready" && lookup.stale && (
           <p className="statement__stale">
-            The last reading failed: these are the figures as they stood before.
+            The last reading failed: these are the figures as read at{" "}
+            {lookup.report.generatedAt.slice(11, 19)} UTC.
           </p>
         )}
       </header>

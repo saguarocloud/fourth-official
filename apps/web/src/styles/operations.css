@@ -48,7 +48,15 @@
   align-items: start;
 }
 
-@media (min-width: 1280px) {
+.statement__pair {
+  margin-bottom: var(--space-5);
+}
+
+.statement__pair .statement__section {
+  margin-bottom: 0;
+}
+
+@media (min-width: 1600px) {
   .statement__pair {
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   }
@@ -61,10 +69,7 @@
   overscroll-behavior-x: contain;
 }
 
-.statement__scroll .data-table {
-  min-width: 44rem;
-}
-
+.statement__scroll .data-table th,
 .levels .data-table td[data-numeric],
 .statement__section .data-table td[data-numeric],
 .statement__section .data-table td:first-child {
@@ -119,7 +124,27 @@
   background: var(--led-red);
 }
 
-/* The error budget: twenty LED segments, each five percent of it. */
+/* A missed objective's figure carries the same weight as the amount. */
+.measured[data-missed] {
+  font-weight: 600;
+  color: var(--ink-1);
+}
+
+/* The itemised total closes the statement: it matches the amount on the board. */
+.statement__section .data-table tfoot th,
+.statement__section .data-table tfoot td {
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--hairline-strong);
+  color: var(--ink-1);
+  font-weight: 600;
+  text-align: left;
+}
+
+.statement__section .data-table tfoot td[data-numeric] {
+  text-align: right;
+}
+
+/* The error budget: twenty LED segments, each five percent of it, and how far over it went. */
 .budget {
   display: grid;
   gap: var(--space-2);
@@ -136,16 +161,36 @@
 }
 
 .budget__objective {
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+
+.budget__headline {
+  font-size: var(--text-lg);
   font-weight: 600;
   color: var(--ink-1);
 }
 
+.budget__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: 44rem;
+}
+
+.budget__over {
+  flex: none;
+  font-family: var(--font-data);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--led-red);
+}
+
 .budget__meter {
+  flex: 1;
   display: grid;
   grid-template-columns: repeat(20, minmax(0, 1fr));
   gap: 3px;
-  max-width: 40rem;
   padding: var(--space-2);
   border-radius: var(--radius-key);
   background: var(--panel-0);
@@ -214,6 +259,10 @@
 }
 
 @media (max-width: 720px) {
+  .statement__scroll .data-table {
+    min-width: 44rem;
+  }
+
   .levels,
   .amount,
   .statement__section {

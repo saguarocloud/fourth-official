@@ -71,4 +71,30 @@ describe("useOperations", () => {
 
     await waitFor(() => expect(result.current.status).toBe("unavailable"));
   });
+
+  it("never starts a read while the last one is still in flight", async () => {
+    const fetch = vi.fn(() => new Promise<Response>(() => undefined));
+    vi.stubGlobal("fetch", fetch);
+    renderHook(() => useOperations());
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(POLL_MS * 3);
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("rests while the page is hidden", async () => {
+    const fetch = serve(Response.json(fixture), Response.json(fixture));
+    renderHook(() => useOperations());
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(1));
+    const hidden = vi.spyOn(document, "hidden", "get").mockReturnValue(true);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(POLL_MS * 2);
+    });
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    hidden.mockRestore();
+  });
 });

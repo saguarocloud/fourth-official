@@ -20,10 +20,11 @@
 }
 
 /* The matchday verdict: the one line an executive reads first. */
+/* The lamp sits on the first line, however many lines the verdict takes. */
 .page-header .verdict {
   flex-basis: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-3);
   margin-top: var(--space-3);
   font-size: var(--text-lg);
@@ -34,6 +35,7 @@
 .verdict__lamp {
   width: 12px;
   height: 12px;
+  margin-top: calc((1lh - 12px) / 2);
   border-radius: 999px;
   flex: none;
 }

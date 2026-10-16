@@ -9,7 +9,7 @@ uv run python scripts/record-feed-fixture.py
 import asyncio
 import dataclasses
 import json
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime, timedelta
 from functools import partial
 from itertools import count
@@ -164,8 +164,6 @@ async def record_policy_history(name: str) -> None:
 
 # The recorded run: a reading of the log's clock every 6 ms of synthetic time.
 TICK_SECONDS = 0.006
-# Moments explained so far in the recording, so every third one falls back.
-_EXPLAINED = count()
 
 
 def ticking() -> Callable[[], float]:
@@ -173,14 +171,24 @@ def ticking() -> Callable[[], float]:
     return lambda: next(readings) * TICK_SECONDS
 
 
-async def drafted(moment: Moment, facts: MatchFacts) -> Explanation:
+def drafting() -> Callable[[Moment, MatchFacts], Awaitable[Explanation]]:
+    """An explainer for one recording: every third moment it explains falls back."""
+    explained = count()
+
+    async def drafted(moment: Moment, facts: MatchFacts) -> Explanation:
+        return await _drafted(moment, facts, fallback=next(explained) % 3 == 2)
+
+    return drafted
+
+
+async def _drafted(moment: Moment, facts: MatchFacts, *, fallback: bool) -> Explanation:
     """The template's insight, as if the models had drafted it: most moments pass on the fast
     model's first draft; every third falls back after a timeout and a refused draft. Synthetic,
     so the screen has model attempts and tokens to show."""
     explanation = await explain(moment, facts, [])
     template = explanation.attempts[-1]
     tokens = 2400 + moment.as_of_seq % 900
-    if next(_EXPLAINED) % 3 == 2:
+    if fallback:
         tried = (
             Attempt(1, "analyst", "fast", "error", error="TimeoutError", input_tokens=tokens),
             Attempt(2, "analyst", "fallback", "failed", ("BARE_NUMBER",), None, tokens, 310),
@@ -208,6 +216,7 @@ async def record_operations(name: str) -> None:
     store = demo_store()
     measured = []
     matches = store.match_ids()
+    drafted = drafting()
     for match_id in matches:
         log = FeedLog(match_id, clock=ticking())
         await log.reset()
