@@ -196,6 +196,13 @@ from fourth_official_contracts.verdicts import (
     Verdict,
     parse_verdict,
 )
+from fourth_official_contracts.wall import (
+    MatchdayWall,
+    WallActivity,
+    WallCorrection,
+    WallMatch,
+    parse_matchday_wall,
+)
 
 __all__ = [
     "CLUB_NAMES",
@@ -272,6 +279,7 @@ __all__ = [
     "MatchEvent",
     "MatchId",
     "MatchOperations",
+    "MatchdayWall",
     "MetricName",
     "MetricShift",
     "MetricSnapshot",
@@ -331,6 +339,9 @@ __all__ = [
     "VarCheckEvent",
     "VarDecisionEvent",
     "Verdict",
+    "WallActivity",
+    "WallCorrection",
+    "WallMatch",
     "WireModel",
     "canonical_bytes",
     "claim_references",
@@ -350,6 +361,7 @@ __all__ = [
     "parse_localized_insight",
     "parse_match_event",
     "parse_match_event_json",
+    "parse_matchday_wall",
     "parse_metric_snapshot",
     "parse_moment",
     "parse_moment_json",

@@ -1,0 +1,241 @@
+{
+  "activity": [
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "entrySeq": 118,
+      "headline": "Calder Town con un jugador menos",
+      "matchId": "m44",
+      "state": "pending_approval",
+      "tenantId": "tribuna-austral"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 36
+      },
+      "entrySeq": 117,
+      "headline": "Calder Town in Unterzahl",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "rheinblick-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 36
+      },
+      "entrySeq": 116,
+      "headline": "Calder Town down a player",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "northlight-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "entrySeq": 115,
+      "headline": "Ocasi\u00f3n de Westmere",
+      "matchId": "m44",
+      "state": "pending_approval",
+      "tenantId": "tribuna-austral"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 24
+      },
+      "entrySeq": 114,
+      "headline": "Gro\u00dfe Chance f\u00fcr Westmere",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "rheinblick-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 24
+      },
+      "entrySeq": 113,
+      "headline": "Westmere go close",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "northlight-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "entrySeq": 112,
+      "headline": "Calder Town con un jugador menos",
+      "matchId": "m44",
+      "state": "pending_approval",
+      "tenantId": "tribuna-austral"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 12
+      },
+      "entrySeq": 111,
+      "headline": "Calder Town in Unterzahl",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "rheinblick-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 12
+      },
+      "entrySeq": 110,
+      "headline": "Calder Town down a player",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "northlight-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "entrySeq": 109,
+      "headline": "Ocasi\u00f3n de Westmere",
+      "matchId": "m44",
+      "state": "pending_approval",
+      "tenantId": "tribuna-austral"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "entrySeq": 108,
+      "headline": "Gro\u00dfe Chance f\u00fcr Westmere",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "rheinblick-sport"
+    },
+    {
+      "aiWritten": false,
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "entrySeq": 107,
+      "headline": "Westmere go close",
+      "matchId": "m44",
+      "state": "on_air",
+      "tenantId": "northlight-sport"
+    }
+  ],
+  "generatedAt": "2026-10-11T15:00:00.000Z",
+  "latestCorrection": {
+    "correctionId": "c-m42-02",
+    "elapsedMs": 3,
+    "eventClock": {
+      "minute": 89,
+      "period": 2,
+      "second": 25
+    },
+    "inText": "HCY 22",
+    "itemsCorrected": 3,
+    "languages": 3,
+    "matchId": "m42",
+    "outText": "HCY 19",
+    "partners": 3,
+    "receivedClock": {
+      "minute": 93,
+      "period": 2,
+      "second": 0
+    },
+    "summary": "Harbour City goal at 89' credited to Idris Brice\u00f1o"
+  },
+  "matches": [
+    {
+      "away": "NGT",
+      "clock": {
+        "minute": 93,
+        "period": 2,
+        "second": 0
+      },
+      "corrections": 2,
+      "home": "HCY",
+      "items": 21,
+      "matchId": "m42",
+      "onAir": [],
+      "pendingApprovals": 5,
+      "score": {
+        "away": 1,
+        "home": 2
+      },
+      "state": "finished"
+    },
+    {
+      "away": "ASV",
+      "clock": {
+        "minute": 97,
+        "period": 2,
+        "second": 0
+      },
+      "corrections": 0,
+      "home": "KBA",
+      "items": 18,
+      "matchId": "m43",
+      "onAir": [],
+      "pendingApprovals": 6,
+      "score": {
+        "away": 1,
+        "home": 2
+      },
+      "state": "finished"
+    },
+    {
+      "away": "WMR",
+      "clock": {
+        "minute": 95,
+        "period": 2,
+        "second": 0
+      },
+      "corrections": 0,
+      "home": "CAL",
+      "items": 12,
+      "matchId": "m44",
+      "onAir": [],
+      "pendingApprovals": 4,
+      "score": {
+        "away": 0,
+        "home": 0
+      },
+      "state": "finished"
+    }
+  ]
+}

@@ -5,7 +5,6 @@ const NBSP = "\u00a0";
 
 import {
   footballMinute,
-  formatCost,
   formatLatency,
   formatMatchClock,
   formatMatchMinute,
@@ -65,22 +64,6 @@ describe("formatLatency", () => {
 
   it("rejects negative durations", () => {
     expect(() => formatLatency(-1, "en-GB")).toThrow(RangeError);
-  });
-});
-
-describe("formatCost", () => {
-  it("shows cents to the cent in USD", () => {
-    expect(formatCost(42, "en-GB")).toBe("US$0.42");
-    expect(formatCost(123456, "en-US")).toBe("$1,234.56");
-  });
-
-  it("uses the locale's separators", () => {
-    expect(formatCost(123456, "de-DE")).toBe(`1.234,56${NBSP}$`);
-  });
-
-  it("rejects fractional or negative cents", () => {
-    expect(() => formatCost(1.5, "en-GB")).toThrow(RangeError);
-    expect(() => formatCost(-1, "en-GB")).toThrow(RangeError);
   });
 });
 

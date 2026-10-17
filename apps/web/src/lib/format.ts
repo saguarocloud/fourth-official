@@ -5,7 +5,6 @@
 
 const SECONDS_PER_MINUTE = 60;
 const MILLISECONDS_PER_SECOND = 1000;
-const CENTS_PER_UNIT = 100;
 const REGULATION_END: Record<1 | 2, number> = { 1: 45, 2: 90 };
 const PERIOD_START: Record<1 | 2, number> = { 1: 1, 2: 46 };
 // Joins a number to its unit so the pair never wraps across lines (Intl does the same).
@@ -62,13 +61,6 @@ export function formatLatency(milliseconds: number, locale: string): string {
 }
 
 /** Cost from integer cents, shown to the cent in US dollars. */
-export function formatCost(cents: number, locale: string): string {
-  requireNonNegativeInteger(cents, "cents");
-  return new Intl.NumberFormat(locale, { style: "currency", currency: "USD" }).format(
-    cents / CENTS_PER_UNIT,
-  );
-}
-
 /** A ratio between 0 and 1 as a whole percentage in the viewer's locale. */
 export function formatPercent(ratio: number, locale: string): string {
   if (!Number.isFinite(ratio) || ratio < 0 || ratio > 1) {

@@ -5,13 +5,12 @@ import { TopBar } from "./TopBar";
 
 const summary = {
   liveMatches: 3,
-  itemsPerMinute: 7.5,
   pendingApprovals: 2,
   corrections: 1,
   p95LatencyMs: 4100,
   sloMs: 8000,
   withinSlo: true,
-  costCents: 1842,
+  costMicrousd: 18_420,
 };
 
 describe("TopBar", () => {
@@ -40,7 +39,7 @@ describe("TopBar", () => {
     expect(screen.getByText("Outside SLO")).toBeInTheDocument();
   });
 
-  it("does not claim an SLO state when nothing is live", () => {
+  it("does not claim an SLO state before anything has aired", () => {
     render(
       <TopBar
         summary={{ ...summary, liveMatches: 0, p95LatencyMs: null }}
@@ -49,13 +48,13 @@ describe("TopBar", () => {
       />,
     );
 
-    expect(screen.getByText("No live matches")).toBeInTheDocument();
+    expect(screen.getByText("Nothing aired yet")).toBeInTheDocument();
     expect(screen.queryByText("Within SLO")).toBeNull();
   });
 
-  it("shows cost so far to the cent", () => {
+  it("shows the cost so far, measured, to the hundredth of a cent", () => {
     render(<TopBar summary={summary} studio="S" replay={false} />);
 
-    expect(screen.getByText("US$18.42")).toBeInTheDocument();
+    expect(screen.getByText("$0.0184")).toBeInTheDocument();
   });
 });

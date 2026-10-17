@@ -276,3 +276,10 @@ def test_with_partners_each_run_publishes_partner_items_with_fresh_schedules() -
     kinds = {getattr(e, "tenant_id", None) for e in day.feed("m42").entries}
     assert {"northlight-sport", "tribuna-austral", "rheinblick-sport"} <= kinds
     assert len(made) == 3  # one per match
+
+
+def test_the_matchday_hands_out_each_match_s_record() -> None:
+    store = demo_store()
+    day = Matchday(store, template_only, sleep=no_wait)
+
+    assert day.record("m42") is store.record("m42")

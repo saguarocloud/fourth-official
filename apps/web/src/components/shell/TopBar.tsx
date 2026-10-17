@@ -3,7 +3,8 @@ import { CircleAlert, CircleCheck, History } from "lucide-react";
 import { LiveClock } from "@/components/shell/LiveClock";
 import { BrandMark } from "@/components/shell/BrandMark";
 import type { MatchdaySummary } from "@/domain/matchday";
-import { formatCost, formatLatency } from "@/lib/format";
+import { dollars } from "@/domain/operations";
+import { formatLatency } from "@/lib/format";
 
 interface TopBarProps {
   readonly summary?: MatchdaySummary;
@@ -42,7 +43,7 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
               )}
               <span>
                 {summary.p95LatencyMs === null
-                  ? "No live matches"
+                  ? "Nothing aired yet"
                   : formatLatency(summary.p95LatencyMs, locale)}
               </span>
               {summary.p95LatencyMs !== null && (
@@ -62,7 +63,7 @@ export function TopBar({ summary, studio, replay, locale = "en-GB" }: TopBarProp
           </div>
           <div>
             <dt>Cost so far</dt>
-            <dd>{formatCost(summary.costCents, locale)}</dd>
+            <dd>{summary.costMicrousd === null ? "–" : dollars(summary.costMicrousd)}</dd>
           </div>
         </dl>
       )}

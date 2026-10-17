@@ -1,6 +1,7 @@
 import { AiTag } from "@/components/ui/AiTag";
 import { StatusLamp } from "@/components/ui/StatusLamp";
-import type { ActivityEntry, Partner } from "@/domain/matchday";
+import type { Partner } from "@/domain/broadcast";
+import type { ActivityEntry } from "@/domain/matchday";
 import { formatMatchMinute } from "@/lib/format";
 
 interface ActivityFeedProps {

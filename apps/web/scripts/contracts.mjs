@@ -15,6 +15,7 @@ export const CONTRACTS = [
   { schema: "signed-provenance.schema.json", output: "provenance.ts" },
   { schema: "scorecard.schema.json", output: "scorecard.ts" },
   { schema: "operations-report.schema.json", output: "operations.ts" },
+  { schema: "matchday-wall.schema.json", output: "wall.ts" },
   { schema: "gate-verdict.schema.json", output: "gateVerdict.ts" },
   { schema: "policy-history.schema.json", output: "policyHistory.ts" },
 ];
