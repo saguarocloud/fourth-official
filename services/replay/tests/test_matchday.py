@@ -283,3 +283,38 @@ def test_the_matchday_hands_out_each_match_s_record() -> None:
     day = Matchday(store, template_only, sleep=no_wait)
 
     assert day.record("m42") is store.record("m42")
+
+
+def test_each_run_warms_the_models_once_as_the_matches_kick_off() -> None:
+    warmed: list[float] = []
+
+    async def warm() -> None:
+        warmed.append(1.0)
+
+    day = Matchday(demo_store(), template_only, sleep=no_wait, warm=warm)
+
+    async def two_runs() -> None:
+        await day.start(now=0.0)
+        await day.wait()
+        await day.start(now=10_000.0)
+        await day.wait()
+
+    anyio.run(two_runs)
+
+    assert warmed == [1.0, 1.0]
+
+
+def test_a_warm_up_that_fails_never_stops_the_run(caplog: pytest.LogCaptureFixture) -> None:
+    async def warm() -> None:
+        raise TimeoutError
+
+    day = Matchday(demo_store(), template_only, sleep=no_wait, warm=warm)
+
+    async def run() -> None:
+        await day.start(now=0.0)
+        await day.wait()
+
+    anyio.run(run)
+
+    assert [m.state for m in day.status()] == ["finished"] * 3
+    assert "warm" in caplog.text

@@ -16,6 +16,7 @@ from fourth_official_explain.analyst import DraftError
 from fourth_official_explain.localize import LocalizationRequest, LocalizedDraft
 from fourth_official_explain.metering import spend, usage_of
 from fourth_official_explain.prompts import Prompt
+from fourth_official_explain.warmup import Warm, warm_up
 
 # Runs the agent on one message with options; returns the agent's response.
 RunAgent = Callable[[str, ChatOptions[Any]], Awaitable[object]]
@@ -58,6 +59,8 @@ class AgentLocalizer:
     provenance: Provenance
     # Model-specific options, such as reasoning effort for reasoning models.
     options: Mapping[str, object] = field(default_factory=dict)
+    # Wakes the deployment before the first item needs it (none in tests).
+    warm: Warm | None = None
 
     async def draft(self, request: LocalizationRequest) -> LocalizedDraft:
         options = cast("ChatOptions[Any]", {**self.options, "response_format": LocalizedDraft})
@@ -94,4 +97,9 @@ def foundry_localizer(
         agent=prompt.agent, prompt_version=prompt.version, model=alias, produced_by="model"
     )
     options = {"reasoning": {"effort": reasoning_effort}} if reasoning_effort else {}
-    return AgentLocalizer(run=run, provenance=provenance, options=options)
+    return AgentLocalizer(
+        run=run,
+        provenance=provenance,
+        options=options,
+        warm=warm_up(client.get_response, options=options),
+    )

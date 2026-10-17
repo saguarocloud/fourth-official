@@ -17,6 +17,7 @@ from fourth_official_explain.drafts import InsightDraft
 from fourth_official_explain.metering import TokenCount, spend, usage_of
 from fourth_official_explain.pipeline import DraftRequest
 from fourth_official_explain.prompts import Prompt
+from fourth_official_explain.warmup import Warm, warm_up
 
 MATCH_DATA_TOOLS = (
     "get_match_state",
@@ -81,6 +82,8 @@ class AgentDrafter:
     # Told what each call spent, whether or not its answer was usable. A call that fails outright
     # reports nothing, so a meter can only undercount.
     meter: Meter | None = None
+    # Wakes the deployment before the first moment needs it (none in tests).
+    warm: Warm | None = None
     _stack: AsyncExitStack | None = field(default=None, init=False, repr=False)
 
     async def __aenter__(self) -> "AgentDrafter":
@@ -155,4 +158,5 @@ def foundry_analyst(  # noqa: PLR0913 - the model, its tools, its prompt and its
         options=options,
         connections=(match_data,),
         meter=meter,
+        warm=warm_up(client.get_response, options=options),
     )
