@@ -15,6 +15,7 @@ from fourth_official_api.explainers import (
     foundry_localizer_for,
     partners_for,
     template_explainer,
+    warming,
 )
 from fourth_official_api.matchday_routes import matchday_router
 from fourth_official_api.operations_routes import operations_router
@@ -114,10 +115,10 @@ def create_app(
                     raise RuntimeError(
                         "model-written items need the studio's signing key; none is set"
                     )
-                explainer = (
+                analyst = (
                     await stack.enter_async_context(foundry_explainer(settings.foundry))
                     if settings.foundry
-                    else template_explainer
+                    else None
                 )
                 localizer = (
                     await stack.enter_async_context(foundry_localizer_for(settings.foundry))
@@ -126,11 +127,14 @@ def create_app(
                 )
                 day = Matchday(
                     store,
-                    explainer,
+                    analyst or template_explainer,
                     config=ReplayConfig(speed=settings.replay_speed),
                     ledger=starts,
                     runs_per_day=settings.runs_per_day,
                     partners=partners_for(policies, localizer, book),
+                    warm=warming(
+                        analyst.warm if analyst else None, localizer.warm if localizer else None
+                    ),
                 )
             app.state.matchday = day
             issuer = provenance

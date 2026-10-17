@@ -15,8 +15,9 @@ while the match runs; after full time the feed is closed and held items stay off
 """
 
 import asyncio
+import logging
 import time
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal, Protocol
@@ -39,6 +40,8 @@ MatchState = Literal["idle", "running", "finished", "failed"]
 DEFAULT_COOLDOWN_SECONDS = 15 * 60.0
 DEFAULT_RUNS_PER_DAY = 24
 DAY_SECONDS = 24 * 60 * 60.0
+
+logger = logging.getLogger(__name__)
 
 
 class StartLedger(Protocol):
@@ -128,6 +131,7 @@ class Matchday:
         ledger: StartLedger | None = None,
         sleep: Sleep = asyncio.sleep,
         partners: Callable[[], Partners] | None = None,
+        warm: Callable[[], Awaitable[None]] | None = None,
     ) -> None:
         self._store, self._explainer, self._sleep = store, explainer, sleep
         # Each match of each run gets its own partners' state (their director schedules).
@@ -142,6 +146,10 @@ class Matchday:
         self._deciding = asyncio.Lock()
         self._ledger = ledger or InMemoryLedger()
         self._lock = asyncio.Lock()
+        # Wakes the models as a run kicks off: a deployment's first call after a quiet spell is
+        # slow enough to time out, and the first moment of every match would pay for it.
+        self._warm = warm
+        self._warming: asyncio.Task[None] | None = None
 
     def feed(self, match_id: str) -> FeedLog:
         return self._feeds[match_id]
@@ -239,6 +247,19 @@ class Matchday:
                 )
                 for match_id, record in records.items()
             }
+            if self._warm is not None:
+                # One warm-up at a time: a last run's that has not finished gives way.
+                if self._warming is not None:
+                    self._warming.cancel()
+                self._warming = asyncio.create_task(self._warm_up(), name="warm-models")
+
+    async def _warm_up(self) -> None:
+        assert self._warm is not None  # noqa: S101 - only scheduled with a warm-up
+        try:
+            await self._warm()
+        except Exception as error:
+            # A model that stays cold costs the first moment some time; it never stops a run.
+            logger.warning("the models could not be warmed (%s)", type(error).__name__)
 
     async def decide(
         self,
@@ -297,10 +318,14 @@ class Matchday:
 
     async def wait(self) -> None:
         """Wait for the current run to end, however it ends."""
+        # Not the warm-up: a run is over when its matches are, whatever the models are doing.
         await asyncio.gather(*self._runs.values(), return_exceptions=True)
 
     async def stop(self) -> None:
         """Cancel a run under way (on shutdown) and wait for it to wind down."""
         for run in self._runs.values():
             run.cancel()
+        if self._warming is not None:
+            self._warming.cancel()
+            await asyncio.gather(self._warming, return_exceptions=True)
         await self.wait()

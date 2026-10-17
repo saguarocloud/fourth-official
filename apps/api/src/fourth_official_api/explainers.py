@@ -1,7 +1,9 @@
 """How the API explains moments: the Analyst on Foundry when configured, else templates alone."""
 
+import asyncio
 from collections.abc import AsyncIterator, Callable, Sequence
 from contextlib import AsyncExitStack, asynccontextmanager
+from dataclasses import dataclass
 from functools import partial
 
 from azure.identity.aio import DefaultAzureCredential
@@ -14,9 +16,10 @@ from fourth_official_explain.localize import Localizer
 from fourth_official_explain.localizer import AgentLocalizer, foundry_localizer
 from fourth_official_explain.production import LOCALIZER, analyst_drafters
 from fourth_official_explain.prompts import load_prompt
+from fourth_official_explain.warmup import Warm
 from fourth_official_policy import blocked_topics_in
 from fourth_official_policy.book import PolicyBook
-from fourth_official_replay import Explainer, Partner, Partners
+from fourth_official_replay import Partner, Partners
 from fourth_official_verifier import MatchFacts
 
 
@@ -36,8 +39,34 @@ def foundry_drafters(
     )
 
 
+@dataclass(frozen=True, slots=True)
+class ModelExplainer:
+    """The Analyst explaining moments with its drafters in turn, and waking their deployments."""
+
+    drafters: Sequence[AgentDrafter]
+
+    async def __call__(self, moment: Moment, facts: MatchFacts) -> Explanation:
+        return await explain(moment, facts, self.drafters)
+
+    async def warm(self) -> None:
+        """Wake every deployment the Analyst drafts on, at once."""
+        await asyncio.gather(*(d.warm() for d in self.drafters if d.warm is not None))
+
+
+def warming(*warms: Warm | None) -> Warm | None:
+    """One warm-up that wakes every model the matchday uses, at once; None if none can be."""
+    given = [w for w in warms if w is not None]
+    if not given:
+        return None
+
+    async def warm() -> None:
+        await asyncio.gather(*(w() for w in given))
+
+    return warm
+
+
 @asynccontextmanager
-async def foundry_explainer(settings: FoundrySettings) -> AsyncIterator[Explainer]:
+async def foundry_explainer(settings: FoundrySettings) -> AsyncIterator[ModelExplainer]:
     """An explainer backed by the Analyst. Credential and MCP sessions open and close here."""
     async with AsyncExitStack() as stack:
         credential = await stack.enter_async_context(
@@ -47,10 +76,7 @@ async def foundry_explainer(settings: FoundrySettings) -> AsyncIterator[Explaine
         for drafter in drafters:
             await stack.enter_async_context(drafter)
 
-        async def explainer(moment: Moment, facts: MatchFacts) -> Explanation:
-            return await explain(moment, facts, drafters)
-
-        yield explainer
+        yield ModelExplainer(drafters=tuple(drafters))
 
 
 @asynccontextmanager

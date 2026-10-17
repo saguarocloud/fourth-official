@@ -24,7 +24,6 @@ from fourth_official_match_data import demo_store
 from fourth_official_moments import detect
 from fourth_official_provenance import InMemoryStore, LocalSigner
 from fourth_official_replay import (
-    Explainer,
     FeedLog,
     InMemoryLedger,
     Matchday,
@@ -180,9 +179,10 @@ def test_with_foundry_configured_the_api_opens_the_analyst_at_startup(
     opened: list[str] = []
 
     @asynccontextmanager
-    async def fake(settings: FoundrySettings) -> AsyncIterator[Explainer]:
+    async def fake(settings: FoundrySettings) -> AsyncIterator[explainers.ModelExplainer]:
         opened.append(settings.project_endpoint)
-        yield template_only
+        # No drafters: the templates write everything.
+        yield explainers.ModelExplainer(drafters=())
         opened.append("closed")
 
     monkeypatch.setattr(main, "foundry_explainer", fake)
@@ -209,8 +209,11 @@ def test_a_configured_start_ledger_is_opened_at_startup_and_lets_the_analyst_run
     opened: list[str] = []
 
     @asynccontextmanager
-    async def fake_explainer(settings: FoundrySettings) -> AsyncIterator[Explainer]:
-        yield template_only
+    async def fake_explainer(
+        settings: FoundrySettings,
+    ) -> AsyncIterator[explainers.ModelExplainer]:
+        # No drafters: the templates write everything.
+        yield explainers.ModelExplainer(drafters=())
 
     @asynccontextmanager
     async def fake_ledger(url: str, client_id: str) -> AsyncIterator[InMemoryLedger]:
@@ -519,3 +522,35 @@ def test_the_analyst_is_never_enabled_without_the_studio_s_signing_key() -> None
 
     with pytest.raises(RuntimeError, match="signing key"), TestClient(app):
         pass
+
+
+def test_the_analyst_s_explainer_warms_every_drafter_it_explains_with() -> None:
+    warmed: list[str] = []
+
+    def drafter(name: str) -> object:
+        async def warm() -> None:
+            warmed.append(name)
+
+        return type("Drafter", (), {"warm": staticmethod(warm)})()
+
+    explainer = explainers.ModelExplainer(drafters=(drafter("fast"), drafter("fallback")))  # type: ignore[arg-type]
+    anyio.run(explainer.warm)
+
+    assert sorted(warmed) == ["fallback", "fast"]
+
+
+def test_warming_the_matchday_wakes_the_analyst_and_the_localizer_together() -> None:
+    warmed: list[str] = []
+
+    async def analyst() -> None:
+        warmed.append("analyst")
+
+    async def localizer() -> None:
+        warmed.append("localizer")
+
+    warm = explainers.warming(analyst, localizer)
+    assert warm is not None
+    anyio.run(warm)
+
+    assert sorted(warmed) == ["analyst", "localizer"]
+    assert explainers.warming(None, None) is None
