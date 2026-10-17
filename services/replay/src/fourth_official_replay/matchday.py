@@ -248,6 +248,9 @@ class Matchday:
                 for match_id, record in records.items()
             }
             if self._warm is not None:
+                # One warm-up at a time: a last run's that has not finished gives way.
+                if self._warming is not None:
+                    self._warming.cancel()
                 self._warming = asyncio.create_task(self._warm_up(), name="warm-models")
 
     async def _warm_up(self) -> None:
@@ -315,8 +318,8 @@ class Matchday:
 
     async def wait(self) -> None:
         """Wait for the current run to end, however it ends."""
-        tasks = [*self._runs.values(), *([self._warming] if self._warming else [])]
-        await asyncio.gather(*tasks, return_exceptions=True)
+        # Not the warm-up: a run is over when its matches are, whatever the models are doing.
+        await asyncio.gather(*self._runs.values(), return_exceptions=True)
 
     async def stop(self) -> None:
         """Cancel a run under way (on shutdown) and wait for it to wind down."""
@@ -324,4 +327,5 @@ class Matchday:
             run.cancel()
         if self._warming is not None:
             self._warming.cancel()
+            await asyncio.gather(self._warming, return_exceptions=True)
         await self.wait()

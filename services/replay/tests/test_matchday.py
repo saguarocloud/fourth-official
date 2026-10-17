@@ -1,5 +1,6 @@
 """The matchday: starts the demo's replays, one run at a time, and serves each match's feed."""
 
+import asyncio
 from collections.abc import Callable
 
 import anyio
@@ -317,4 +318,51 @@ def test_a_warm_up_that_fails_never_stops_the_run(caplog: pytest.LogCaptureFixtu
     anyio.run(run)
 
     assert [m.state for m in day.status()] == ["finished"] * 3
-    assert "warm" in caplog.text
+    assert "the models could not be warmed (TimeoutError)" in caplog.text
+
+
+def test_a_slow_warm_up_never_holds_up_waiting_for_the_run_and_stopping_cancels_it() -> None:
+    cancelled: list[bool] = []
+
+    async def warm() -> None:
+        try:
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+
+    day = Matchday(demo_store(), template_only, sleep=no_wait, warm=warm)
+
+    async def run() -> None:
+        await day.start(now=0.0)
+        with anyio.fail_after(20):
+            await day.wait()
+        await day.stop()
+
+    anyio.run(run)
+
+    assert cancelled == [True]
+
+
+def test_a_new_run_cancels_a_warm_up_still_pending_from_the_last() -> None:
+    cancelled: list[bool] = []
+
+    async def warm() -> None:
+        try:
+            await asyncio.sleep(60)
+        except asyncio.CancelledError:
+            cancelled.append(True)
+            raise
+
+    day = Matchday(demo_store(), template_only, sleep=no_wait, warm=warm)
+
+    async def two_runs() -> None:
+        await day.start(now=0.0)
+        await day.wait()
+        await day.start(now=10_000.0)
+        await day.wait()
+        await day.stop()
+
+    anyio.run(two_runs)
+
+    assert cancelled == [True, True]

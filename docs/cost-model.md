@@ -63,7 +63,7 @@ So the infrastructure rate is **6,942 micro-dollars an hour** (`INFRA_MICROUSD_P
 - **A floor, not an estimate.** A call that fails before the service reports usage (a timeout) spends tokens nobody counts, and so does a localisation that fails so badly no item is published (its attempts are never on the feed).
 - **Memory only.** Measures live as long as the API process. A restart, or scaling to zero, starts afresh with the next run, as the feeds do.
 - **List prices.** No discounts, no commitment tiers, US dollars.
-- **The warm-up is not charged to a match.** As a run kicks off, each model deployment gets one short request (a few dozen tokens) so the first moment of every match does not wait out a cold start; its tokens are not on any attempt.
+- **The warm-up is not charged to a match.** As a run kicks off, each model deployment gets one short request (at most 64 output tokens, reasoning included) so the first moment of every match does not wait out a cold start. It is not metered at all: another reason the model cost is a floor.
 - **Within an hour.** A duration longer than an hour is reported as an hour (and logged); a match never runs that long.
 - **Reports are reused for two seconds**, so a burst of requests computes the report once.
 
